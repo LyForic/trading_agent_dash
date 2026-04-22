@@ -3,14 +3,17 @@ import type { AgentId } from '@/lib/types';
 import { useRoomScroll } from '@/hooks/useRoomScroll';
 
 /**
- * Full-height section wrapper. When scrolled into 60% view it sets
- * body[data-room], which triggers the WorldLayer to swap its accent
- * aura and reveal the room's desk prop (VR gauge / window / hourglass).
+ * Observer wrapper around each agent's card. Size-neutral — the section
+ * takes the natural height of its child so the roster stays tightly
+ * stacked (Phase 2 density). The IntersectionObserver in useRoomScroll
+ * still fires as you scroll through the cards, setting body[data-room]
+ * so the World Layer can react.
  *
- * min-h-[60vh] per spec §5 — deliberately tall enough that scrolling
- * between agents feels like walking between rooms on a mobile screen.
- * Content (the AgentCard) is centered vertically so the cozy world
- * elements (window, lamp, prop) breathe around it.
+ * Prior implementation forced min-h-[60vh] which regressed card density.
+ * Room "walking" as a scroll gesture lands properly once the three
+ * agent-room background PNGs are commissioned/generated; until then,
+ * this wrapper's job is just to tell the world *which agent's card is
+ * currently in view* so room-specific treatments can swap in later.
  */
 export function RoomSection({
   room,
@@ -21,11 +24,7 @@ export function RoomSection({
 }) {
   const ref = useRoomScroll(room);
   return (
-    <section
-      ref={ref as React.RefObject<HTMLElement>}
-      data-room={room}
-      className="min-h-[60vh] flex flex-col justify-center"
-    >
+    <section ref={ref as React.RefObject<HTMLElement>} data-room={room}>
       {children}
     </section>
   );

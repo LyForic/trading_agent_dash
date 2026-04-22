@@ -1,28 +1,23 @@
 import { useEffect } from 'react';
-import { VRGauge } from './VRGauge';
-import { Hourglass } from './Hourglass';
 
 /**
- * The fixed world behind all content. Four layered elements, each scoped
- * per mode via CSS selectors in globals.css:
+ * Fixed world behind all content. Current scope (post-Phase-3 revert):
  *
  *   1. Base color — reads --world-bg (daytime cream, dusk indigo, moonlit navy)
- *   2. Wood-plank texture — barely-visible horizontal banding, gives the
- *      world an implied surface (strongest in dusk/moonlit)
- *   3. Window — top-right, with stars and a moon (moonlit only); hidden
- *      entirely in daytime (we're indoors with the sun elsewhere)
- *   4. Lamp glow — bottom-right amber radial, gives dusk/moonlit the
- *      "someone's desk lamp is on" feel. Brighter in dusk, softer in
- *      moonlit (only ambient light left at 2am)
+ *   2. Wood-plank texture — barely-visible horizontal banding
+ *   3. Window — top-right, gradient + stars (dusk/moonlit) + moon (moonlit)
+ *   4. Lamp glow — bottom-right amber radial, dusk/moonlit only
  *
- * Per spec §2.1 and R4's Phase 2 feedback: these placeholder atmospheric
- * elements should have landed with Phase 1. Pulling them in now so the
- * dashboard doesn't feel like a flat color dashboard while Phase 3/4
- * (per-room scroll swap, weather-live window) get built on top.
+ * Deliberately minimal. The full "cozy Stardew interior" requires drawn
+ * room backgrounds (960×540 PNG per agent) which are out-of-scope for
+ * Claude Code to generate. Those land in Phase 3.1 once Brandon's
+ * PixelLab work or commissioned art delivers. At that point this layer
+ * gets one additional element — a fixed background image crossfaded per
+ * body[data-room]; the time-of-day tokens become tint overlays instead
+ * of bg replacements.
  *
- * All elements are inline CSS/SVG — no commissioned pixel art required.
- * Phase 4 will swap the window into a weather-reactive component; this
- * is scaffolding, not final art.
+ * Until then, this scaffolding gives "evening room with a window and a
+ * lamp" without pretending to be three distinct rooms.
  */
 export function WorldLayer() {
   useEffect(() => {
@@ -61,12 +56,12 @@ export function WorldLayer() {
       />
 
       {/* Window — top right. Inner glass gradient + cross panes + stars.
-          Visible only in dusk and moonlit (daytime we're facing away). */}
+          Visible only in dusk and moonlit (daytime we're facing away).
+          Will be replaced with a weather-reactive component in Phase 4. */}
       <div
         className="gym-window absolute top-24 right-6 w-28 h-36 transition-opacity duration-300"
         style={{ imageRendering: 'pixelated' }}
       >
-        {/* Outer wooden frame */}
         <div
           className="absolute inset-0 rounded-sm"
           style={{
@@ -75,10 +70,7 @@ export function WorldLayer() {
               '0 3px 0 hsl(28 35% 16%), inset 0 0 0 1px hsl(28 35% 35%)',
           }}
         />
-
-        {/* Glass pane with mode-dependent gradient */}
         <div className="gym-window-pane absolute inset-1 overflow-hidden">
-          {/* Cross-pane divider: horizontal */}
           <div
             className="absolute left-0 right-0"
             style={{
@@ -87,7 +79,6 @@ export function WorldLayer() {
               backgroundColor: 'hsl(28 35% 22%)',
             }}
           />
-          {/* Cross-pane divider: vertical */}
           <div
             className="absolute top-0 bottom-0"
             style={{
@@ -96,9 +87,6 @@ export function WorldLayer() {
               backgroundColor: 'hsl(28 35% 22%)',
             }}
           />
-
-          {/* Stars — low-opacity pixel dots. Positions chosen to sit in the
-              4 window quadrants without bumping into the cross panes. */}
           {[
             { top: '12%', left: '22%' },
             { top: '18%', left: '70%' },
@@ -117,8 +105,6 @@ export function WorldLayer() {
               }}
             />
           ))}
-
-          {/* Moon — moonlit only, soft pale-blue disc in upper-right quadrant */}
           <span
             className="gym-moon absolute transition-opacity duration-300"
             style={{
@@ -135,8 +121,7 @@ export function WorldLayer() {
         </div>
       </div>
 
-      {/* Lamp glow — bottom-right radial amber. Amber hue ties to Metheus
-          accent (the agent in whose "room" the lamp lives). */}
+      {/* Lamp glow — bottom-right radial amber */}
       <div
         className="gym-lamp-glow absolute transition-opacity duration-300"
         style={{
@@ -149,31 +134,6 @@ export function WorldLayer() {
           pointerEvents: 'none',
         }}
       />
-
-      {/* Per-room accent aura — bottom-left-ish radial tinted by --world-accent
-          (set per body[data-room]). This is the smooth-morphing color cue
-          that tells a user "you've walked into a different agent's room."
-          Distinct position from the lamp glow so they layer, not compete. */}
-      <div
-        className="gym-room-aura absolute transition-[background] duration-500"
-        style={{
-          top: '30%',
-          left: '-15%',
-          width: '70vh',
-          height: '70vh',
-          background:
-            'radial-gradient(circle at 30% 50%, color-mix(in srgb, var(--world-accent, transparent) 28%, transparent) 0%, transparent 60%)',
-          pointerEvents: 'none',
-          mixBlendMode: 'screen',
-        }}
-      />
-
-      {/* Per-agent desk props — only the one matching body[data-room] is
-          visible at a time (opacity toggles in globals.css). Gale's prop
-          is the window already rendered above — CSS boosts its brightness
-          when she's the active room. */}
-      <VRGauge />
-      <Hourglass />
     </div>
   );
 }

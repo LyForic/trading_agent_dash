@@ -90,12 +90,14 @@ export default function App() {
             </button>
           </div>
 
-          {/* Each agent lives in its own scroll-section. Sections are
-              tall (min-h-60vh) so scrolling between agents reads as
-              walking between rooms, not just flipping cards. When a
-              section crosses the 60% visibility threshold it sets
-              body[data-room], which the World Layer reacts to. */}
-          <div>
+          {/* Roster stays tight (Phase 2 density). Each card is wrapped
+              in a RoomSection for the IntersectionObserver hook only —
+              sections take natural card height so "three cards in one
+              thumb-zone" holds on 375px phones. When the per-agent room
+              backgrounds arrive, the body[data-room] attribute set by
+              the observer will drive a crossfade of the background
+              image behind these stacked cards. */}
+          <div className="space-y-3">
             {data.agents.map((agent) => (
               <RoomSection key={agent.id} room={agent.id}>
                 <AgentCard agent={agent} />
