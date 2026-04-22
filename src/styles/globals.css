@@ -11,15 +11,15 @@
 
   /* Content layer: paper (card interior) regardless of world mode */
   --color-paper: hsl(34 30% 88%);
-  --color-paper-raised: hsl(36 33% 92%);
+  --color-paper-raised: hsl(36 35% 94%);   /* +2% saturation, +2% lightness vs paper → visible lift without shadow */
   --color-ink: hsl(25 25% 18%);
   --color-ink-muted: hsl(25 12% 48%);
   --color-border-default: hsl(30 20% 80%);
   --color-loss: hsl(0 50% 42%);
   --color-gain: hsl(140 35% 35%);
 
-  /* Agent accents */
-  --color-apex: hsl(195 70% 55%);
+  /* Agent accents — Apex toned from electric cyan to denim blue for merch-readiness and dusk-mode non-bloom */
+  --color-apex: hsl(200 68% 54%);
   --color-gale: hsl(170 60% 45%);
   --color-metheus: hsl(35 75% 55%);
 }
