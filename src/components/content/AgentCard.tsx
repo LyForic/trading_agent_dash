@@ -31,6 +31,11 @@ export function AgentCard({ agent }: { agent: Agent }) {
         backgroundColor: 'var(--color-paper)',
         borderColor: 'var(--color-border-default)',
         boxShadow: '0 4px 12px rgba(62, 53, 41, 0.15)',
+        // Spec §2.2: content layer is theme-locked. Card text must ALWAYS
+        // be --ink regardless of world mode, or the cream page color
+        // inherited from dusk/moonlit bleeds through into the card and
+        // makes labels invisible on cream.
+        color: 'var(--color-ink)',
       }}
     >
       <button

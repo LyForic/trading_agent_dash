@@ -30,7 +30,7 @@ export function InBattlePill({ settlesAt, onTap }: Props) {
         onFocus={() => setTooltipOpen(true)}
         onBlur={() => setTooltipOpen(false)}
         onClick={onTap}
-        className="px-3 py-1 rounded-full text-xs font-medium border"
+        className="in-battle-pulse px-3 py-1 rounded-full text-xs font-medium border"
         style={{
           backgroundColor: 'color-mix(in srgb, var(--color-metheus) 18%, transparent)',
           color: 'var(--color-metheus)',

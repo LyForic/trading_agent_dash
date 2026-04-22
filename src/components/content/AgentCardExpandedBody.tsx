@@ -47,7 +47,16 @@ export function AgentCardExpandedBody({ agent }: { agent: Agent }) {
           >
             Status
           </div>
-          <div className="capitalize">{agent.state.replace('_', ' ')}</div>
+          <div className="capitalize">
+            {/* Delay policy §7.1: any surface implying live trade data
+                must use "In Battle", not "Live", so the 30-min delay is
+                consistent across every visible string. */}
+            {agent.open_position
+              ? 'In Battle'
+              : agent.state === 'arriving_soon'
+                ? 'Arriving soon'
+                : 'Idle'}
+          </div>
         </div>
       </div>
 

@@ -42,10 +42,13 @@ export default function App() {
           </header>
 
           {/* Dev-only mode switcher — removed in Phase 3 when RoomSection
-              takes over the role of making all three modes testable. */}
+              takes over the role of making all three modes testable.
+              Label text inherits from world (cream in dusk, charcoal in
+              daytime) at 70% opacity; buttons are cream-raised pills so
+              they read against any world mode. */}
           <div
-            className="flex flex-wrap items-center gap-2 text-[11px]"
-            style={{ color: 'var(--color-ink-muted)' }}
+            className="flex flex-wrap items-center gap-2 text-[11px] opacity-70"
+            style={{ color: 'var(--world-ink)' }}
           >
             <span>
               Mode: <strong>{effectiveMode}</strong>{' '}
@@ -61,8 +64,9 @@ export default function App() {
                   backgroundColor:
                     effectiveMode === m
                       ? 'var(--color-paper-raised)'
-                      : 'transparent',
+                      : 'var(--color-paper)',
                   color: 'var(--color-ink)',
+                  opacity: 1,
                 }}
               >
                 {m}
@@ -73,8 +77,13 @@ export default function App() {
                 setOverride(null);
                 document.body.dataset.mode = autoMode;
               }}
-              className="px-2 py-0.5 rounded-md border opacity-70"
-              style={{ borderColor: 'var(--color-border-default)' }}
+              className="px-2 py-0.5 rounded-md border"
+              style={{
+                borderColor: 'var(--color-border-default)',
+                backgroundColor: 'var(--color-paper)',
+                color: 'var(--color-ink)',
+                opacity: 0.7,
+              }}
             >
               auto
             </button>
