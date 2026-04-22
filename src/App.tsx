@@ -3,6 +3,7 @@ import { WorldLayer } from '@/components/world/WorldLayer';
 import { useTimeOfDay } from '@/hooks/useTimeOfDay';
 import { AgentCard } from '@/components/content/AgentCard';
 import { TrustStrip } from '@/components/content/TrustStrip';
+import { RoomSection } from '@/components/rooms/RoomSection';
 import { mockLeaderboard } from '@/lib/mockData';
 import type { WorldMode } from '@/lib/timeOfDay';
 
@@ -89,9 +90,16 @@ export default function App() {
             </button>
           </div>
 
-          <div className="space-y-3">
+          {/* Each agent lives in its own scroll-section. Sections are
+              tall (min-h-60vh) so scrolling between agents reads as
+              walking between rooms, not just flipping cards. When a
+              section crosses the 60% visibility threshold it sets
+              body[data-room], which the World Layer reacts to. */}
+          <div>
             {data.agents.map((agent) => (
-              <AgentCard key={agent.id} agent={agent} />
+              <RoomSection key={agent.id} room={agent.id}>
+                <AgentCard agent={agent} />
+              </RoomSection>
             ))}
           </div>
 

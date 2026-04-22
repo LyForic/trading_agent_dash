@@ -1,4 +1,6 @@
 import { useEffect } from 'react';
+import { VRGauge } from './VRGauge';
+import { Hourglass } from './Hourglass';
 
 /**
  * The fixed world behind all content. Four layered elements, each scoped
@@ -147,6 +149,31 @@ export function WorldLayer() {
           pointerEvents: 'none',
         }}
       />
+
+      {/* Per-room accent aura — bottom-left-ish radial tinted by --world-accent
+          (set per body[data-room]). This is the smooth-morphing color cue
+          that tells a user "you've walked into a different agent's room."
+          Distinct position from the lamp glow so they layer, not compete. */}
+      <div
+        className="gym-room-aura absolute transition-[background] duration-500"
+        style={{
+          top: '30%',
+          left: '-15%',
+          width: '70vh',
+          height: '70vh',
+          background:
+            'radial-gradient(circle at 30% 50%, color-mix(in srgb, var(--world-accent, transparent) 28%, transparent) 0%, transparent 60%)',
+          pointerEvents: 'none',
+          mixBlendMode: 'screen',
+        }}
+      />
+
+      {/* Per-agent desk props — only the one matching body[data-room] is
+          visible at a time (opacity toggles in globals.css). Gale's prop
+          is the window already rendered above — CSS boosts its brightness
+          when she's the active room. */}
+      <VRGauge />
+      <Hourglass />
     </div>
   );
 }

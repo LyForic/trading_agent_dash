@@ -141,6 +141,62 @@ body[data-mode="moonlit"] .gym-moon {
   opacity: 1;
 }
 
+/* ---- Per-agent room personality ----
+   Each agent's section, when in viewport, sets body[data-room="<id>"]
+   via IntersectionObserver. That triggers a two-part swap:
+     (a) --world-accent CSS var — drives the room-aura color
+     (b) desk prop visibility — VR gauge (Apex) / window boost (Gale) /
+         hourglass (Metheus) fade in; others fade out.
+   The world bg, lamp, wood, window frame stay constant — this is the
+   "same cozy room, different corners" feel per spec §5. */
+
+/* Default: no room active. All props hidden, neutral accent. */
+.gym-vr-gauge,
+.gym-hourglass {
+  opacity: 0;
+}
+
+/* Apex room — sharp blue accent + VR gauge visible */
+body[data-room="apex"] {
+  --world-accent: hsl(200 68% 54%);
+}
+body[data-room="apex"] .gym-vr-gauge {
+  opacity: 1;
+}
+
+/* Gale room — teal accent + amplified window + star twinkle boost.
+   The window already lives in the world layer; when Gale is active
+   its stars get brighter and the glass gets a subtle halo. Phase 4
+   will layer real weather particles on top of this same window. */
+body[data-room="gale"] {
+  --world-accent: hsl(170 60% 45%);
+}
+body[data-room="gale"] .gym-window {
+  filter: drop-shadow(0 0 12px color-mix(in srgb, var(--color-gale) 35%, transparent));
+}
+body[data-room="gale"] .gym-star {
+  opacity: 1 !important;
+}
+
+/* Metheus room — amber accent + hourglass visible */
+body[data-room="metheus"] {
+  --world-accent: hsl(35 75% 55%);
+}
+body[data-room="metheus"] .gym-hourglass {
+  opacity: 1;
+}
+
+/* Hourglass sand-stream animation — slow trickle, matches the
+   "long-arc" personality. 30s loop keeps it ambient, not distracting. */
+@keyframes hourglass-stream {
+  0%, 100% { transform: scaleY(1); opacity: 0.9; }
+  50% { transform: scaleY(1.5); opacity: 1; }
+}
+.gym-hourglass-stream {
+  transform-origin: center;
+  animation: hourglass-stream 2.8s ease-in-out infinite;
+}
+
 /* In-Battle pill pulse — dual-signal: opacity breathing + a ring-ripple
    that expands outward from the pill. Intentionally louder than a pure
    breathing cycle so a viewer notices it without being told — per
