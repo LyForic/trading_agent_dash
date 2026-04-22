@@ -66,6 +66,99 @@ body.tab-hidden .ambient-motion {
   animation-play-state: paused !important;
 }
 
+/* ---- Cozy world atmospheric elements, scoped per time-of-day mode ----
+   These overrides control the World Layer's window, lamp, wood, moon,
+   and stars so the same three DOM elements read differently in each
+   mode (per spec §2.1 "same room, different times of day"). */
+
+/* Baseline/daytime: no window, no lamp, faint wood grain only.
+   In daytime we're indoors with the sun overhead — the window is not
+   the focal point and its night-sky gradient would fight the cream bg. */
+body[data-mode="daytime"] .gym-window {
+  opacity: 0;
+}
+body[data-mode="daytime"] .gym-lamp-glow {
+  opacity: 0;
+}
+body[data-mode="daytime"] .gym-wood {
+  opacity: 0.06;
+}
+body[data-mode="daytime"] .gym-star,
+body[data-mode="daytime"] .gym-moon {
+  opacity: 0;
+}
+
+/* Dusk: warm lamp on, amber light spilling; window shows warm-blue twilight
+   gradient (sky still fading from sunset). Stars barely visible. */
+body[data-mode="dusk"] .gym-window {
+  opacity: 1;
+}
+body[data-mode="dusk"] .gym-window-pane {
+  background: linear-gradient(
+    180deg,
+    hsl(220 55% 14%) 0%,
+    hsl(25 65% 42%) 75%,
+    hsl(20 60% 35%) 100%
+  );
+}
+body[data-mode="dusk"] .gym-lamp-glow {
+  opacity: 0.75;
+}
+body[data-mode="dusk"] .gym-wood {
+  opacity: 0.18;
+}
+body[data-mode="dusk"] .gym-star {
+  background-color: hsl(48 80% 85%);
+  opacity: 0.6;
+}
+body[data-mode="dusk"] .gym-moon {
+  opacity: 0;
+}
+
+/* Moonlit: lamp dimmer (only ambient light left), window shows full
+   night sky gradient + moon. Stars brighter because no sunset competes. */
+body[data-mode="moonlit"] .gym-window {
+  opacity: 1;
+}
+body[data-mode="moonlit"] .gym-window-pane {
+  background: linear-gradient(
+    180deg,
+    hsl(225 55% 6%) 0%,
+    hsl(225 45% 11%) 100%
+  );
+}
+body[data-mode="moonlit"] .gym-lamp-glow {
+  opacity: 0.45;
+}
+body[data-mode="moonlit"] .gym-wood {
+  opacity: 0.12;
+}
+body[data-mode="moonlit"] .gym-star {
+  background-color: hsl(48 60% 95%);
+  opacity: 1;
+}
+body[data-mode="moonlit"] .gym-moon {
+  opacity: 1;
+}
+
+/* In-Battle pill pulse — dual-signal: opacity breathing + a ring-ripple
+   that expands outward from the pill. Intentionally louder than a pure
+   breathing cycle so a viewer notices it without being told — per
+   Brandon's Phase 2 feedback. Still respects prefers-reduced-motion. */
+@keyframes in-battle-pulse {
+  0%, 100% {
+    opacity: 0.82;
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-metheus) 55%, transparent);
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--color-metheus) 0%, transparent);
+  }
+}
+.in-battle-pulse {
+  animation: in-battle-pulse 1.8s ease-out infinite;
+}
+
 /* Baseline body styling */
 body {
   margin: 0;
