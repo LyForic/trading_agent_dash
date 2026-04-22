@@ -31,15 +31,21 @@
   --world-ink: hsl(25 25% 18%);
 }
 
+/* Dusk — 7pm, lamp-lit, warm indigo. The brand hero mode.
+   Lifted from 14% → 19% L and warmed toward indigo so the cream card
+   feels cozy (not just high-contrast) against the wall. */
 body[data-mode="dusk"] {
-  --world-bg: hsl(220 35% 14%);
+  --world-bg: hsl(218 30% 19%);
   --world-surface: hsl(30 25% 18%);
   --world-ink: hsl(40 50% 92%);
 }
 
+/* Moonlit — 2am, cold navy, late-night watch. Pushed cooler and deeper
+   than dusk so the gap lands on OLED at arm's length: ~12% lightness
+   step + 7° hue shift toward pure navy. */
 body[data-mode="moonlit"] {
-  --world-bg: hsl(222 45% 9%);
-  --world-surface: hsl(22 30% 13%);
+  --world-bg: hsl(225 45% 7%);
+  --world-surface: hsl(22 30% 12%);
   --world-ink: hsl(42 40% 88%);
 }
 
