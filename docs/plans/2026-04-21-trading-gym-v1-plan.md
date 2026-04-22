@@ -458,6 +458,17 @@ export interface OpenPosition {
   settles_at: string;             // ISO timestamp
 }
 
+export interface Receipt {
+  id: string;
+  contract_ticker: string;
+  side: 'yes' | 'no';
+  entry_price_cents: number;
+  settle_price_cents: number;
+  size: number;
+  pnl: number;
+  settled_at: string;
+}
+
 export interface Agent {
   id: AgentId;
   name: string;
@@ -469,7 +480,7 @@ export interface Agent {
   cities_or_tags: string[];
   moves: Move[];
   open_position: OpenPosition | null;
-  latest_receipt_id: string | null;
+  latest_receipt: Receipt | null;       // embedded for V1; V1.1 adds /trade/:id route + replay
   state: 'live' | 'pending' | 'arriving_soon';
 }
 
@@ -518,7 +529,16 @@ export const mockLeaderboard: LeaderboardResponse = {
         entered_at_delayed: new Date(Date.now() - 45 * 60 * 1000).toISOString(),
         settles_at: new Date(Date.now() + 6 * 60 * 60 * 1000).toISOString(),
       },
-      latest_receipt_id: 'APX-20260421-014',
+      latest_receipt: {
+        id: 'APX-20260421-014',
+        contract_ticker: 'KXBTC-26APR20-B72000',
+        side: 'no',
+        entry_price_cents: 58,
+        settle_price_cents: 100,
+        size: 8,
+        pnl: 33.60,
+        settled_at: new Date(Date.now() - 18 * 60 * 60 * 1000).toISOString(),
+      },
       state: 'live',
     },
     {
@@ -537,7 +557,16 @@ export const mockLeaderboard: LeaderboardResponse = {
         { name: '???', locked: true },
       ],
       open_position: null,
-      latest_receipt_id: 'GAL-20260421-014',
+      latest_receipt: {
+        id: 'GAL-20260421-014',
+        contract_ticker: 'KXHIGHMIA-26APR19-B85',
+        side: 'yes',
+        entry_price_cents: 29,
+        settle_price_cents: 0,
+        size: 3,
+        pnl: -0.87,
+        settled_at: new Date(Date.now() - 36 * 60 * 60 * 1000).toISOString(),
+      },
       state: 'live',
     },
     {
@@ -551,7 +580,7 @@ export const mockLeaderboard: LeaderboardResponse = {
       cities_or_tags: [],
       moves: [],
       open_position: null,
-      latest_receipt_id: null,
+      latest_receipt: null,
       state: 'arriving_soon',
     },
   ],
@@ -1172,22 +1201,59 @@ export function AgentCardExpandedBody({ agent }: { agent: Agent }) {
         </div>
       )}
 
-      {agent.latest_receipt_id && (
-        <div className="flex items-center gap-2 pt-2">
-          <button
-            type="button"
-            className="px-4 py-2 rounded-md bg-[color:var(--color-paper-raised)] text-sm font-medium border border-[color:var(--color-border-default)]"
-          >
-            View trade log →
-          </button>
-          <a
-            href={`/trade/${agent.latest_receipt_id}`}
-            className="text-xs font-mono text-[color:var(--color-ink-muted)] hover:text-[color:var(--color-ink)]"
-          >
-            Latest receipt: {agent.latest_receipt_id} →
-          </a>
+      {agent.latest_receipt && (
+        <div className="mt-3 p-3 rounded-lg bg-[color:var(--color-paper-raised)] border border-[color:var(--color-border-default)]">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[10px] uppercase tracking-wide text-[color:var(--color-ink-muted)]">
+              Latest receipt
+            </span>
+            <span className="font-mono text-[10px] text-[color:var(--color-ink-muted)]">
+              {agent.latest_receipt.id}
+            </span>
+          </div>
+          <div className="grid grid-cols-2 gap-2 text-xs tabular-nums">
+            <div>
+              <dt className="text-[color:var(--color-ink-muted)]">Contract</dt>
+              <dd className="truncate">{agent.latest_receipt.contract_ticker}</dd>
+            </div>
+            <div>
+              <dt className="text-[color:var(--color-ink-muted)]">Side · Entry</dt>
+              <dd>
+                {agent.latest_receipt.side.toUpperCase()} @ {agent.latest_receipt.entry_price_cents}¢
+              </dd>
+            </div>
+            <div>
+              <dt className="text-[color:var(--color-ink-muted)]">Settlement</dt>
+              <dd>{agent.latest_receipt.settle_price_cents}¢</dd>
+            </div>
+            <div>
+              <dt className="text-[color:var(--color-ink-muted)]">P&L</dt>
+              <dd
+                style={{
+                  color:
+                    agent.latest_receipt.pnl >= 0
+                      ? 'var(--color-gain)'
+                      : 'var(--color-loss)',
+                }}
+              >
+                {agent.latest_receipt.pnl >= 0 ? '+' : ''}${agent.latest_receipt.pnl.toFixed(2)}
+              </dd>
+            </div>
+          </div>
+          <p className="text-[9px] text-[color:var(--color-ink-muted)] mt-2 leading-tight">
+            Settled {new Date(agent.latest_receipt.settled_at).toLocaleString()} · shown after 30-minute delay
+          </p>
         </div>
       )}
+
+      <div className="pt-2">
+        <button
+          type="button"
+          className="px-4 py-2 rounded-md bg-[color:var(--color-paper-raised)] text-sm font-medium border border-[color:var(--color-border-default)]"
+        >
+          View trade log →
+        </button>
+      </div>
     </div>
   );
 }
@@ -1870,7 +1936,7 @@ export function WindowPane({ weather }: Props) {
         RAINDROPS.map((_, i) => (
           <span
             key={i}
-            className="absolute w-[2px] h-3 bg-white/40"
+            className="raindrop absolute w-[2px] h-3 bg-white/40"
             style={{
               left: `${(i * 83) % 100}%`,
               top: '-12px',
@@ -1886,11 +1952,32 @@ export function WindowPane({ weather }: Props) {
           90% { opacity: 1; }
           100% { transform: translateY(140px); opacity: 0; }
         }
+        /* Pause particle motion when tab is hidden — battery saver per spec §5.2 */
+        body.tab-hidden .raindrop {
+          animation-play-state: paused !important;
+        }
       `}</style>
     </div>
   );
 }
 ```
+
+- [ ] **Step 1b: Add the visibility listener in `WorldLayer.tsx`**
+
+Inside the existing `useEffect` that observes `data-room`, or in a sibling effect:
+
+```tsx
+// Add to WorldLayer.tsx
+useEffect(() => {
+  const onVisibility = () => {
+    document.body.classList.toggle('tab-hidden', document.hidden);
+  };
+  document.addEventListener('visibilitychange', onVisibility);
+  return () => document.removeEventListener('visibilitychange', onVisibility);
+}, []);
+```
+
+This toggles a body class on tab visibility change; the CSS selector above pauses all raindrop animations when `document.hidden` is true. Satisfies spec §5.2 "Pause on `document.hidden`."
 
 - [ ] **Step 2: Render `WindowPane` only when Gale's section is in view**
 
@@ -2131,7 +2218,7 @@ git commit -m "feat(battle): TugOfWarBar with center-origin animation"
 
 ```tsx
 // src/components/battle/BattleArena.tsx
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { Agent } from '@/lib/types';
 import { TugOfWarBar } from './TugOfWarBar';
 
@@ -2144,17 +2231,38 @@ export function BattleArena({ agent }: Props) {
   if (!op) return null;
 
   const [mockCurrentPrice, setMockCurrentPrice] = useState(op.entry_price_cents);
+  const [shake, setShake] = useState(false);
+  const prevPriceRef = useRef(op.entry_price_cents);
 
   // V1: mock mid-price walk. V1.1 replaces this with public Kalshi feed.
   useEffect(() => {
     const id = setInterval(() => {
       setMockCurrentPrice((prev) => {
         const drift = (Math.random() - 0.5) * 2;
-        return Math.max(1, Math.min(99, prev + drift));
+        const next = Math.max(1, Math.min(99, prev + drift));
+
+        // Damage-shake triggers per spec §8.3:
+        //   (a) bar crosses center (entry) against the agent in this tick, OR
+        //   (b) mid-price moved >3% of entry in one poll
+        const entry = op.entry_price_cents;
+        const prevDelta = prev - entry;
+        const nextDelta = next - entry;
+        const favorsAgent = (d: number) => (op.side === 'yes' ? d > 0 : d < 0);
+        const crossedAgainst =
+          favorsAgent(prevDelta) && !favorsAgent(nextDelta) && nextDelta !== 0;
+        const bigMove = Math.abs(next - prev) / Math.max(entry, 1) > 0.03;
+
+        if (crossedAgainst || bigMove) {
+          setShake(true);
+          setTimeout(() => setShake(false), 300);
+        }
+
+        prevPriceRef.current = next;
+        return next;
       });
     }, 1500);
     return () => clearInterval(id);
-  }, []);
+  }, [op.entry_price_cents, op.side]);
 
   const enteredAt = new Date(op.entered_at_delayed);
   const settlesAt = new Date(op.settles_at);
@@ -2162,7 +2270,19 @@ export function BattleArena({ agent }: Props) {
   const settlesInHr = Math.round((settlesAt.getTime() - Date.now()) / (60 * 60_000));
 
   return (
-    <div className="space-y-4 text-sm">
+    <div
+      className="space-y-4 text-sm"
+      style={{
+        animation: shake ? 'battle-shake 0.3s ease-in-out' : 'none',
+      }}
+    >
+      <style>{`
+        @keyframes battle-shake {
+          0%, 100% { transform: translateX(0); }
+          25% { transform: translateX(-4px); }
+          75% { transform: translateX(4px); }
+        }
+      `}</style>
       <div className="text-center">
         <div className="text-xs uppercase text-[color:var(--color-ink-muted)]">
           Battle Arena · 30-min delay
@@ -2458,18 +2578,32 @@ npx lighthouse http://localhost:4173 --only-categories=performance,accessibility
 
 Targets: Performance ≥90, Accessibility ≥95.
 
-- [ ] **Step 4: Fix any failing budgets**
+- [ ] **Step 4: Explicit accessibility spot-checks (beyond Lighthouse)**
+
+Lighthouse A11y catches most things but misses taste calls. Manually verify:
+
+- [ ] Every interactive element (button, anchor, pill) is at least 44x44 CSS px. Use DevTools → hover over elements, check the Box Model panel.
+- [ ] All P&L, WR%, counts, timestamps use `font-variant-numeric: tabular-nums` (search CSS for `tabular-nums`, confirm at least 10 matches across card + trust strip + battle arena).
+- [ ] Red loss `-$22.89` on `--paper` background passes WCAG AA. Use [Chrome DevTools Color Picker contrast checker]. Expected contrast ratio ≥ 4.5:1.
+- [ ] Tab key navigates through cards in reading order (top-to-bottom, no jumps).
+- [ ] Enter/Space on a focused collapsed card expands it; Escape closes the BottomSheet.
+- [ ] Battle Arena bottom sheet has `role="dialog"` and `aria-modal="true"`.
+- [ ] `prefers-reduced-motion` disables the ambient raindrop + lamp flicker animations (test in DevTools → Rendering → Emulate CSS media `prefers-reduced-motion: reduce`).
+
+- [ ] **Step 5: Fix any failing budgets or a11y items**
 
 Typical fixes:
 - Code-split `BottomSheet` + `BattleArena` via `React.lazy`
 - Inline critical CSS (Tailwind should handle this)
 - Defer non-critical Framer Motion imports
+- Bump tap-target padding to hit 44px
+- Add missing `aria-*` attributes
 
-- [ ] **Step 5: Commit any fixes**
+- [ ] **Step 6: Commit any fixes**
 
 ```bash
 git add -A
-git commit -m "perf: meet bundle + Lighthouse budgets for V1"
+git commit -m "perf: meet bundle + Lighthouse budgets, pass a11y spot-checks for V1"
 ```
 
 ### Task 30: PR Phase 6
