@@ -42,6 +42,19 @@ function AppInner() {
     }
   }, [expandedAgentId]);
 
+  // Esc exits focus — standard modal/sheet expectation for keyboard users
+  // on desktop and iPad with external keyboards. Listener only mounts
+  // while focused so we're not leaking a global handler during the
+  // communal-gym state.
+  useEffect(() => {
+    if (!expandedAgentId) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setExpandedAgentId(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [expandedAgentId]);
+
   const handleToggle = (id: AgentId) => {
     setExpandedAgentId((curr) => (curr === id ? null : id));
   };
