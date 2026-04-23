@@ -299,6 +299,93 @@ body[data-room="gale"] .weather-window {
   }
 }
 
+/* ---- Phase-4 Slice 2: Focus Mode + Mobile Bottom-Sheet ----
+   Tapping a card enters Focus Mode: the other two cards unmount via
+   AnimatePresence exit, the chosen agent's room is already swapping in
+   via body[data-room], and on mobile the focused card slides up and
+   docks as a bottom-sheet. The backdrop covers the rest of the viewport
+   so the room reads as the hero while the card remains fully legible.
+   On desktop, focus mode keeps the card where it sits — the UX gain is
+   simply "the other agents got out of the way." */
+
+.focus-mode-backdrop {
+  background-color: rgba(0, 0, 0, 0.38);
+  z-index: 15;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
+}
+
+.agent-card-focus {
+  position: relative;
+  z-index: 20;
+}
+
+.focus-drag-handle {
+  display: block;
+  width: 44px;
+  height: 5px;
+  margin: -2px auto 8px auto;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--color-ink) 30%, transparent);
+  cursor: pointer;
+  transition: background-color 180ms ease, transform 180ms ease;
+}
+.focus-drag-handle:hover,
+.focus-drag-handle:focus-visible {
+  background-color: color-mix(in srgb, var(--color-ink) 55%, transparent);
+  transform: scaleX(1.1);
+  outline: none;
+}
+
+/* Mobile: focused card docks as a bottom sheet with slide-up animation.
+   The outer .agent-card-focus becomes the sheet shell; the card inside
+   handles its own overflow via .agent-card-expanded (Phase 3 rule). */
+@media (max-width: 767px) {
+  .agent-card-focus {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: 420px;
+    margin-left: auto;
+    margin-right: auto;
+    max-height: 68vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 10px 12px 16px 12px;
+    border-radius: 20px 20px 0 0;
+    background-color: color-mix(in srgb, var(--color-paper) 94%, transparent);
+    box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.32);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    animation: focus-sheet-slide-up 320ms cubic-bezier(0.2, 0.85, 0.2, 1);
+  }
+  /* On mobile the sheet shell already provides paper bg + shadow — the
+     inner AgentCard doesn't need its own to avoid double-carded look. */
+  .agent-card-focus > article {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+  }
+  /* Inside the sheet the expanded body max-height cap from Phase 3 is
+     obsolete — the sheet itself scrolls. Lift the cap so content flows. */
+  .agent-card-focus .agent-card-expanded {
+    max-height: none;
+    overflow-y: visible;
+  }
+}
+
+@keyframes focus-sheet-slide-up {
+  from { transform: translateY(100%); opacity: 0.4; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
 /* Baseline body styling */
 body {
   margin: 0;

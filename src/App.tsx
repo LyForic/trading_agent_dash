@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { WorldLayer } from '@/components/world/WorldLayer';
 import { useTimeOfDay } from '@/hooks/useTimeOfDay';
 import { AgentCard } from '@/components/content/AgentCard';
@@ -33,14 +34,18 @@ export default function App() {
   useEffect(() => {
     if (expandedAgentId) {
       document.body.dataset.room = expandedAgentId;
+      document.body.dataset.focus = expandedAgentId;
     } else {
       delete document.body.dataset.room;
+      delete document.body.dataset.focus;
     }
   }, [expandedAgentId]);
 
   const handleToggle = (id: AgentId) => {
     setExpandedAgentId((curr) => (curr === id ? null : id));
   };
+
+  const exitFocus = () => setExpandedAgentId(null);
 
   return (
     <>
@@ -140,23 +145,72 @@ export default function App() {
 
           <VisitDeltaStrip delta={delta} onDismiss={dismiss} />
 
-          {/* Tight card stacking. Click a card to expand — that swaps
-              the world-layer room to that agent's personal room.
-              Collapsing returns to the communal gym. */}
+          {/* Agent roster. Tapping a card enters Focus Mode: the other two
+              cards fade out, the chosen agent's room takes over, and on
+              mobile the card docks as a bottom-sheet (via CSS rule on
+              body[data-focus]). Tap the backdrop or the exit button to
+              return to the communal gym. */}
           <div className="space-y-3">
-            {data.agents.map((agent) => (
-              <AgentCard
-                key={agent.id}
-                agent={agent}
-                expanded={expandedAgentId === agent.id}
-                onToggle={() => handleToggle(agent.id)}
-              />
-            ))}
+            <AnimatePresence mode="sync" initial={false}>
+              {data.agents.map((agent) => {
+                const focused = expandedAgentId === agent.id;
+                const hidden = expandedAgentId !== null && !focused;
+                if (hidden) return null;
+                return (
+                  <motion.div
+                    key={agent.id}
+                    layout="position"
+                    initial={false}
+                    exit={{
+                      opacity: 0,
+                      height: 0,
+                      marginTop: 0,
+                      marginBottom: 0,
+                      transition: { duration: 0.22, ease: 'easeIn' },
+                    }}
+                    className={focused ? 'agent-card-focus' : undefined}
+                  >
+                    {focused && (
+                      <button
+                        type="button"
+                        onClick={exitFocus}
+                        aria-label="Return to communal gym"
+                        className="focus-drag-handle"
+                      />
+                    )}
+                    <AgentCard
+                      agent={agent}
+                      expanded={focused}
+                      onToggle={() => handleToggle(agent.id)}
+                    />
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
           </div>
 
           <FooterTicker data={data} />
         </main>
       </div>
+
+      {/* Focus-mode backdrop — mounts only when a card is focused. Tapping
+          it exits focus mode. The backdrop sits above the world layer but
+          below the docked card sheet so the agent's room is visible yet
+          dimmed, nudging attention onto the card. */}
+      <AnimatePresence>
+        {expandedAgentId && (
+          <motion.button
+            key="focus-backdrop"
+            aria-label="Exit focus mode"
+            onClick={exitFocus}
+            className="fixed inset-0 focus-mode-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+          />
+        )}
+      </AnimatePresence>
     </>
   );
 }
