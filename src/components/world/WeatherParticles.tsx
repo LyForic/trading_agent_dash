@@ -92,7 +92,9 @@ export function WeatherParticles({ condition }: { condition: WeatherCondition })
 }
 
 function RainLayer({ dense }: { dense: boolean }) {
-  const drops = useSeededDrops(dense ? 60 : 40, dense ? 'storm' : 'rain');
+  // Denser populations (60 / 90) so the effect reads on a small mobile
+  // window rect, not just a fullscreen desktop window.
+  const drops = useSeededDrops(dense ? 90 : 60, dense ? 'storm' : 'rain');
   return (
     <>
       {drops.map((d) => (
@@ -114,7 +116,7 @@ function RainLayer({ dense }: { dense: boolean }) {
 }
 
 function SnowLayer() {
-  const flakes = useSeededFlakes(35, 'snow');
+  const flakes = useSeededFlakes(55, 'snow');
   return (
     <>
       {flakes.map((f) => (

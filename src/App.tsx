@@ -8,10 +8,11 @@ import { FooterTicker } from '@/components/content/FooterTicker';
 import { VisitDeltaStrip } from '@/components/content/VisitDeltaStrip';
 import { useAgentData } from '@/lib/useAgentData';
 import { useVisitDelta } from '@/lib/useVisitDelta';
+import { GaleWeatherProvider } from '@/lib/galeWeatherContext';
 import type { AgentId } from '@/lib/types';
 import type { WorldMode } from '@/lib/timeOfDay';
 
-export default function App() {
+function AppInner() {
   const autoMode = useTimeOfDay();
   const [override, setOverride] = useState<WorldMode | null>(null);
   if (override && document.body.dataset.mode !== override) {
@@ -240,5 +241,13 @@ export default function App() {
         )}
       </AnimatePresence>
     </>
+  );
+}
+
+export default function App() {
+  return (
+    <GaleWeatherProvider>
+      <AppInner />
+    </GaleWeatherProvider>
   );
 }

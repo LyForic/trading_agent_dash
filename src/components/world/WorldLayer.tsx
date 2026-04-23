@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { WeatherParticles } from './WeatherParticles';
 import { AmbientMotion } from './AmbientMotion';
-import { useGaleWeather } from '@/lib/useGaleWeather';
+import { useSharedGaleWeather } from '@/lib/galeWeatherContext';
 
 /**
  * Fixed world behind all content. Four stacked layers from back to front:
@@ -39,7 +39,7 @@ const ROOMS = [
 ] as const;
 
 export function WorldLayer() {
-  const { current: weather } = useGaleWeather();
+  const { current: weather } = useSharedGaleWeather();
 
   useEffect(() => {
     const onVisibility = () => {

@@ -264,27 +264,27 @@ body[data-room="gale"] .weather-window {
   will-change: background-color, opacity;
 }
 .weather-window[data-condition="rain"] .weather-window-tint {
-  background-color: hsla(210, 55%, 55%, 0.35);
+  background-color: hsla(210, 58%, 48%, 0.52);
   opacity: 1;
 }
 .weather-window[data-condition="storm"] .weather-window-tint {
-  background-color: hsla(220, 40%, 38%, 0.45);
+  background-color: hsla(220, 42%, 32%, 0.62);
   opacity: 1;
 }
 .weather-window[data-condition="snow"] .weather-window-tint {
-  background-color: hsla(210, 22%, 88%, 0.45);
+  background-color: hsla(210, 22%, 90%, 0.58);
   opacity: 1;
 }
 .weather-window[data-condition="clouds"] .weather-window-tint {
-  background-color: hsla(215, 15%, 70%, 0.25);
+  background-color: hsla(215, 15%, 72%, 0.38);
   opacity: 1;
 }
 .weather-window[data-condition="mist"] .weather-window-tint {
-  background-color: hsla(210, 10%, 80%, 0.38);
+  background-color: hsla(210, 10%, 82%, 0.50);
   opacity: 1;
 }
 .weather-window[data-condition="clear"] .weather-window-tint {
-  background-color: hsla(45, 85%, 70%, 0.22);
+  background-color: hsla(45, 88%, 72%, 0.34);
   opacity: 1;
 }
 
