@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 import { WeatherParticles } from './WeatherParticles';
+import { AmbientMotion } from './AmbientMotion';
 import { useGaleWeather } from '@/lib/useGaleWeather';
 
 /**
@@ -88,6 +89,11 @@ export function WorldLayer() {
         className="gym-light-source absolute inset-0 transition-opacity duration-500"
         aria-hidden
       />
+
+      {/* Ambient motion — dust motes everywhere + per-room warm hotspots
+          that fade in with body[data-room]. Cheap "this place is alive"
+          layer without needing layered sprites. */}
+      <AmbientMotion />
 
       {/* Weather particles in Gale's window rect. Always mounted; CSS
           opacity on body[data-room="gale"] controls visibility so the
