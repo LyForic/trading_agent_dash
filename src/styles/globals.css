@@ -179,6 +179,40 @@ body[data-room="gale"] .weather-window {
   opacity: 1;
 }
 
+/* Weather window mood tint — a subtle color wash sitting behind the
+   particles, inside the same clip rect. Read as "what's it like outside
+   the glass" without touching the rest of the room's lighting model
+   (time-of-day stays the global authority). */
+.weather-window-tint {
+  opacity: 0;
+  transition: background-color 500ms ease, opacity 500ms ease;
+  will-change: background-color, opacity;
+}
+.weather-window[data-condition="rain"] .weather-window-tint {
+  background-color: hsla(210, 55%, 55%, 0.35);
+  opacity: 1;
+}
+.weather-window[data-condition="storm"] .weather-window-tint {
+  background-color: hsla(220, 40%, 38%, 0.45);
+  opacity: 1;
+}
+.weather-window[data-condition="snow"] .weather-window-tint {
+  background-color: hsla(210, 22%, 88%, 0.45);
+  opacity: 1;
+}
+.weather-window[data-condition="clouds"] .weather-window-tint {
+  background-color: hsla(215, 15%, 70%, 0.25);
+  opacity: 1;
+}
+.weather-window[data-condition="mist"] .weather-window-tint {
+  background-color: hsla(210, 10%, 80%, 0.38);
+  opacity: 1;
+}
+.weather-window[data-condition="clear"] .weather-window-tint {
+  background-color: hsla(45, 85%, 70%, 0.22);
+  opacity: 1;
+}
+
 /* Raindrops — thin diagonal streaks falling fast. Linear-gradient gives
    the characteristic "falling water" shape without needing an image. */
 .raindrop {
