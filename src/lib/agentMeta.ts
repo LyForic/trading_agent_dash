@@ -4,14 +4,15 @@ import type { AgentId, Move } from './types';
  * Per-agent character constants that do NOT belong in the database —
  * name, nickname, persona-level move catalog, sprite, room-relevant tags.
  *
- * The DB (pm_bets + bots) holds what changes trade-over-trade. This file
- * holds what defines the character. Single source of truth for these
- * fields across the client hook AND the Supabase Edge Function (which
- * duplicates it verbatim — see supabase/functions/leaderboard/index.ts).
+ * The DB (agent_trades + bots) holds what changes trade-over-trade. This
+ * file holds what defines the character. Single source of truth for
+ * these fields across the client hook AND the Supabase Edge Function
+ * (which duplicates it verbatim — see supabase/functions/leaderboard/
+ * index.ts).
  *
- * `pm_bets_cutoff_iso` is Brandon's "fresh start" reset: for Apex we
- * explicitly hide trades pre-dating his active iteration so the card
- * doesn't read her prior experiment's drawdown. Null means "show all."
+ * No per-agent cutoff field: agent_trades is the "formal reset" table,
+ * and the pm_bets → agent_trades trigger only mirrors UPDATEs after its
+ * install timestamp, so the table is intentionally fresh.
  */
 export interface AgentMeta {
   id: AgentId;
@@ -21,7 +22,6 @@ export interface AgentMeta {
   sprite_url: string;
   cities_or_tags: string[];
   moves: Move[];
-  pm_bets_cutoff_iso: string | null;
 }
 
 export const AGENT_META: Record<AgentId, AgentMeta> = {
@@ -38,8 +38,6 @@ export const AGENT_META: Record<AgentId, AgentMeta> = {
       { name: '???', locked: true },
       { name: '???', locked: true },
     ],
-    // Brandon is actively iterating Apex; hide the prior drawdown history.
-    pm_bets_cutoff_iso: '2026-04-23T00:00:00Z',
   },
   gale: {
     id: 'gale',
@@ -54,7 +52,6 @@ export const AGENT_META: Record<AgentId, AgentMeta> = {
       { name: '???', locked: true },
       { name: '???', locked: true },
     ],
-    pm_bets_cutoff_iso: null,
   },
   metheus: {
     id: 'metheus',
@@ -69,7 +66,6 @@ export const AGENT_META: Record<AgentId, AgentMeta> = {
       { name: '???', locked: true },
       { name: '???', locked: true },
     ],
-    pm_bets_cutoff_iso: null,
   },
 };
 

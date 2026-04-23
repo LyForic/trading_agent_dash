@@ -2,10 +2,10 @@
 //
 // Deno Edge Function serving the unified Trading Gym leaderboard.
 //
-// Reads pm_bets, aggregates per bot into the dashboard's Agent shape,
-// applies the per-agent "fresh start" cutoff (currently only Apex).
-// Matches the logic in src/lib/useAgentData.ts so the client can be
-// pointed at either source without a shape change.
+// Reads agent_trades (the formal-reset table), aggregates per bot into
+// the dashboard's Agent shape. Metheus writes agent_trades directly;
+// Apex + Gale are mirrored in from pm_bets via the
+// mirror_pm_bet_to_agent_trade trigger.
 //
 // Deploy:
 //   supabase link --project-ref zzfmmsuzzbbrfptmtmfu
@@ -29,7 +29,6 @@ interface AgentMeta {
   sprite_url: string;
   cities_or_tags: string[];
   moves: Move[];
-  pm_bets_cutoff_iso: string | null;
 }
 
 // Duplicated verbatim from src/lib/agentMeta.ts. If you edit this,
@@ -49,7 +48,6 @@ const AGENT_META: Record<string, AgentMeta> = {
       { name: '???', locked: true },
       { name: '???', locked: true },
     ],
-    pm_bets_cutoff_iso: '2026-04-23T00:00:00Z',
   },
   gale: {
     id: 'gale',
@@ -64,7 +62,6 @@ const AGENT_META: Record<string, AgentMeta> = {
       { name: '???', locked: true },
       { name: '???', locked: true },
     ],
-    pm_bets_cutoff_iso: null,
   },
   metheus: {
     id: 'metheus',
@@ -79,49 +76,37 @@ const AGENT_META: Record<string, AgentMeta> = {
       { name: '???', locked: true },
       { name: '???', locked: true },
     ],
-    pm_bets_cutoff_iso: null,
   },
 };
 
 const AGENT_IDS = ['apex', 'gale', 'metheus'] as const;
 
-interface PmBetsRow {
+interface AgentTradeRow {
   id: string;
-  bot_id: string;
-  ticker: string;
-  direction: 'YES' | 'NO';
-  contracts: number;
+  agent_id: string;
+  contract_ticker: string;
+  side: 'yes' | 'no';
   entry_price: number | null;
-  exit_price: number | null;
-  exit_fill_price: number | null;
-  pnl_cents: number | null;
-  status: string | null;
-  settlement_time: string | null;
+  size: number;
+  entered_at: string;
+  settled_at: string | null;
+  settle_price: number | null;
+  pnl: number | null;
+  move_used: string | null;
   created_at: string;
 }
 
-function approximateSettlePrice(row: PmBetsRow): number {
-  if (row.exit_fill_price !== null && row.exit_fill_price !== undefined) return row.exit_fill_price;
-  if (row.exit_price !== null && row.exit_price !== undefined) return row.exit_price;
-  if (row.pnl_cents !== null && row.entry_price !== null && row.contracts > 0) {
-    const perContract = row.pnl_cents / row.contracts;
-    const derived = row.direction === 'YES' ? row.entry_price + perContract : row.entry_price - perContract;
-    return Math.round(derived);
-  }
-  return 0;
-}
-
-function buildAgent(id: string, rows: PmBetsRow[]) {
+function buildAgent(id: string, rows: AgentTradeRow[]) {
   const meta = AGENT_META[id];
-  const closed = rows.filter((r) => r.pnl_cents !== null && r.pnl_cents !== undefined);
+  const closed = rows.filter((r) => r.pnl !== null && r.pnl !== undefined);
 
   let W = 0;
   let L = 0;
   let BE = 0;
-  let totalPnlCents = 0;
+  let totalPnl = 0;
   for (const r of closed) {
-    const p = r.pnl_cents ?? 0;
-    totalPnlCents += p;
+    const p = r.pnl ?? 0;
+    totalPnl += p;
     if (p > 0) W += 1;
     else if (p < 0) L += 1;
     else BE += 1;
@@ -132,21 +117,21 @@ function buildAgent(id: string, rows: PmBetsRow[]) {
     .slice()
     .sort(
       (a, b) =>
-        new Date(b.settlement_time ?? b.created_at).getTime() -
-        new Date(a.settlement_time ?? a.created_at).getTime(),
+        new Date(b.settled_at ?? b.created_at).getTime() -
+        new Date(a.settled_at ?? a.created_at).getTime(),
     );
   const latestRow = sortedByClose[0];
 
   const latest_receipt = latestRow
     ? {
-        id: latestRow.id.slice(0, 18).toUpperCase(),
-        contract_ticker: latestRow.ticker,
-        side: latestRow.direction.toLowerCase(),
+        id: `${id.toUpperCase().slice(0, 3)}-${latestRow.id.slice(0, 8).toUpperCase()}`,
+        contract_ticker: latestRow.contract_ticker,
+        side: latestRow.side,
         entry_price_cents: latestRow.entry_price ?? 0,
-        settle_price_cents: approximateSettlePrice(latestRow),
-        size: latestRow.contracts,
-        pnl: (latestRow.pnl_cents ?? 0) / 100,
-        settled_at: latestRow.settlement_time ?? latestRow.created_at,
+        settle_price_cents: latestRow.settle_price ?? 0,
+        size: latestRow.size,
+        pnl: latestRow.pnl ?? 0,
+        settled_at: latestRow.settled_at ?? latestRow.created_at,
       }
     : null;
 
@@ -156,7 +141,7 @@ function buildAgent(id: string, rows: PmBetsRow[]) {
     nickname: meta.nickname,
     market_label: meta.market_label,
     sprite_url: meta.sprite_url,
-    total_pnl: totalPnlCents / 100,
+    total_pnl: totalPnl,
     record: { W, L, BE, settled },
     brier_7d: { value: 0, n: 0 },
     cities_or_tags: meta.cities_or_tags,
@@ -191,19 +176,16 @@ Deno.serve(async (req) => {
   try {
     const agents = await Promise.all(
       AGENT_IDS.map(async (id) => {
-        const meta = AGENT_META[id];
-        let q = sb
-          .from('pm_bets')
+        const { data, error } = await sb
+          .from('agent_trades')
           .select(
-            'id,bot_id,ticker,direction,contracts,entry_price,exit_price,exit_fill_price,pnl_cents,status,settlement_time,created_at',
+            'id,agent_id,contract_ticker,side,entry_price,size,entered_at,settled_at,settle_price,pnl,move_used,created_at',
           )
-          .eq('bot_id', id)
-          .order('created_at', { ascending: false })
+          .eq('agent_id', id)
+          .order('settled_at', { ascending: false, nullsFirst: false })
           .limit(500);
-        if (meta.pm_bets_cutoff_iso) q = q.gte('created_at', meta.pm_bets_cutoff_iso);
-        const { data, error } = await q;
         if (error) throw error;
-        return buildAgent(id, (data ?? []) as PmBetsRow[]);
+        return buildAgent(id, (data ?? []) as AgentTradeRow[]);
       }),
     );
 
