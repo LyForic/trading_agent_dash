@@ -1,7 +1,9 @@
 import { useEffect } from 'react';
+import { WeatherParticles } from './WeatherParticles';
+import { useGaleWeather } from '@/lib/useGaleWeather';
 
 /**
- * Fixed world behind all content. Three stacked layers from back to front:
+ * Fixed world behind all content. Four stacked layers from back to front:
  *
  *   1. Room images — four `<div>`s absolutely positioned with
  *      background-image per room (gym/apex/gale/metheus). Each has
@@ -14,8 +16,16 @@ import { useEffect } from 'react';
  *      transparent for daytime. Room art stays the constant; light
  *      changes.
  *
- *   3. Visibility pause — toggles body.tab-hidden on visibilitychange
- *      so future particle animations (Phase 4 weather) can pause.
+ *   3. Light-source glow — radial gradient simulating sun/moon through
+ *      the back-wall window.
+ *
+ *   4. Weather particles — Gale-only; mounts always, fades in when
+ *      body[data-room="gale"]. Condition comes from useGaleWeather which
+ *      rotates Gale's five cities and falls back gracefully if the
+ *      weather Edge Function isn't reachable.
+ *
+ *   + Visibility pause — toggles body.tab-hidden on visibilitychange so
+ *     particle animations pause when the tab is hidden.
  *
  * All pixel art renders with image-rendering: pixelated for crisp scale.
  */
@@ -28,6 +38,8 @@ const ROOMS = [
 ] as const;
 
 export function WorldLayer() {
+  const { current: weather } = useGaleWeather();
+
   useEffect(() => {
     const onVisibility = () => {
       document.body.classList.toggle('tab-hidden', document.hidden);
@@ -76,6 +88,13 @@ export function WorldLayer() {
         className="gym-light-source absolute inset-0 transition-opacity duration-500"
         aria-hidden
       />
+
+      {/* Weather particles in Gale's window rect. Always mounted; CSS
+          opacity on body[data-room="gale"] controls visibility so the
+          fade-in matches the room crossfade. Condition defaults to
+          'clouds' while the hook is loading so the window isn't empty
+          on first paint. */}
+      <WeatherParticles condition={weather?.condition ?? 'clouds'} />
     </div>
   );
 }

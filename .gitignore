@@ -43,3 +43,6 @@ lerna-debug.log*
 
 # TypeScript build info
 *.tsbuildinfo
+
+# Supabase CLI scratch state
+supabase/.temp/

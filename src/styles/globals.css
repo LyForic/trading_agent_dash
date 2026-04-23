@@ -166,6 +166,94 @@ body.tab-hidden .ambient-motion {
   animation-play-state: paused !important;
 }
 
+/* ---- Weather particles in Gale's window ----
+   Mounted always (parent component), fades in only when gale's room is
+   active. Same always-mounted pattern as the tint/light-source layers
+   so opacity animates smoothly instead of flashing in. */
+.weather-window {
+  opacity: 0;
+  transition: opacity 500ms ease;
+  will-change: opacity;
+}
+body[data-room="gale"] .weather-window {
+  opacity: 1;
+}
+
+/* Raindrops — thin diagonal streaks falling fast. Linear-gradient gives
+   the characteristic "falling water" shape without needing an image. */
+.raindrop {
+  background: linear-gradient(
+    to bottom,
+    rgba(200, 220, 245, 0) 0%,
+    rgba(200, 220, 245, 0.75) 60%,
+    rgba(200, 220, 245, 0) 100%
+  );
+  border-radius: 999px;
+  animation: raindrop-fall linear infinite;
+  will-change: transform, opacity;
+}
+@keyframes raindrop-fall {
+  0%   { transform: translate3d(0, 0, 0); opacity: 0; }
+  10%  { opacity: 0.9; }
+  100% { transform: translate3d(-12px, 320%, 0); opacity: 0; }
+}
+
+/* Snow — round white dots drifting down with a subtle side-to-side sway. */
+.snowflake {
+  background-color: rgba(245, 248, 255, 0.85);
+  border-radius: 50%;
+  box-shadow: 0 0 2px rgba(245, 248, 255, 0.5);
+  animation: snowflake-fall linear infinite;
+  will-change: transform, opacity;
+}
+@keyframes snowflake-fall {
+  0%   { transform: translate3d(0, 0, 0); opacity: 0; }
+  10%  { opacity: 0.9; }
+  50%  { transform: translate3d(14px, 180%, 0); }
+  100% { transform: translate3d(-10px, 320%, 0); opacity: 0; }
+}
+
+/* Storm flash — rare, brief brightening over the window during rain. */
+.storm-flash {
+  background-color: rgba(240, 245, 255, 0);
+  animation: storm-flash 8s ease-out infinite;
+  animation-delay: 3s;
+}
+@keyframes storm-flash {
+  0%, 6%, 100% { background-color: rgba(240, 245, 255, 0); }
+  3%           { background-color: rgba(240, 245, 255, 0.55); }
+  4%           { background-color: rgba(240, 245, 255, 0.15); }
+  4.5%         { background-color: rgba(240, 245, 255, 0.45); }
+}
+
+/* Mist — soft gray wash breathing in and out. */
+.mist-layer {
+  background: linear-gradient(
+    to bottom,
+    rgba(235, 238, 245, 0.0) 0%,
+    rgba(235, 238, 245, 0.35) 50%,
+    rgba(235, 238, 245, 0.0) 100%
+  );
+  animation: mist-breathe 6s ease-in-out infinite;
+}
+@keyframes mist-breathe {
+  0%, 100% { opacity: 0.5; }
+  50%      { opacity: 0.9; }
+}
+
+/* Clouds — two slow-drifting translucent bands across the window. */
+.clouds-layer {
+  background:
+    radial-gradient(ellipse 60% 28% at 25% 35%, rgba(255, 255, 255, 0.35), transparent 70%),
+    radial-gradient(ellipse 70% 24% at 75% 60%, rgba(255, 255, 255, 0.25), transparent 70%);
+  background-size: 100% 100%;
+  animation: clouds-drift 28s linear infinite;
+}
+@keyframes clouds-drift {
+  0%   { transform: translate3d(-6%, 0, 0); }
+  100% { transform: translate3d(6%, 0, 0); }
+}
+
 /* In-Battle pill pulse — dual-signal: opacity breathing + a ring-ripple
    that expands outward from the pill. Intentionally louder than a pure
    breathing cycle so a viewer notices it without being told — per
