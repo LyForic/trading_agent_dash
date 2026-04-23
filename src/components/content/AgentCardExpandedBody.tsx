@@ -1,6 +1,19 @@
 import type { Agent } from '@/lib/types';
 import { MovePill } from './MovePill';
 import { formatPnl } from '@/lib/formatting';
+import { useSharedGaleWeather } from '@/lib/galeWeatherContext';
+import type { WeatherCondition } from '@/lib/useGaleWeather';
+
+/** Emoji per OpenWeather condition bucket — keeps the badge compact and
+ *  gives users a glanceable cue that "this room has live weather." */
+const WEATHER_ICON: Record<WeatherCondition, string> = {
+  rain: '🌧️',
+  storm: '⛈️',
+  snow: '❄️',
+  clouds: '☁️',
+  mist: '🌫️',
+  clear: '☀️',
+};
 
 /**
  * Full detail body shown when an AgentCard is expanded. Layered blocks:
@@ -24,6 +37,11 @@ export function AgentCardExpandedBody({ agent }: { agent: Agent }) {
         minute: '2-digit',
       })
     : null;
+  const { current: weather, source: weatherSource } = useSharedGaleWeather();
+  // Only mount the weather badge for Gale — she owns the weather market.
+  // If the hook hasn't returned a snapshot yet (first 100ms) we fall back
+  // to the city list. Once weather lands we highlight her active city.
+  const activeCity = agent.id === 'gale' ? weather?.city ?? null : null;
 
   return (
     <div
@@ -100,20 +118,63 @@ export function AgentCardExpandedBody({ agent }: { agent: Agent }) {
         </div>
       )}
 
+      {agent.id === 'gale' && weather && (
+        <div>
+          <div
+            className="text-[10px] uppercase tracking-wide"
+            style={{ color: 'var(--color-ink-muted)' }}
+          >
+            Window
+          </div>
+          <div className="flex items-center gap-2 mt-0.5">
+            <span className="text-base" aria-hidden>
+              {WEATHER_ICON[weather.condition]}
+            </span>
+            <span className="tabular-nums">
+              {weather.label}{' '}
+              <span style={{ color: 'var(--color-ink-muted)' }}>
+                · {weather.temp_f}°F · {weather.condition}
+              </span>
+            </span>
+            {weatherSource === 'fallback' && (
+              <span
+                className="text-[9px] px-1.5 py-0.5 rounded"
+                style={{
+                  backgroundColor: 'color-mix(in srgb, var(--color-border-default) 50%, transparent)',
+                  color: 'var(--color-ink-muted)',
+                }}
+                title="Live data temporarily unavailable; showing last-known fallback."
+              >
+                cached
+              </span>
+            )}
+          </div>
+        </div>
+      )}
+
       {agent.cities_or_tags.length > 0 && (
         <div className="flex flex-wrap gap-1">
-          {agent.cities_or_tags.map((t) => (
-            <span
-              key={t}
-              className="px-2 py-0.5 rounded-md text-[10px] font-medium tracking-wide"
-              style={{
-                backgroundColor: 'var(--color-paper-raised)',
-                color: 'var(--color-ink-muted)',
-              }}
-            >
-              {t}
-            </span>
-          ))}
+          {agent.cities_or_tags.map((t) => {
+            const isActive = activeCity === t;
+            return (
+              <span
+                key={t}
+                className="px-2 py-0.5 rounded-md text-[10px] font-medium tracking-wide"
+                style={{
+                  backgroundColor: isActive
+                    ? `color-mix(in srgb, var(--color-${agent.id}) 22%, var(--color-paper-raised))`
+                    : 'var(--color-paper-raised)',
+                  color: isActive ? 'var(--color-ink)' : 'var(--color-ink-muted)',
+                  outline: isActive
+                    ? `1px solid color-mix(in srgb, var(--color-${agent.id}) 55%, transparent)`
+                    : 'none',
+                }}
+                title={isActive ? 'Currently watching this city' : undefined}
+              >
+                {t}
+              </span>
+            );
+          })}
         </div>
       )}
 
