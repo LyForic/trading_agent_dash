@@ -42,6 +42,7 @@ export interface Agent {
   name: string;
   nickname: string;
   market_label: string;
+  sprite_url?: string; // public asset path; AgentAvatar falls back to color silhouette if absent
   total_pnl: number;
   record: Record;
   brier_7d: BrierScore;

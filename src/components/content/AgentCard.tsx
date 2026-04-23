@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import type { Agent } from '@/lib/types';
 import { AgentCardCollapsedRow } from './AgentCardCollapsedRow';
 import { AgentCardExpandedBody } from './AgentCardExpandedBody';
@@ -6,21 +5,33 @@ import { AgentCardExpandedBody } from './AgentCardExpandedBody';
 /**
  * AgentCard — the atomic unit of the roster. Collapsed by default on all
  * viewports so three fit in one 375px screen; tap the summary row to
- * expand to full detail (record, Brier, cities, moves, latest receipt).
- * Arriving-soon agents cannot expand — their body would be empty.
+ * expand and drop into that agent's room.
+ *
+ * Expansion state is lifted to App.tsx so only one card can be expanded
+ * at a time — matching the "you're in Apex's room now, not Apex+Gale"
+ * mental model. App.tsx also drives body[data-room] from the expanded
+ * agent id, which swaps the world-layer background image to that
+ * agent's room via CSS.
  *
  * In Phase 5 the `onBattleTap` will open the Battle Arena bottom sheet;
  * for now the pill is rendered but its click is inert (no handler wired).
  */
-export function AgentCard({ agent }: { agent: Agent }) {
-  const [expanded, setExpanded] = useState(false);
+export function AgentCard({
+  agent,
+  expanded,
+  onToggle,
+}: {
+  agent: Agent;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
   const canExpand = agent.state !== 'arriving_soon';
 
   const toggleExpansion = (event: React.MouseEvent) => {
     // Don't toggle expansion when the user clicks the in-battle pill
     // (that has its own tap target for the Battle Arena invite).
     if ((event.target as HTMLElement).closest('[data-role="in-battle-pill"]')) return;
-    if (canExpand) setExpanded((v) => !v);
+    if (canExpand) onToggle();
   };
 
   return (
@@ -55,7 +66,7 @@ export function AgentCard({ agent }: { agent: Agent }) {
         <AgentCardCollapsedRow agent={agent} />
       </button>
       {expanded && canExpand && (
-        <div className="px-3 pb-3">
+        <div className="px-3 pb-3 agent-card-expanded">
           <AgentCardExpandedBody agent={agent} />
         </div>
       )}
