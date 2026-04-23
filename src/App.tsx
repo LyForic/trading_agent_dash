@@ -54,14 +54,18 @@ export default function App() {
         className="min-h-screen max-w-[420px] mx-auto relative"
         style={{ color: 'var(--world-ink)' }}
       >
-        <TrustStrip data={data} />
+        <div className="gym-chrome">
+          <TrustStrip data={data} />
+        </div>
 
         <main className="px-4 pt-6 pb-10 space-y-4">
           {/* Title sits in a paper pill so it reads on any room art in
               any time-of-day mode. Without this the white title got
-              lost against the light-wood wall of the communal gym. */}
+              lost against the light-wood wall of the communal gym.
+              .gym-chrome makes it hide itself on mobile during focus so
+              the chosen agent's room has unobstructed real estate. */}
           <header
-            className="inline-block rounded-2xl px-4 py-3"
+            className="gym-chrome inline-block rounded-2xl px-4 py-3"
             style={{
               backgroundColor: 'color-mix(in srgb, var(--color-paper) 76%, transparent)',
               color: 'var(--color-ink)',
@@ -83,7 +87,7 @@ export default function App() {
           {/* Dev-only mode switcher; the buttons themselves are cream
               pills so they read above any world mode. */}
           <div
-            className="flex flex-wrap items-center gap-2 text-[11px]"
+            className="gym-chrome flex flex-wrap items-center gap-2 text-[11px]"
             style={{
               color: 'var(--color-ink)',
               backgroundColor: 'color-mix(in srgb, var(--color-paper) 82%, transparent)',
@@ -143,7 +147,9 @@ export default function App() {
             </button>
           </div>
 
-          <VisitDeltaStrip delta={delta} onDismiss={dismiss} />
+          <div className="gym-chrome">
+            <VisitDeltaStrip delta={delta} onDismiss={dismiss} />
+          </div>
 
           {/* Agent roster. Tapping a card enters Focus Mode: the other two
               cards fade out, the chosen agent's room takes over, and on
@@ -189,7 +195,9 @@ export default function App() {
             </AnimatePresence>
           </div>
 
-          <FooterTicker data={data} />
+          <div className="gym-chrome">
+            <FooterTicker data={data} />
+          </div>
         </main>
       </div>
 
@@ -209,6 +217,26 @@ export default function App() {
             exit={{ opacity: 0 }}
             transition={{ duration: 0.25 }}
           />
+        )}
+      </AnimatePresence>
+
+      {/* Explicit "Back to gym" affordance — a labeled paper pill floating
+          top-left, always visible during focus. The backdrop tap + the
+          drag-handle pill exist too, but peer review flagged that neither
+          reads as "exit" on first encounter. This is the unambiguous one. */}
+      <AnimatePresence>
+        {expandedAgentId && (
+          <motion.button
+            key="focus-back-button"
+            onClick={exitFocus}
+            className="focus-back-button"
+            initial={{ opacity: 0, x: -12 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -12 }}
+            transition={{ duration: 0.22, ease: 'easeOut' }}
+          >
+            ← Back to gym
+          </motion.button>
         )}
       </AnimatePresence>
     </>
