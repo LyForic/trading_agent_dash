@@ -3,6 +3,7 @@ import { WorldLayer } from '@/components/world/WorldLayer';
 import { useTimeOfDay } from '@/hooks/useTimeOfDay';
 import { AgentCard } from '@/components/content/AgentCard';
 import { TrustStrip } from '@/components/content/TrustStrip';
+import { FooterTicker } from '@/components/content/FooterTicker';
 import { useAgentData } from '@/lib/useAgentData';
 import type { AgentId } from '@/lib/types';
 import type { WorldMode } from '@/lib/timeOfDay';
@@ -148,50 +149,7 @@ export default function App() {
             ))}
           </div>
 
-          <footer
-            className="grid grid-cols-3 gap-2 mt-6 text-[11px] text-center"
-            style={{ color: 'var(--color-ink-muted)' }}
-          >
-            {data.agents
-              .filter((a) => a.state !== 'arriving_soon')
-              .map((a) => (
-                <div
-                  key={a.id}
-                  className="p-2 rounded-lg border"
-                  style={{
-                    backgroundColor: 'color-mix(in srgb, var(--color-paper) 82%, transparent)',
-                    borderColor: 'var(--color-border-default)',
-                    backdropFilter: 'blur(4px)',
-                    WebkitBackdropFilter: 'blur(4px)',
-                  }}
-                >
-                  <div
-                    className="tabular-nums font-medium text-sm"
-                    style={{ color: 'var(--color-ink)' }}
-                  >
-                    {a.record.settled}
-                  </div>
-                  <div>{a.name} bets</div>
-                </div>
-              ))}
-            <div
-              className="p-2 rounded-lg border col-span-1"
-              style={{
-                backgroundColor: 'color-mix(in srgb, var(--color-paper) 82%, transparent)',
-                borderColor: 'var(--color-border-default)',
-                backdropFilter: 'blur(4px)',
-                WebkitBackdropFilter: 'blur(4px)',
-              }}
-            >
-              <div
-                className="tabular-nums font-medium text-sm"
-                style={{ color: 'var(--color-ink)' }}
-              >
-                ✓
-              </div>
-              <div>Verifiable on Kalshi</div>
-            </div>
-          </footer>
+          <FooterTicker data={data} />
         </main>
       </div>
     </>
