@@ -541,6 +541,144 @@ body[data-room="gale"] .weather-window {
   to   { transform: translateY(0);    opacity: 1; }
 }
 
+/* ---- Phase 4 Slice 3: Town Square ----
+   The plaza exterior lives at /. Houses are 192×192 transparent PNGs
+   composited onto a 200×112 plaza PNG. Everything scales together at
+   any viewport width because positions/sizes are % of the stage. */
+
+.town-square-stage {
+  position: relative;
+  width: 100%;
+  max-width: 640px;
+  aspect-ratio: 200 / 112;
+  image-rendering: pixelated;
+  overflow: visible;
+}
+.town-square-bg {
+  position: absolute;
+  inset: 0;
+  background-image: url("/rooms/town-square.png");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+}
+
+/* Fountain glow — circular radial sitting on the fountain painted at
+   plaza center. Warm (gain) / cool (loss) / neutral based on
+   body[data-plaza-mood]. Breathes slowly via hotspot-breathe so the
+   plaza reads as alive, not static. */
+.town-square-fountain-glow {
+  position: absolute;
+  left: 50%;
+  top: 58%;
+  width: 28%;
+  aspect-ratio: 1 / 1;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  pointer-events: none;
+  opacity: 0.6;
+  background: radial-gradient(
+    circle,
+    rgba(255, 210, 130, 0.55) 0%,
+    rgba(255, 180, 80, 0.22) 40%,
+    transparent 70%
+  );
+  animation: hotspot-breathe 6s ease-in-out infinite;
+  transition: background 500ms ease, opacity 500ms ease;
+}
+body[data-plaza-mood="gain"] .town-square-fountain-glow {
+  background: radial-gradient(
+    circle,
+    rgba(170, 230, 170, 0.55) 0%,
+    rgba(120, 200, 120, 0.22) 40%,
+    transparent 70%
+  );
+}
+body[data-plaza-mood="loss"] .town-square-fountain-glow {
+  background: radial-gradient(
+    circle,
+    rgba(230, 160, 150, 0.55) 0%,
+    rgba(200, 110, 100, 0.22) 40%,
+    transparent 70%
+  );
+}
+
+/* House sprite tap targets. Each Link is absolutely positioned on the
+   plaza; the img inside is the 192×192 PNG scaled to ~28% of plaza
+   width. Translate -50% centers the sprite on the (left, top) anchor. */
+.town-square-house {
+  position: absolute;
+  transform: translate(-50%, -85%);
+  width: 28%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: transform;
+}
+.town-square-house:hover,
+.town-square-house:focus-visible {
+  transform: translate(-50%, -88%) scale(1.05);
+  outline: none;
+}
+.town-square-house:active {
+  transform: translate(-50%, -84%) scale(0.98);
+}
+.house-sprite {
+  width: 100%;
+  height: auto;
+  image-rendering: pixelated;
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.35));
+  -webkit-user-drag: none;
+  user-select: none;
+}
+.house-label {
+  font-family: var(--font-display);
+  font-size: clamp(9px, 1.6vw, 13px);
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background-color: color-mix(in srgb, var(--color-paper) 90%, transparent);
+  color: var(--color-ink);
+  white-space: nowrap;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.2);
+}
+
+/* Small pulsing dot above a house when its agent has new activity
+   since the visitor's last session — reuses in-battle-pulse's ripple
+   keyframe for the ring-outward effect. */
+.house-new-pulse {
+  position: absolute;
+  top: -4%;
+  right: 14%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: var(--color-gain);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-gain) 60%, transparent);
+  animation: in-battle-pulse 1.8s ease-out infinite;
+  pointer-events: none;
+}
+
+/* Invisible hit target for the gym facade painted at the top of the
+   plaza. Sized to the double-door area; adjust if the plaza art
+   changes. Subtle hover brightening gives it a tap affordance. */
+.town-square-gym-hit {
+  position: absolute;
+  border-radius: 6px;
+  background-color: transparent;
+  transition: background-color 180ms ease;
+  cursor: pointer;
+}
+.town-square-gym-hit:hover,
+.town-square-gym-hit:focus-visible {
+  background-color: rgba(255, 230, 180, 0.18);
+  outline: none;
+}
+
 /* Baseline body styling */
 body {
   margin: 0;
