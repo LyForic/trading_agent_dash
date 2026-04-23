@@ -166,6 +166,81 @@ body.tab-hidden .ambient-motion {
   animation-play-state: paused !important;
 }
 
+/* ---- Ambient motion (Phase 4 Slice 2) ----
+   Dust motes drift across every room; per-room hotspots glow at plausible
+   in-scene light sources (gym chandelier, apex monitors, metheus lamp).
+   Gale gets the weather layer instead of a hotspot — her window is already
+   the kinetic element. */
+
+.dust-mote {
+  background-color: rgba(255, 248, 220, 0.45);
+  border-radius: 50%;
+  box-shadow: 0 0 2px rgba(255, 248, 220, 0.35);
+  animation: dust-drift linear infinite;
+  opacity: 0.55;
+  will-change: transform, opacity;
+}
+@keyframes dust-drift {
+  0%   { transform: translate3d(0, 0, 0); opacity: 0; }
+  10%  { opacity: 0.55; }
+  50%  { transform: translate3d(40px, -30px, 0); opacity: 0.7; }
+  90%  { opacity: 0.35; }
+  100% { transform: translate3d(80px, -8px, 0); opacity: 0; }
+}
+
+/* Per-room hotspots. All four mounted always; CSS toggles opacity based
+   on body[data-room]. Default opacity: 0, only the active one reveals. */
+.room-hotspot {
+  opacity: 0;
+  transition: opacity 500ms ease;
+  will-change: opacity;
+}
+/* Gym — warm chandelier glow at center-top, visible when no specific
+   room is active (communal default). */
+.room-hotspot--gym {
+  background: radial-gradient(
+    ellipse 40% 30% at 50% 24%,
+    rgba(255, 215, 160, 0.22) 0%,
+    rgba(255, 195, 120, 0.08) 40%,
+    transparent 70%
+  );
+  animation: hotspot-breathe 8s ease-in-out infinite;
+}
+body:not([data-room]) .room-hotspot--gym {
+  opacity: 1;
+}
+/* Apex — cool bluish monitor-wash in center, matches the dojo's denim
+   accent. Slightly faster breathe to feel "active training." */
+.room-hotspot--apex {
+  background: radial-gradient(
+    ellipse 50% 28% at 50% 50%,
+    rgba(150, 190, 235, 0.18) 0%,
+    rgba(80, 140, 200, 0.06) 45%,
+    transparent 72%
+  );
+  animation: hotspot-breathe 6s ease-in-out infinite;
+}
+body[data-room="apex"] .room-hotspot--apex {
+  opacity: 1;
+}
+/* Metheus — warm amber lamp glow biased toward the desk/lamp area. */
+.room-hotspot--metheus {
+  background: radial-gradient(
+    ellipse 38% 26% at 58% 48%,
+    rgba(255, 175, 80, 0.28) 0%,
+    rgba(220, 140, 60, 0.10) 45%,
+    transparent 72%
+  );
+  animation: hotspot-breathe 9s ease-in-out infinite;
+}
+body[data-room="metheus"] .room-hotspot--metheus {
+  opacity: 1;
+}
+@keyframes hotspot-breathe {
+  0%, 100% { filter: brightness(0.9); }
+  50%      { filter: brightness(1.1); }
+}
+
 /* ---- Weather particles in Gale's window ----
    Mounted always (parent component), fades in only when gale's room is
    active. Same always-mounted pattern as the tint/light-source layers
