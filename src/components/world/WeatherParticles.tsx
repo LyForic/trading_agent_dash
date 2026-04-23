@@ -72,9 +72,14 @@ export function WeatherParticles({ condition }: { condition: WeatherCondition })
   return (
     <div
       aria-hidden
+      data-condition={condition}
       className="weather-window absolute pointer-events-none overflow-hidden"
       style={WINDOW_RECT}
     >
+      {/* Mood tint — a color wash behind the particles that matches the
+          condition. Sits inside the same clip rect so time-of-day stays
+          the authority on the rest of the room. */}
+      <div aria-hidden className="weather-window-tint absolute inset-0" />
       {(condition === 'rain' || condition === 'storm') && (
         <RainLayer dense={condition === 'storm'} />
       )}
@@ -87,7 +92,9 @@ export function WeatherParticles({ condition }: { condition: WeatherCondition })
 }
 
 function RainLayer({ dense }: { dense: boolean }) {
-  const drops = useSeededDrops(dense ? 60 : 40, dense ? 'storm' : 'rain');
+  // Denser populations (60 / 90) so the effect reads on a small mobile
+  // window rect, not just a fullscreen desktop window.
+  const drops = useSeededDrops(dense ? 90 : 60, dense ? 'storm' : 'rain');
   return (
     <>
       {drops.map((d) => (
@@ -109,7 +116,7 @@ function RainLayer({ dense }: { dense: boolean }) {
 }
 
 function SnowLayer() {
-  const flakes = useSeededFlakes(35, 'snow');
+  const flakes = useSeededFlakes(55, 'snow');
   return (
     <>
       {flakes.map((f) => (

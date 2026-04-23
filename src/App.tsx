@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { AnimatePresence, motion } from 'framer-motion';
 import { WorldLayer } from '@/components/world/WorldLayer';
 import { useTimeOfDay } from '@/hooks/useTimeOfDay';
 import { AgentCard } from '@/components/content/AgentCard';
@@ -7,10 +8,11 @@ import { FooterTicker } from '@/components/content/FooterTicker';
 import { VisitDeltaStrip } from '@/components/content/VisitDeltaStrip';
 import { useAgentData } from '@/lib/useAgentData';
 import { useVisitDelta } from '@/lib/useVisitDelta';
+import { GaleWeatherProvider } from '@/lib/galeWeatherContext';
 import type { AgentId } from '@/lib/types';
 import type { WorldMode } from '@/lib/timeOfDay';
 
-export default function App() {
+function AppInner() {
   const autoMode = useTimeOfDay();
   const [override, setOverride] = useState<WorldMode | null>(null);
   if (override && document.body.dataset.mode !== override) {
@@ -33,14 +35,31 @@ export default function App() {
   useEffect(() => {
     if (expandedAgentId) {
       document.body.dataset.room = expandedAgentId;
+      document.body.dataset.focus = expandedAgentId;
     } else {
       delete document.body.dataset.room;
+      delete document.body.dataset.focus;
     }
+  }, [expandedAgentId]);
+
+  // Esc exits focus — standard modal/sheet expectation for keyboard users
+  // on desktop and iPad with external keyboards. Listener only mounts
+  // while focused so we're not leaking a global handler during the
+  // communal-gym state.
+  useEffect(() => {
+    if (!expandedAgentId) return;
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setExpandedAgentId(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, [expandedAgentId]);
 
   const handleToggle = (id: AgentId) => {
     setExpandedAgentId((curr) => (curr === id ? null : id));
   };
+
+  const exitFocus = () => setExpandedAgentId(null);
 
   return (
     <>
@@ -49,14 +68,18 @@ export default function App() {
         className="min-h-screen max-w-[420px] mx-auto relative"
         style={{ color: 'var(--world-ink)' }}
       >
-        <TrustStrip data={data} />
+        <div className="gym-chrome">
+          <TrustStrip data={data} />
+        </div>
 
         <main className="px-4 pt-6 pb-10 space-y-4">
           {/* Title sits in a paper pill so it reads on any room art in
               any time-of-day mode. Without this the white title got
-              lost against the light-wood wall of the communal gym. */}
+              lost against the light-wood wall of the communal gym.
+              .gym-chrome makes it hide itself on mobile during focus so
+              the chosen agent's room has unobstructed real estate. */}
           <header
-            className="inline-block rounded-2xl px-4 py-3"
+            className="gym-chrome inline-block rounded-2xl px-4 py-3"
             style={{
               backgroundColor: 'color-mix(in srgb, var(--color-paper) 76%, transparent)',
               color: 'var(--color-ink)',
@@ -78,7 +101,7 @@ export default function App() {
           {/* Dev-only mode switcher; the buttons themselves are cream
               pills so they read above any world mode. */}
           <div
-            className="flex flex-wrap items-center gap-2 text-[11px]"
+            className="gym-chrome flex flex-wrap items-center gap-2 text-[11px]"
             style={{
               color: 'var(--color-ink)',
               backgroundColor: 'color-mix(in srgb, var(--color-paper) 82%, transparent)',
@@ -138,25 +161,106 @@ export default function App() {
             </button>
           </div>
 
-          <VisitDeltaStrip delta={delta} onDismiss={dismiss} />
-
-          {/* Tight card stacking. Click a card to expand — that swaps
-              the world-layer room to that agent's personal room.
-              Collapsing returns to the communal gym. */}
-          <div className="space-y-3">
-            {data.agents.map((agent) => (
-              <AgentCard
-                key={agent.id}
-                agent={agent}
-                expanded={expandedAgentId === agent.id}
-                onToggle={() => handleToggle(agent.id)}
-              />
-            ))}
+          <div className="gym-chrome">
+            <VisitDeltaStrip delta={delta} onDismiss={dismiss} />
           </div>
 
-          <FooterTicker data={data} />
+          {/* Agent roster. Tapping a card enters Focus Mode: the other two
+              cards fade out, the chosen agent's room takes over, and on
+              mobile the card docks as a bottom-sheet (via CSS rule on
+              body[data-focus]). Tap the backdrop or the exit button to
+              return to the communal gym. */}
+          <div className="space-y-3">
+            <AnimatePresence mode="sync" initial={false}>
+              {data.agents.map((agent) => {
+                const focused = expandedAgentId === agent.id;
+                const hidden = expandedAgentId !== null && !focused;
+                if (hidden) return null;
+                return (
+                  <motion.div
+                    key={agent.id}
+                    layout="position"
+                    initial={false}
+                    exit={{
+                      opacity: 0,
+                      height: 0,
+                      marginTop: 0,
+                      marginBottom: 0,
+                      transition: { duration: 0.22, ease: 'easeIn' },
+                    }}
+                    className={focused ? 'agent-card-focus' : undefined}
+                  >
+                    {focused && (
+                      <button
+                        type="button"
+                        onClick={exitFocus}
+                        aria-label="Return to communal gym"
+                        className="focus-drag-handle"
+                      />
+                    )}
+                    <AgentCard
+                      agent={agent}
+                      expanded={focused}
+                      onToggle={() => handleToggle(agent.id)}
+                    />
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
+          </div>
+
+          <div className="gym-chrome">
+            <FooterTicker data={data} />
+          </div>
         </main>
       </div>
+
+      {/* Focus-mode backdrop — mounts only when a card is focused. Tapping
+          it exits focus mode. The backdrop sits above the world layer but
+          below the docked card sheet so the agent's room is visible yet
+          dimmed, nudging attention onto the card. */}
+      <AnimatePresence>
+        {expandedAgentId && (
+          <motion.button
+            key="focus-backdrop"
+            aria-label="Exit focus mode"
+            onClick={exitFocus}
+            className="fixed inset-0 focus-mode-backdrop"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.25 }}
+          />
+        )}
+      </AnimatePresence>
+
+      {/* Explicit "Back to gym" affordance — a labeled paper pill floating
+          top-left, always visible during focus. The backdrop tap + the
+          drag-handle pill exist too, but peer review flagged that neither
+          reads as "exit" on first encounter. This is the unambiguous one. */}
+      <AnimatePresence>
+        {expandedAgentId && (
+          <motion.button
+            key="focus-back-button"
+            onClick={exitFocus}
+            className="focus-back-button"
+            initial={{ opacity: 0, x: -12 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -12 }}
+            transition={{ duration: 0.22, ease: 'easeOut' }}
+          >
+            ← Back to gym
+          </motion.button>
+        )}
+      </AnimatePresence>
     </>
+  );
+}
+
+export default function App() {
+  return (
+    <GaleWeatherProvider>
+      <AppInner />
+    </GaleWeatherProvider>
   );
 }

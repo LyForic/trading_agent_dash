@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { WeatherParticles } from './WeatherParticles';
-import { useGaleWeather } from '@/lib/useGaleWeather';
+import { AmbientMotion } from './AmbientMotion';
+import { useSharedGaleWeather } from '@/lib/galeWeatherContext';
 
 /**
  * Fixed world behind all content. Four stacked layers from back to front:
@@ -38,7 +39,7 @@ const ROOMS = [
 ] as const;
 
 export function WorldLayer() {
-  const { current: weather } = useGaleWeather();
+  const { current: weather } = useSharedGaleWeather();
 
   useEffect(() => {
     const onVisibility = () => {
@@ -88,6 +89,11 @@ export function WorldLayer() {
         className="gym-light-source absolute inset-0 transition-opacity duration-500"
         aria-hidden
       />
+
+      {/* Ambient motion — dust motes everywhere + per-room warm hotspots
+          that fade in with body[data-room]. Cheap "this place is alive"
+          layer without needing layered sprites. */}
+      <AmbientMotion />
 
       {/* Weather particles in Gale's window rect. Always mounted; CSS
           opacity on body[data-room="gale"] controls visibility so the

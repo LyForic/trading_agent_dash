@@ -166,6 +166,81 @@ body.tab-hidden .ambient-motion {
   animation-play-state: paused !important;
 }
 
+/* ---- Ambient motion (Phase 4 Slice 2) ----
+   Dust motes drift across every room; per-room hotspots glow at plausible
+   in-scene light sources (gym chandelier, apex monitors, metheus lamp).
+   Gale gets the weather layer instead of a hotspot — her window is already
+   the kinetic element. */
+
+.dust-mote {
+  background-color: rgba(255, 248, 220, 0.45);
+  border-radius: 50%;
+  box-shadow: 0 0 2px rgba(255, 248, 220, 0.35);
+  animation: dust-drift linear infinite;
+  opacity: 0.55;
+  will-change: transform, opacity;
+}
+@keyframes dust-drift {
+  0%   { transform: translate3d(0, 0, 0); opacity: 0; }
+  10%  { opacity: 0.55; }
+  50%  { transform: translate3d(40px, -30px, 0); opacity: 0.7; }
+  90%  { opacity: 0.35; }
+  100% { transform: translate3d(80px, -8px, 0); opacity: 0; }
+}
+
+/* Per-room hotspots. All four mounted always; CSS toggles opacity based
+   on body[data-room]. Default opacity: 0, only the active one reveals. */
+.room-hotspot {
+  opacity: 0;
+  transition: opacity 500ms ease;
+  will-change: opacity;
+}
+/* Gym — warm chandelier glow at center-top, visible when no specific
+   room is active (communal default). */
+.room-hotspot--gym {
+  background: radial-gradient(
+    ellipse 40% 30% at 50% 24%,
+    rgba(255, 215, 160, 0.22) 0%,
+    rgba(255, 195, 120, 0.08) 40%,
+    transparent 70%
+  );
+  animation: hotspot-breathe 8s ease-in-out infinite;
+}
+body:not([data-room]) .room-hotspot--gym {
+  opacity: 1;
+}
+/* Apex — cool bluish monitor-wash in center, matches the dojo's denim
+   accent. Slightly faster breathe to feel "active training." */
+.room-hotspot--apex {
+  background: radial-gradient(
+    ellipse 50% 28% at 50% 50%,
+    rgba(150, 190, 235, 0.18) 0%,
+    rgba(80, 140, 200, 0.06) 45%,
+    transparent 72%
+  );
+  animation: hotspot-breathe 6s ease-in-out infinite;
+}
+body[data-room="apex"] .room-hotspot--apex {
+  opacity: 1;
+}
+/* Metheus — warm amber lamp glow biased toward the desk/lamp area. */
+.room-hotspot--metheus {
+  background: radial-gradient(
+    ellipse 38% 26% at 58% 48%,
+    rgba(255, 175, 80, 0.28) 0%,
+    rgba(220, 140, 60, 0.10) 45%,
+    transparent 72%
+  );
+  animation: hotspot-breathe 9s ease-in-out infinite;
+}
+body[data-room="metheus"] .room-hotspot--metheus {
+  opacity: 1;
+}
+@keyframes hotspot-breathe {
+  0%, 100% { filter: brightness(0.9); }
+  50%      { filter: brightness(1.1); }
+}
+
 /* ---- Weather particles in Gale's window ----
    Mounted always (parent component), fades in only when gale's room is
    active. Same always-mounted pattern as the tint/light-source layers
@@ -176,6 +251,40 @@ body.tab-hidden .ambient-motion {
   will-change: opacity;
 }
 body[data-room="gale"] .weather-window {
+  opacity: 1;
+}
+
+/* Weather window mood tint — a subtle color wash sitting behind the
+   particles, inside the same clip rect. Read as "what's it like outside
+   the glass" without touching the rest of the room's lighting model
+   (time-of-day stays the global authority). */
+.weather-window-tint {
+  opacity: 0;
+  transition: background-color 500ms ease, opacity 500ms ease;
+  will-change: background-color, opacity;
+}
+.weather-window[data-condition="rain"] .weather-window-tint {
+  background-color: hsla(210, 58%, 48%, 0.52);
+  opacity: 1;
+}
+.weather-window[data-condition="storm"] .weather-window-tint {
+  background-color: hsla(220, 42%, 32%, 0.62);
+  opacity: 1;
+}
+.weather-window[data-condition="snow"] .weather-window-tint {
+  background-color: hsla(210, 22%, 90%, 0.58);
+  opacity: 1;
+}
+.weather-window[data-condition="clouds"] .weather-window-tint {
+  background-color: hsla(215, 15%, 72%, 0.38);
+  opacity: 1;
+}
+.weather-window[data-condition="mist"] .weather-window-tint {
+  background-color: hsla(210, 10%, 82%, 0.50);
+  opacity: 1;
+}
+.weather-window[data-condition="clear"] .weather-window-tint {
+  background-color: hsla(45, 88%, 72%, 0.34);
   opacity: 1;
 }
 
@@ -297,6 +406,139 @@ body[data-room="gale"] .weather-window {
   .gym-room-bg--apex {
     background-position: 62% 50%;
   }
+}
+
+/* ---- Phase-4 Slice 2: Focus Mode + Mobile Bottom-Sheet ----
+   Tapping a card enters Focus Mode: the other two cards unmount via
+   AnimatePresence exit, the chosen agent's room is already swapping in
+   via body[data-room], and on mobile the focused card slides up and
+   docks as a bottom-sheet. The backdrop covers the rest of the viewport
+   so the room reads as the hero while the card remains fully legible.
+   On desktop, focus mode keeps the card where it sits — the UX gain is
+   simply "the other agents got out of the way." */
+
+.focus-mode-backdrop {
+  background-color: rgba(0, 0, 0, 0.38);
+  z-index: 15;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  backdrop-filter: blur(1px);
+  -webkit-backdrop-filter: blur(1px);
+}
+
+.agent-card-focus {
+  position: relative;
+  z-index: 20;
+}
+
+/* "Back to gym" affordance floating top-left during focus. Always visible
+   because peer review flagged that the backdrop tap + drag handle didn't
+   read as exits to first-time users. This is the labeled one. */
+.focus-back-button {
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top, 12px));
+  left: max(12px, env(safe-area-inset-left, 12px));
+  z-index: 30;
+  padding: 7px 13px 7px 11px;
+  border: 1px solid var(--color-border-default);
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--color-paper) 94%, transparent);
+  color: var(--color-ink);
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: transform 180ms ease, background-color 180ms ease;
+}
+.focus-back-button:hover,
+.focus-back-button:focus-visible {
+  background-color: var(--color-paper);
+  transform: translateY(-1px);
+  outline: none;
+}
+
+/* Chrome (TrustStrip, title, mode switcher, visit-delta, footer ticker)
+   stays as-is on desktop during focus — plenty of real estate. On mobile
+   it hides to free the viewport for the chosen agent's room. Opacity
+   transition (not display:none) keeps layout stable and reversible. */
+.gym-chrome {
+  transition: opacity 220ms ease;
+}
+@media (max-width: 767px) {
+  body[data-focus] .gym-chrome {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+.focus-drag-handle {
+  display: block;
+  width: 56px;
+  height: 5px;
+  margin: -2px auto 10px auto;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--color-ink) 30%, transparent);
+  cursor: pointer;
+  transition: background-color 180ms ease, transform 180ms ease, width 180ms ease;
+}
+.focus-drag-handle:hover,
+.focus-drag-handle:focus-visible {
+  background-color: color-mix(in srgb, var(--color-ink) 55%, transparent);
+  width: 72px;
+  outline: none;
+}
+
+/* Mobile: focused card docks as a bottom sheet with slide-up animation.
+   The outer .agent-card-focus becomes the sheet shell; the card inside
+   handles its own overflow via .agent-card-expanded (Phase 3 rule).
+   Capped at 55vh so the top ~45vh of the viewport is pure room — direct
+   response to peer review that the old 68vh sheet was burying the
+   background the user had just tapped into. */
+@media (max-width: 767px) {
+  .agent-card-focus {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: 420px;
+    margin-left: auto;
+    margin-right: auto;
+    max-height: 55vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 10px 12px 16px 12px;
+    border-radius: 20px 20px 0 0;
+    background-color: color-mix(in srgb, var(--color-paper) 94%, transparent);
+    box-shadow: 0 -8px 28px rgba(0, 0, 0, 0.32);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    animation: focus-sheet-slide-up 320ms cubic-bezier(0.2, 0.85, 0.2, 1);
+  }
+  /* On mobile the sheet shell already provides paper bg + shadow — the
+     inner AgentCard doesn't need its own to avoid double-carded look. */
+  .agent-card-focus > article {
+    background-color: transparent;
+    border: none;
+    box-shadow: none;
+  }
+  /* Inside the sheet the expanded body max-height cap from Phase 3 is
+     obsolete — the sheet itself scrolls. Lift the cap so content flows. */
+  .agent-card-focus .agent-card-expanded {
+    max-height: none;
+    overflow-y: visible;
+  }
+}
+
+@keyframes focus-sheet-slide-up {
+  from { transform: translateY(100%); opacity: 0.4; }
+  to   { transform: translateY(0);    opacity: 1; }
 }
 
 /* Baseline body styling */
