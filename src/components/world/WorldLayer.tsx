@@ -1,24 +1,32 @@
 import { useEffect } from 'react';
 
 /**
- * Fixed world behind all content. Current scope (post-Phase-3 revert):
+ * Fixed world behind all content. Three stacked layers from back to front:
  *
- *   1. Base color — reads --world-bg (daytime cream, dusk indigo, moonlit navy)
- *   2. Wood-plank texture — barely-visible horizontal banding
- *   3. Window — top-right, gradient + stars (dusk/moonlit) + moon (moonlit)
- *   4. Lamp glow — bottom-right amber radial, dusk/moonlit only
+ *   1. Room images — four `<div>`s absolutely positioned with
+ *      background-image per room (gym/apex/gale/metheus). Each has
+ *      opacity: 0 except the active one, driven by body[data-room].
+ *      Gym is the hero/default when no room is focused. Crossfades via
+ *      400ms opacity transition = the "door-step" feel without motion.
  *
- * Deliberately minimal. The full "cozy Stardew interior" requires drawn
- * room backgrounds (960×540 PNG per agent) which are out-of-scope for
- * Claude Code to generate. Those land in Phase 3.1 once Brandon's
- * PixelLab work or commissioned art delivers. At that point this layer
- * gets one additional element — a fixed background image crossfaded per
- * body[data-room]; the time-of-day tokens become tint overlays instead
- * of bg replacements.
+ *   2. Time-of-day tint — one semi-transparent color overlay driven by
+ *      body[data-mode]. Warm amber wash for dusk, cool navy for moonlit,
+ *      transparent for daytime. Room art stays the constant; light
+ *      changes.
  *
- * Until then, this scaffolding gives "evening room with a window and a
- * lamp" without pretending to be three distinct rooms.
+ *   3. Visibility pause — toggles body.tab-hidden on visibilitychange
+ *      so future particle animations (Phase 4 weather) can pause.
+ *
+ * All pixel art renders with image-rendering: pixelated for crisp scale.
  */
+
+const ROOMS = [
+  { id: 'gym', url: '/rooms/gym.png' },
+  { id: 'apex', url: '/rooms/apex.png' },
+  { id: 'gale', url: '/rooms/gale.png' },
+  { id: 'metheus', url: '/rooms/metheus.png' },
+] as const;
+
 export function WorldLayer() {
   useEffect(() => {
     const onVisibility = () => {
@@ -32,107 +40,41 @@ export function WorldLayer() {
     <div
       aria-hidden
       className="fixed inset-0 -z-10 pointer-events-none overflow-hidden"
+      style={{ backgroundColor: '#0a0a0a' }}
     >
-      {/* Base color layer */}
-      <div
-        className="absolute inset-0 transition-colors duration-300"
-        style={{ backgroundColor: 'var(--world-bg)' }}
-      />
-
-      {/* Wood-plank texture — horizontal repeating gradient, very low opacity.
-          Gives the world a surface feel without being a literal wood image. */}
-      <div
-        className="gym-wood absolute inset-0 transition-opacity duration-300"
-        style={{
-          backgroundImage: `repeating-linear-gradient(
-            0deg,
-            transparent 0 72px,
-            rgba(120, 80, 40, 0.14) 72px 74px,
-            transparent 74px 148px,
-            rgba(120, 80, 40, 0.07) 148px 150px
-          )`,
-          mixBlendMode: 'overlay',
-        }}
-      />
-
-      {/* Window — top right. Inner glass gradient + cross panes + stars.
-          Visible only in dusk and moonlit (daytime we're facing away).
-          Will be replaced with a weather-reactive component in Phase 4. */}
-      <div
-        className="gym-window absolute top-24 right-6 w-28 h-36 transition-opacity duration-300"
-        style={{ imageRendering: 'pixelated' }}
-      >
+      {/* Room layer — four stacked background divs, one per room.
+          Active visibility is controlled purely by body[data-room] via
+          CSS; NO inline opacity here, because inline styles beat class
+          selectors and would permanently pin a room to 0. */}
+      {ROOMS.map((room) => (
         <div
-          className="absolute inset-0 rounded-sm"
+          key={room.id}
+          className={`gym-room-bg gym-room-bg--${room.id} absolute inset-0`}
           style={{
-            border: '4px solid hsl(28 35% 22%)',
-            boxShadow:
-              '0 3px 0 hsl(28 35% 16%), inset 0 0 0 1px hsl(28 35% 35%)',
+            backgroundImage: `url(${room.url})`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            imageRendering: 'pixelated',
           }}
         />
-        <div className="gym-window-pane absolute inset-1 overflow-hidden">
-          <div
-            className="absolute left-0 right-0"
-            style={{
-              top: 'calc(50% - 1.5px)',
-              height: '3px',
-              backgroundColor: 'hsl(28 35% 22%)',
-            }}
-          />
-          <div
-            className="absolute top-0 bottom-0"
-            style={{
-              left: 'calc(50% - 1.5px)',
-              width: '3px',
-              backgroundColor: 'hsl(28 35% 22%)',
-            }}
-          />
-          {[
-            { top: '12%', left: '22%' },
-            { top: '18%', left: '70%' },
-            { top: '28%', left: '40%' },
-            { top: '35%', left: '82%' },
-            { top: '40%', left: '15%' },
-          ].map((s, i) => (
-            <span
-              key={i}
-              className="gym-star absolute"
-              style={{
-                top: s.top,
-                left: s.left,
-                width: '2px',
-                height: '2px',
-              }}
-            />
-          ))}
-          <span
-            className="gym-moon absolute transition-opacity duration-300"
-            style={{
-              top: '14%',
-              right: '18%',
-              width: '14px',
-              height: '14px',
-              borderRadius: '50%',
-              background:
-                'radial-gradient(circle at 35% 35%, hsl(48 80% 92%) 0%, hsl(48 50% 75%) 70%, transparent 100%)',
-              boxShadow: '0 0 8px rgba(220, 220, 255, 0.4)',
-            }}
-          />
-        </div>
-      </div>
+      ))}
 
-      {/* Lamp glow — bottom-right radial amber */}
+      {/* Time-of-day tint overlay — multiply blend so dusk/moonlit
+          genuinely darken the art (like dim ambient light), rather than
+          washing it out with a flat color. Driven by body[data-mode]. */}
       <div
-        className="gym-lamp-glow absolute transition-opacity duration-300"
-        style={{
-          bottom: '-10%',
-          right: '-10%',
-          width: '60vh',
-          height: '60vh',
-          background:
-            'radial-gradient(circle at 65% 65%, color-mix(in srgb, var(--color-metheus) 50%, transparent) 0%, color-mix(in srgb, var(--color-metheus) 12%, transparent) 40%, transparent 70%)',
-          pointerEvents: 'none',
-        }}
+        className="gym-tint-overlay absolute inset-0 transition-colors duration-500"
+        aria-hidden
+      />
+
+      {/* Light-source glow — simulates sunset through window (dusk) or
+          moonbeam (moonlit). Positioned center-top because most of our
+          room art places windows along the back wall. Invisible in
+          daytime. */}
+      <div
+        className="gym-light-source absolute inset-0 transition-opacity duration-500"
+        aria-hidden
       />
     </div>
   );

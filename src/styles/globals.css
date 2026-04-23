@@ -24,29 +24,129 @@
   --color-metheus: hsl(35 75% 55%);
 }
 
-/* World layer tokens — overridden per time-of-day mode on <body> */
+/* World-layer tokens + time-of-day lighting.
+   Key principle for smooth transitions: mix-blend-mode and filter values
+   stay STABLE across modes. Blend mode is always `multiply`. Filter is
+   always `brightness(x) saturate(y)` — never `none`. Only the numeric
+   values change, which animates smoothly (no flash on daytime swap). */
 :root {
-  --world-bg: hsl(38 45% 96%);
-  --world-surface: hsl(36 33% 92%);
-  --world-ink: hsl(25 25% 18%);
+  --world-ink: hsl(40 50% 95%); /* chrome text above the art (not inside cards) */
 }
 
-/* Dusk — 7pm, lamp-lit, warm indigo. The brand hero mode.
-   Lifted from 14% → 19% L and warmed toward indigo so the cream card
-   feels cozy (not just high-contrast) against the wall. */
-body[data-mode="dusk"] {
-  --world-bg: hsl(218 30% 19%);
-  --world-surface: hsl(30 25% 18%);
-  --world-ink: hsl(40 50% 92%);
+/* Room background opacity — CSS drives this completely, no inline styles.
+   Gym is the hero/default; only the active agent's room fades in over it. */
+.gym-room-bg {
+  opacity: 0;
+  transition: opacity 500ms ease, filter 300ms ease;
+  will-change: opacity, filter;
+}
+.gym-room-bg--gym {
+  opacity: 1; /* default when no data-room is set */
 }
 
-/* Moonlit — 2am, cold navy, late-night watch. Pushed cooler and deeper
-   than dusk so the gap lands on OLED at arm's length: ~12% lightness
-   step + 7° hue shift toward pure navy. */
-body[data-mode="moonlit"] {
-  --world-bg: hsl(225 45% 7%);
-  --world-surface: hsl(22 30% 12%);
-  --world-ink: hsl(42 40% 88%);
+/* When an agent's room is active: gym fades out, that agent's room fades in. */
+body[data-room="apex"] .gym-room-bg--gym,
+body[data-room="gale"] .gym-room-bg--gym,
+body[data-room="metheus"] .gym-room-bg--gym {
+  opacity: 0;
+}
+body[data-room="apex"] .gym-room-bg--apex {
+  opacity: 1;
+}
+body[data-room="gale"] .gym-room-bg--gale {
+  opacity: 1;
+}
+body[data-room="metheus"] .gym-room-bg--metheus {
+  opacity: 1;
+}
+
+/* Tint overlay — kept mounted with multiply blend always. Only the
+   background-color changes across modes (transparent → warm → cool),
+   which animates smoothly via transition. */
+.gym-tint-overlay {
+  background-color: transparent;
+  mix-blend-mode: multiply;
+  transition: background-color 300ms ease;
+  will-change: background-color;
+}
+
+/* Light-source glow — same pattern: always mounted, opacity-driven. */
+.gym-light-source {
+  opacity: 0;
+  transition: opacity 300ms ease, background 300ms ease;
+  will-change: opacity, background;
+}
+
+/* ---- Daytime: bright, neutral, no overlay, no glow ---- */
+body[data-mode="daytime"] .gym-room-bg {
+  filter: brightness(1) saturate(1);
+}
+body[data-mode="daytime"] .gym-tint-overlay {
+  background-color: transparent;
+}
+body[data-mode="daytime"] .gym-light-source {
+  opacity: 0;
+}
+
+/* ---- Dusk: visibly darker + warmer + sunset glow in upper-right ----
+   Brightness DROPS (not up) — real dusk is dimmer. Saturation lifts
+   so the warm tones catch. Tint wash is warm amber through multiply. */
+body[data-mode="dusk"] .gym-room-bg {
+  filter: brightness(0.86) saturate(1.15);
+}
+body[data-mode="dusk"] .gym-tint-overlay {
+  background-color: hsl(22 60% 58%);
+}
+body[data-mode="dusk"] .gym-light-source {
+  background: radial-gradient(
+    ellipse at 72% 26%,
+    rgba(255, 195, 105, 0.42) 0%,
+    rgba(255, 165, 75, 0.16) 30%,
+    transparent 62%
+  );
+  opacity: 1;
+}
+
+/* ---- Moonlit: dramatically dim + cool + desaturated + moonbeam +
+   subtle corner vignette. This is the "2am" mode — reads as lights off,
+   only ambient light remaining. */
+body[data-mode="moonlit"] .gym-room-bg {
+  filter: brightness(0.58) saturate(0.75);
+}
+body[data-mode="moonlit"] .gym-tint-overlay {
+  background-color: hsl(222 55% 32%);
+}
+body[data-mode="moonlit"] .gym-light-source {
+  background:
+    radial-gradient(
+      ellipse at 50% 18%,
+      rgba(210, 225, 255, 0.28) 0%,
+      rgba(160, 190, 240, 0.08) 32%,
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse at center,
+      transparent 45%,
+      rgba(0, 0, 0, 0.35) 100%
+    );
+  opacity: 1;
+}
+
+/* ---- Room crossfade driven by body[data-room] ----
+   Default: gym is visible, others hidden. When scroll selects an agent,
+   that agent's room fades in while gym fades out. 500ms transition
+   matches the duration-500 class set inline on the divs. */
+
+body[data-room="apex"] .gym-room-bg--gym,
+body[data-room="gale"] .gym-room-bg--gym,
+body[data-room="metheus"] .gym-room-bg--gym {
+  opacity: 0;
+}
+
+body[data-room="apex"] .gym-room-bg--apex,
+body[data-room="gale"] .gym-room-bg--gale,
+body[data-room="metheus"] .gym-room-bg--metheus {
+  opacity: 1;
 }
 
 /* Respect reduced motion per spec §4.5 */
@@ -66,88 +166,6 @@ body.tab-hidden .ambient-motion {
   animation-play-state: paused !important;
 }
 
-/* ---- Cozy world atmospheric elements, scoped per time-of-day mode ----
-   These overrides control the World Layer's window, lamp, wood, moon,
-   and stars so the same three DOM elements read differently in each
-   mode (per spec §2.1 "same room, different times of day"). */
-
-/* Baseline/daytime: no window, no lamp, faint wood grain only.
-   In daytime we're indoors with the sun overhead — the window is not
-   the focal point and its night-sky gradient would fight the cream bg. */
-body[data-mode="daytime"] .gym-window {
-  opacity: 0;
-}
-body[data-mode="daytime"] .gym-lamp-glow {
-  opacity: 0;
-}
-body[data-mode="daytime"] .gym-wood {
-  opacity: 0.06;
-}
-body[data-mode="daytime"] .gym-star,
-body[data-mode="daytime"] .gym-moon {
-  opacity: 0;
-}
-
-/* Dusk: warm lamp on, amber light spilling; window shows warm-blue twilight
-   gradient (sky still fading from sunset). Stars barely visible. */
-body[data-mode="dusk"] .gym-window {
-  opacity: 1;
-}
-body[data-mode="dusk"] .gym-window-pane {
-  background: linear-gradient(
-    180deg,
-    hsl(220 55% 14%) 0%,
-    hsl(25 65% 42%) 75%,
-    hsl(20 60% 35%) 100%
-  );
-}
-body[data-mode="dusk"] .gym-lamp-glow {
-  opacity: 0.75;
-}
-body[data-mode="dusk"] .gym-wood {
-  opacity: 0.18;
-}
-body[data-mode="dusk"] .gym-star {
-  background-color: hsl(48 80% 85%);
-  opacity: 0.6;
-}
-body[data-mode="dusk"] .gym-moon {
-  opacity: 0;
-}
-
-/* Moonlit: lamp dimmer (only ambient light left), window shows full
-   night sky gradient + moon. Stars brighter because no sunset competes. */
-body[data-mode="moonlit"] .gym-window {
-  opacity: 1;
-}
-body[data-mode="moonlit"] .gym-window-pane {
-  background: linear-gradient(
-    180deg,
-    hsl(225 55% 6%) 0%,
-    hsl(225 45% 11%) 100%
-  );
-}
-body[data-mode="moonlit"] .gym-lamp-glow {
-  opacity: 0.45;
-}
-body[data-mode="moonlit"] .gym-wood {
-  opacity: 0.12;
-}
-body[data-mode="moonlit"] .gym-star {
-  background-color: hsl(48 60% 95%);
-  opacity: 1;
-}
-body[data-mode="moonlit"] .gym-moon {
-  opacity: 1;
-}
-
-/* ---- Per-agent room hooks (infrastructure only) ----
-   IntersectionObserver sets body[data-room="<id>"] as the user scrolls
-   through the roster. Currently no visual effect — once the three
-   agent-room background PNGs exist, this attribute will drive a
-   crossfade of the room background image. Left as a dormant hook so
-   Phase 3.1 wire-up is a one-line change per room. */
-
 /* In-Battle pill pulse — dual-signal: opacity breathing + a ring-ripple
    that expands outward from the pill. Intentionally louder than a pure
    breathing cycle so a viewer notices it without being told — per
@@ -166,10 +184,37 @@ body[data-mode="moonlit"] .gym-moon {
   animation: in-battle-pulse 1.8s ease-out infinite;
 }
 
+/* --- Phase-3 mobile framing (peer-review R3) ---
+   On phones the expanded card covered ~70% of the viewport, burying the
+   room art the user just expanded into. Cap expanded content height so
+   the top ~42vh stays pure room — a lightweight preview of the Phase-5
+   bottom-sheet.
+
+   Note on R3's per-room vertical background-position tweaks: with a 16:9
+   source (960x540) and a 9:19 portrait viewport, `background-size: cover`
+   scales to match VERTICAL height, so there is zero vertical overflow to
+   reposition against. Only HORIZONTAL position matters on portrait. We
+   therefore apply a horizontal shift on Apex only (his punching bag sits
+   right of center and otherwise gets cropped); gym/gale/metheus already
+   have their focal element horizontally centered. */
+@media (max-width: 767px) {
+  .agent-card-expanded {
+    max-height: 58vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+
+@media (orientation: portrait) {
+  .gym-room-bg--apex {
+    background-position: 62% 50%;
+  }
+}
+
 /* Baseline body styling */
 body {
   margin: 0;
-  background-color: var(--world-bg);
+  background-color: #0a0a0a; /* fallback black beyond room image edges */
   color: var(--world-ink);
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;

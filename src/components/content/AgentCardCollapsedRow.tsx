@@ -20,7 +20,7 @@ export function AgentCardCollapsedRow({ agent, onBattleTap }: Props) {
 
   return (
     <div className="flex items-center gap-3 p-3">
-      <AgentAvatar id={agent.id} name={agent.name} size={48} />
+      <AgentAvatar id={agent.id} name={agent.name} spriteUrl={agent.sprite_url} size={48} />
       <div className="flex-1 min-w-0">
         <div className="flex items-baseline flex-wrap gap-2">
           <span

@@ -1,19 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { WorldLayer } from '@/components/world/WorldLayer';
 import { useTimeOfDay } from '@/hooks/useTimeOfDay';
 import { AgentCard } from '@/components/content/AgentCard';
 import { TrustStrip } from '@/components/content/TrustStrip';
-import { RoomSection } from '@/components/rooms/RoomSection';
 import { mockLeaderboard } from '@/lib/mockData';
+import type { AgentId } from '@/lib/types';
 import type { WorldMode } from '@/lib/timeOfDay';
 
-/**
- * Trading Gym V1 — the roster screen.
- * Fixed world layer behind, sticky TrustStrip on top, three collapsed
- * AgentCards (Apex, Gale, Metheus). Phase 3 will wrap each card in a
- * RoomSection so the world layer accent shifts as you scroll between
- * agents. Phase 5 will wire the in-battle pill tap to the BattleArena.
- */
 export default function App() {
   const autoMode = useTimeOfDay();
   const [override, setOverride] = useState<WorldMode | null>(null);
@@ -22,6 +15,24 @@ export default function App() {
   }
   const effectiveMode = override ?? autoMode;
   const data = mockLeaderboard;
+
+  // Single-expansion state. Only one agent can be "in focus" at a time —
+  // expanding a card drops you into that agent's room (world-layer
+  // background swaps via body[data-room]). Collapsing returns to the
+  // communal gym default.
+  const [expandedAgentId, setExpandedAgentId] = useState<AgentId | null>(null);
+
+  useEffect(() => {
+    if (expandedAgentId) {
+      document.body.dataset.room = expandedAgentId;
+    } else {
+      delete document.body.dataset.room;
+    }
+  }, [expandedAgentId]);
+
+  const handleToggle = (id: AgentId) => {
+    setExpandedAgentId((curr) => (curr === id ? null : id));
+  };
 
   return (
     <>
@@ -33,27 +44,47 @@ export default function App() {
         <TrustStrip data={data} />
 
         <main className="px-4 pt-6 pb-10 space-y-4">
-          <header>
+          {/* Title sits in a paper pill so it reads on any room art in
+              any time-of-day mode. Without this the white title got
+              lost against the light-wood wall of the communal gym. */}
+          <header
+            className="inline-block rounded-2xl px-4 py-3"
+            style={{
+              backgroundColor: 'color-mix(in srgb, var(--color-paper) 76%, transparent)',
+              color: 'var(--color-ink)',
+              backdropFilter: 'blur(4px)',
+              WebkitBackdropFilter: 'blur(4px)',
+            }}
+          >
             <h1 className="text-3xl" style={{ fontFamily: 'var(--font-display)' }}>
               The Trading Gym
             </h1>
-            <p className="mt-1 text-sm opacity-80">
+            <p
+              className="mt-1 text-sm"
+              style={{ color: 'var(--color-ink-muted)' }}
+            >
               Three agents. Live markets. Documented in public.
             </p>
           </header>
 
-          {/* Dev-only mode switcher — removed in Phase 3 when RoomSection
-              takes over the role of making all three modes testable.
-              Label text inherits from world (cream in dusk, charcoal in
-              daytime) at 70% opacity; buttons are cream-raised pills so
-              they read against any world mode. */}
+          {/* Dev-only mode switcher; the buttons themselves are cream
+              pills so they read above any world mode. */}
           <div
-            className="flex flex-wrap items-center gap-2 text-[11px] opacity-70"
-            style={{ color: 'var(--world-ink)' }}
+            className="flex flex-wrap items-center gap-2 text-[11px]"
+            style={{
+              color: 'var(--color-ink)',
+              backgroundColor: 'color-mix(in srgb, var(--color-paper) 82%, transparent)',
+              padding: '8px 10px',
+              borderRadius: '12px',
+              backdropFilter: 'blur(4px)',
+              WebkitBackdropFilter: 'blur(4px)',
+            }}
           >
             <span>
               Mode: <strong>{effectiveMode}</strong>{' '}
-              {override ? '(forced)' : '(auto)'}
+              <em style={{ color: 'var(--color-ink-muted)' }}>
+                {override ? '(forced)' : '(auto)'}
+              </em>
             </span>
             {(['daytime', 'dusk', 'moonlit'] as const).map((m) => (
               <button
@@ -67,7 +98,6 @@ export default function App() {
                       ? 'var(--color-paper-raised)'
                       : 'var(--color-paper)',
                   color: 'var(--color-ink)',
-                  opacity: 1,
                 }}
               >
                 {m}
@@ -78,35 +108,31 @@ export default function App() {
                 setOverride(null);
                 document.body.dataset.mode = autoMode;
               }}
-              className="px-2 py-0.5 rounded-md border"
+              className="px-2 py-0.5 rounded-md border opacity-70"
               style={{
                 borderColor: 'var(--color-border-default)',
                 backgroundColor: 'var(--color-paper)',
                 color: 'var(--color-ink)',
-                opacity: 0.7,
               }}
             >
               auto
             </button>
           </div>
 
-          {/* Roster stays tight (Phase 2 density). Each card is wrapped
-              in a RoomSection for the IntersectionObserver hook only —
-              sections take natural card height so "three cards in one
-              thumb-zone" holds on 375px phones. When the per-agent room
-              backgrounds arrive, the body[data-room] attribute set by
-              the observer will drive a crossfade of the background
-              image behind these stacked cards. */}
+          {/* Tight card stacking. Click a card to expand — that swaps
+              the world-layer room to that agent's personal room.
+              Collapsing returns to the communal gym. */}
           <div className="space-y-3">
             {data.agents.map((agent) => (
-              <RoomSection key={agent.id} room={agent.id}>
-                <AgentCard agent={agent} />
-              </RoomSection>
+              <AgentCard
+                key={agent.id}
+                agent={agent}
+                expanded={expandedAgentId === agent.id}
+                onToggle={() => handleToggle(agent.id)}
+              />
             ))}
           </div>
 
-          {/* Social-proof footer — per spec §6 TrustStrip has counts; this
-              is the complementary "credibility grammar" shelf. */}
           <footer
             className="grid grid-cols-3 gap-2 mt-6 text-[11px] text-center"
             style={{ color: 'var(--color-ink-muted)' }}
@@ -118,8 +144,10 @@ export default function App() {
                   key={a.id}
                   className="p-2 rounded-lg border"
                   style={{
-                    backgroundColor: 'color-mix(in srgb, var(--color-paper) 60%, transparent)',
+                    backgroundColor: 'color-mix(in srgb, var(--color-paper) 82%, transparent)',
                     borderColor: 'var(--color-border-default)',
+                    backdropFilter: 'blur(4px)',
+                    WebkitBackdropFilter: 'blur(4px)',
                   }}
                 >
                   <div
@@ -134,8 +162,10 @@ export default function App() {
             <div
               className="p-2 rounded-lg border col-span-1"
               style={{
-                backgroundColor: 'color-mix(in srgb, var(--color-paper) 60%, transparent)',
+                backgroundColor: 'color-mix(in srgb, var(--color-paper) 82%, transparent)',
                 borderColor: 'var(--color-border-default)',
+                backdropFilter: 'blur(4px)',
+                WebkitBackdropFilter: 'blur(4px)',
               }}
             >
               <div
