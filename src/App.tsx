@@ -3,7 +3,7 @@ import { WorldLayer } from '@/components/world/WorldLayer';
 import { useTimeOfDay } from '@/hooks/useTimeOfDay';
 import { AgentCard } from '@/components/content/AgentCard';
 import { TrustStrip } from '@/components/content/TrustStrip';
-import { mockLeaderboard } from '@/lib/mockData';
+import { useAgentData } from '@/lib/useAgentData';
 import type { AgentId } from '@/lib/types';
 import type { WorldMode } from '@/lib/timeOfDay';
 
@@ -14,7 +14,11 @@ export default function App() {
     document.body.dataset.mode = override;
   }
   const effectiveMode = override ?? autoMode;
-  const data = mockLeaderboard;
+  // Hook returns mockLeaderboard as fallback when Supabase is
+  // unconfigured or a query fails, so downstream components always
+  // see a valid LeaderboardResponse shape. `source` lets the dev
+  // mode switcher show whether we're on live or mock data.
+  const { data, source, error: dataError } = useAgentData();
 
   // Single-expansion state. Only one agent can be "in focus" at a time —
   // expanding a card drops you into that agent's room (world-layer
@@ -85,6 +89,17 @@ export default function App() {
               <em style={{ color: 'var(--color-ink-muted)' }}>
                 {override ? '(forced)' : '(auto)'}
               </em>
+              {' · '}
+              Data:{' '}
+              <strong style={{ color: source === 'live' ? 'var(--color-gain)' : 'var(--color-ink-muted)' }}>
+                {source}
+              </strong>
+              {dataError && (
+                <em style={{ color: 'var(--color-loss)' }} title={dataError}>
+                  {' '}
+                  (err)
+                </em>
+              )}
             </span>
             {(['daytime', 'dusk', 'moonlit'] as const).map((m) => (
               <button
