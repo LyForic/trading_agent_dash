@@ -4,7 +4,9 @@ import { useTimeOfDay } from '@/hooks/useTimeOfDay';
 import { AgentCard } from '@/components/content/AgentCard';
 import { TrustStrip } from '@/components/content/TrustStrip';
 import { FooterTicker } from '@/components/content/FooterTicker';
+import { VisitDeltaStrip } from '@/components/content/VisitDeltaStrip';
 import { useAgentData } from '@/lib/useAgentData';
+import { useVisitDelta } from '@/lib/useVisitDelta';
 import type { AgentId } from '@/lib/types';
 import type { WorldMode } from '@/lib/timeOfDay';
 
@@ -20,6 +22,7 @@ export default function App() {
   // see a valid LeaderboardResponse shape. `source` lets the dev
   // mode switcher show whether we're on live or mock data.
   const { data, source, error: dataError } = useAgentData();
+  const { delta, dismiss } = useVisitDelta(data, source);
 
   // Single-expansion state. Only one agent can be "in focus" at a time —
   // expanding a card drops you into that agent's room (world-layer
@@ -134,6 +137,8 @@ export default function App() {
               auto
             </button>
           </div>
+
+          <VisitDeltaStrip delta={delta} onDismiss={dismiss} />
 
           {/* Tight card stacking. Click a card to expand — that swaps
               the world-layer room to that agent's personal room.
