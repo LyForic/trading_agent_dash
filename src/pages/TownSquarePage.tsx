@@ -428,6 +428,51 @@ export function TownSquarePage() {
               );
             })}
 
+            {/* Grounding pad layer — under each house, above plaza. Renders before
+                the house sprite in DOM order AND has a lower z-index band. */}
+            {DESTINATIONS.filter((d) => d.groundingPad).map((dest) => {
+              const pad = dest.groundingPad!;
+              return (
+                <img
+                  key={`pad-${dest.id}`}
+                  src="/props/grounding-pad.png"
+                  alt=""
+                  className="town-grounding-pad"
+                  draggable={false}
+                  style={{
+                    left: pad.x,
+                    top: pad.y,
+                    width: pad.width,
+                    transform: `translate(-${pad.anchorX ?? 50}%, -${pad.anchorY ?? 100}%)`,
+                    zIndex: Z.groundingPad + Math.round(pad.y),
+                  }}
+                />
+              );
+            })}
+
+            {/* Diegetic prop layer — stones / mailbox / fence / debris. Overlaps
+                the seam where the house base meets the plaza. Shares the scene
+                layer band with houses + avatar for proper depth sort. */}
+            {DESTINATIONS.filter((d) => d.prop).map((dest) => {
+              const p = dest.prop!;
+              return (
+                <img
+                  key={`prop-${dest.id}`}
+                  src={p.src}
+                  alt=""
+                  className="town-house-prop"
+                  draggable={false}
+                  style={{
+                    left: p.x,
+                    top: p.y,
+                    width: p.width,
+                    transform: `translate(-${p.anchorX ?? 50}%, -${p.anchorY ?? 100}%)`,
+                    zIndex: Z.scene + Math.round(p.y) + (p.zOffset ?? 0),
+                  }}
+                />
+              );
+            })}
+
             {/* Avatar stays inside the world so it scales with
                 everything else; sprite size is 72 world-pixels, not
                 the 48 R4 shipped. */}
