@@ -3,71 +3,79 @@ import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useAgentData } from '@/lib/useAgentData';
 import { useVisitDelta } from '@/lib/useVisitDelta';
+import { useTimeOfDay } from '@/hooks/useTimeOfDay';
 import { AGENT_IDS, AGENT_META } from '@/lib/agentMeta';
 import type { AgentId } from '@/lib/types';
 
 /**
- * Town Square — the new entry point at `/`. Plaza exterior + three
- * agent-house sprites composited on top as `<Link>` tap targets, plus a
- * gym-facade hit target painted into the plaza art that routes to
- * `/gym` (the communal roster from Phase 0-3).
+ * Town Square — the new entry point at `/`. Full-bleed plaza exterior
+ * with house sprites composited as Link tap targets.
  *
- * House positions are expressed as percentages of the plaza rectangle
- * so the composition scales proportionally at any viewport width. The
- * plaza itself is a 200×112 PNG with `image-rendering: pixelated`,
- * scaled to fill the responsive container.
- *
- * Diegetic indicators this page ships with:
- *   - Pulse dots above houses whose agent has new settlements since
- *     the last visit (reuses `useVisitDelta`'s delta.perAgent)
- *   - Fountain glow modulated by aggregate P&L sign (warm for gain,
- *     cool for loss) — lives in CSS via body[data-plaza-mood]
- *
- * What this page does NOT do: render agent cards, trust strip, or the
- * footer ticker. Those live on `/gym`. The plaza is the overworld —
- * a curiosity surface, not a data dashboard.
+ * R3 revision per peer review:
+ *   - Full-bleed stage (100vw × 100dvh, object-fit cover). No blurred
+ *     backdrop letterbox — that frame felt like a web preview instead
+ *     of a world. The trade-off is that narrow portrait phones crop
+ *     some of the plaza's outer trees (an acceptable concession while
+ *     a dedicated portrait plaza is out of scope).
+ *   - Houses are FOOT-anchored (translate -50% -100%), so the (x, y)
+ *     coordinate represents where the front door touches the ground
+ *     at the path endpoint. This is what makes them sit in the world
+ *     instead of floating over it.
+ *   - Each house has a CSS ground shadow via ::after — the single
+ *     biggest fix for the "sticker" look.
+ *   - Z-index sorted by Y: houses lower on screen render on top of
+ *     houses higher up. This is Stardew's trick for depth illusion
+ *     without needing a perspective system.
+ *   - Time-of-day applies to the plaza, not just the interior rooms.
+ *     Dusk and moonlit tint the whole stage; houses dim with the same
+ *     brightness filter the rooms use; the lamp post glows warm at
+ *     dusk and cool at moonlit.
+ *   - Coming Soon is now a grayscale clone of Metheus's house with a
+ *     "?" overlay, not a dashed CSS box. Reads as "future building"
+ *     instead of "broken UI."
+ *   - Labels live on a separate absolute layer with z-index above all
+ *     houses — fixes Apex's label getting covered by Gale's sprite.
+ *   - Avatar placeholder at the lamp post: a small CSS marker with a
+ *     bob animation, ready to be replaced by a real pixel sprite when
+ *     /avatar/avatar-idle.png lands. Node-based tap-to-walk animation
+ *     and walk cycles are deferred to Phase 5.
  */
 
-// Four-corner spatial grammar per R2 feedback: agents at the corners,
-// plaza center left open (future avatar spawn / fountain focal point),
-// gym painted at top. Percentages are CENTER-anchored via CSS
-// translate(-50%, -50%) so a sprite placed at (18%, 50%) has its middle
-// at (18%, 50%) of the plaza and never overruns the stage edges.
-//
-//   Apex  NW (18%, 50%)       ·       Metheus  NE (82%, 50%)
-//   Gale  SW (18%, 80%)       ·       Coming-Soon  SE (82%, 80%)
-//
-// The NE/SW/SE positions are symmetric around the plaza center, and
-// the NW/NE pair stays below the painted gym facade at the top.
-const HOUSE_POSITIONS: Record<AgentId, { left: string; top: string }> = {
-  apex: { left: '18%', top: '50%' },
-  gale: { left: '18%', top: '80%' },
-  metheus: { left: '82%', top: '50%' },
+interface Node {
+  x: number; // % of viewport (stage)
+  y: number; // % of viewport (stage) — represents the house's FOOT (door on ground)
+  width: number; // % of viewport
+}
+
+// Foot-anchored positions for each destination. (x, y) is where the
+// front door meets the path/grass. translate(-50%, -100%) in CSS puts
+// the sprite above this anchor so it visually sits on the ground.
+const NODES: Record<AgentId | 'comingSoon', Node> = {
+  apex: { x: 16, y: 58, width: 18 },
+  metheus: { x: 84, y: 58, width: 18 },
+  gale: { x: 22, y: 93, width: 18 },
+  comingSoon: { x: 78, y: 93, width: 18 },
 };
 
-// Future-tenant lot anchored in the SE corner, symmetric to Gale. Signals
-// "this world can grow" without needing a new art asset — CSS dashed plot
-// + "?" sign. Swap to a real house sprite whenever the fourth agent
-// launches.
-const COMING_SOON_POSITION = { left: '82%', top: '80%' };
+// Label position for each destination — offset slightly below the
+// foot anchor. Kept on a separate absolute layer with z-index above
+// all houses so a neighbor sprite can never clip a label.
+const LABEL_OFFSET_Y = 3; // % below foot
 
-// The gym facade in the plaza art sits at the top spanning ~center.
-// Hit target matches roughly where the double doors are painted; the
-// label pill sits at the bottom of the hit rect, just under the painted
-// doorway, so users can see the tap target is clickable.
-const GYM_FACADE_RECT = {
-  left: '32%',
-  top: '4%',
-  width: '36%',
-  height: '30%',
-};
+// Gym facade hit target sits over the painted double doors at the top
+// of the plaza. Tuned to the art; nudge if the plaza image changes.
+const GYM_LABEL = { x: 50, y: 30 };
+const GYM_HIT_RECT = { left: '34%', top: '4%', width: '32%', height: '28%' };
+
+// Avatar spawn near the lamp post (plaza center). Placeholder until
+// we have a real pixel avatar sprite in public/avatar/.
+const AVATAR_POSITION = { x: 50, y: 55 };
 
 export function TownSquarePage() {
+  const autoMode = useTimeOfDay();
   const { data, source } = useAgentData();
   const { delta } = useVisitDelta(data, source);
 
-  // Plaza mood = sign of aggregate P&L across agents. CSS uses
-  // body[data-plaza-mood] to dial the fountain glow warm vs cool.
   const totalPnl = useMemo(
     () => data.agents.reduce((s, a) => s + a.total_pnl, 0),
     [data.agents],
@@ -76,11 +84,15 @@ export function TownSquarePage() {
     totalPnl > 1 ? 'gain' : totalPnl < -1 ? 'loss' : 'even';
 
   useEffect(() => {
+    // Set time-of-day on body so plaza CSS rules fire. GymPage has its
+    // own override logic that will replace this when the user visits
+    // an interior route.
+    document.body.dataset.mode = autoMode;
+  }, [autoMode]);
+
+  useEffect(() => {
     document.body.dataset.plazaMood = mood;
     document.body.dataset.route = 'town-square';
-    // Plaza has its own world — make sure any lingering room/focus
-    // attributes from a prior navigation don't keep the old room art
-    // peeking through.
     delete document.body.dataset.room;
     delete document.body.dataset.focus;
     return () => {
@@ -89,42 +101,54 @@ export function TownSquarePage() {
     };
   }, [mood]);
 
-  // Which agents have new settlements since this user's last visit.
   const pulsingAgents = useMemo(() => {
     if (!delta) return new Set<AgentId>();
-    const s = new Set<AgentId>();
-    for (const a of delta.perAgent) s.add(a.id);
-    return s;
+    return new Set(delta.perAgent.map((a) => a.id));
   }, [delta]);
 
   return (
     <div className="town-square-page">
-      {/* Blurred plaza copy fills whatever space the contained stage
-          doesn't — so the letterbox reads as atmospheric depth instead
-          of empty chrome. Same image, downscaled and blurred. */}
-      <div className="town-square-backdrop" aria-hidden />
-
       <div className="town-square-stage">
-        {/* Plaza base — pixel-scaled background image */}
+        {/* Plaza base — full-bleed pixel-scaled background. */}
         <div className="town-square-bg" aria-hidden />
 
-        {/* Fountain glow — sits on top of the painted fountain in the
-            plaza art, tinted by plaza mood. CSS handles the positioning
-            and the warm/cool/neutral color via body[data-plaza-mood]. */}
-        <div className="town-square-fountain-glow ambient-motion" aria-hidden />
+        {/* Time-of-day tint — same multiply-blend pattern as the
+            interior rooms. Transparent at daytime, warm amber at
+            dusk, cool navy at moonlit. */}
+        <div className="town-square-tint" aria-hidden />
 
-        {/* Three house sprites as Link tap targets, one per agent. */}
+        {/* Lamp post warm glow — invisible at daytime, intense at
+            moonlit. Lives over the painted lamp in plaza center. */}
+        <div className="town-square-lamp-glow ambient-motion" aria-hidden />
+
+        {/* Avatar placeholder at the plaza center. A real 32×32 idle
+            sprite will replace this when /avatar/avatar-idle.png
+            lands; the position and z-index are already correct so it's
+            a one-line swap to an <img>. */}
+        <div
+          className="town-square-avatar"
+          style={{ left: `${AVATAR_POSITION.x}%`, top: `${AVATAR_POSITION.y}%` }}
+          aria-label="You are here"
+        />
+
+        {/* Houses — foot-anchored on path endpoints. Z-index derived
+            from y-position so houses lower on screen render over
+            houses higher up (Stardew depth trick). */}
         {AGENT_IDS.map((id) => {
-          const pos = HOUSE_POSITIONS[id];
-          const meta = AGENT_META[id];
+          const n = NODES[id];
           const pulsing = pulsingAgents.has(id);
           return (
             <Link
               key={id}
               to={`/${id}`}
-              aria-label={`Enter ${meta.name}'s room`}
+              aria-label={`Enter ${AGENT_META[id].name}'s room`}
               className="town-square-house"
-              style={{ left: pos.left, top: pos.top }}
+              style={{
+                left: `${n.x}%`,
+                top: `${n.y}%`,
+                width: `${n.width}%`,
+                zIndex: Math.round(n.y),
+              }}
             >
               {pulsing && <span className="house-new-pulse" aria-hidden />}
               <img
@@ -133,52 +157,99 @@ export function TownSquarePage() {
                 className="house-sprite"
                 draggable={false}
               />
-              <span className="house-label">{meta.name}</span>
             </Link>
           );
         })}
 
-        {/* Coming-Soon future-tenant lot — CSS-only placeholder (dashed
-            plot + "?" sign). Non-interactive; communicates growth. */}
+        {/* Coming Soon — grayscale clone of Metheus's house with a
+            "?" overlay. Non-interactive; signals future tenant
+            without breaking the 16-bit aesthetic. */}
         <div
-          className="town-square-coming-soon"
-          style={{ left: COMING_SOON_POSITION.left, top: COMING_SOON_POSITION.top }}
+          className="town-square-house town-square-coming-soon"
+          style={{
+            left: `${NODES.comingSoon.x}%`,
+            top: `${NODES.comingSoon.y}%`,
+            width: `${NODES.comingSoon.width}%`,
+            zIndex: Math.round(NODES.comingSoon.y),
+          }}
           role="img"
           aria-label="Future agent — arriving soon"
         >
-          <div className="coming-soon-plot" aria-hidden>
+          <img
+            src="/houses/metheus.png"
+            alt=""
+            className="house-sprite"
+            draggable={false}
+          />
+          <span className="coming-soon-mark" aria-hidden>
             ?
-          </div>
-          <span className="house-label coming-soon-label">Coming soon</span>
+          </span>
         </div>
 
-        {/* Gym facade hit target — routes to /gym. Now shows a visible
-            "Trading Gym" label pill at the bottom of the hit rect so
-            first-time users recognize the painted doors as tappable. */}
+        {/* Gym facade hit target — invisible rect over the painted
+            double doors at the top. */}
         <Link
           to="/gym"
           aria-label="Enter the communal gym"
           className="town-square-gym-hit"
-          style={GYM_FACADE_RECT}
-        >
-          <span className="town-square-gym-label">Trading Gym</span>
-        </Link>
-      </div>
+          style={GYM_HIT_RECT}
+        />
 
-      {/* Small welcome-back strip floating below the plaza when the
-          visitor has new activity since last session. Matches the
-          diegetic feel — sits on the cobblestone, not in chrome. */}
-      {delta && (
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.2 }}
-          className="town-square-welcome"
-          style={{ color: 'var(--world-ink)' }}
+        {/* Labels — separate layer, z-index above all houses.
+            Positioned below each house's foot anchor. Never clipped
+            by a neighbor sprite. */}
+        <Link
+          to="/gym"
+          className="town-square-label town-square-label--destination"
+          style={{ left: `${GYM_LABEL.x}%`, top: `${GYM_LABEL.y}%` }}
+          aria-hidden
+          tabIndex={-1}
         >
-          {delta.totalNewTrades} new trade{delta.totalNewTrades === 1 ? '' : 's'} since your last visit
-        </motion.div>
-      )}
+          Trading Gym
+        </Link>
+        {AGENT_IDS.map((id) => {
+          const n = NODES[id];
+          return (
+            <Link
+              key={`label-${id}`}
+              to={`/${id}`}
+              className="town-square-label town-square-label--destination"
+              style={{
+                left: `${n.x}%`,
+                top: `${n.y + LABEL_OFFSET_Y}%`,
+              }}
+              aria-hidden
+              tabIndex={-1}
+            >
+              {AGENT_META[id].name}
+            </Link>
+          );
+        })}
+        <span
+          className="town-square-label town-square-label--disabled"
+          style={{
+            left: `${NODES.comingSoon.x}%`,
+            top: `${NODES.comingSoon.y + LABEL_OFFSET_Y}%`,
+          }}
+        >
+          Coming soon
+        </span>
+
+        {/* Welcome-back strip — lives inside the stage so it sits on
+            the plaza cobblestone instead of in a separate chrome row
+            below. */}
+        {delta && (
+          <motion.div
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.2 }}
+            className="town-square-welcome"
+          >
+            {delta.totalNewTrades} new trade
+            {delta.totalNewTrades === 1 ? '' : 's'} since your last visit
+          </motion.div>
+        )}
+      </div>
     </div>
   );
 }
