@@ -46,3 +46,9 @@ lerna-debug.log*
 
 # Supabase CLI scratch state
 supabase/.temp/
+
+# Brainstorming session artifacts
+.superpowers/
+
+# Agent handoff scratch (codex-implement, etc.)
+.ai/

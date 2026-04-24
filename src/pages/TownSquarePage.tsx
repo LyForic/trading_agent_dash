@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useAgentData } from '@/lib/useAgentData';
 import { useVisitDelta } from '@/lib/useVisitDelta';
 import { useTimeOfDay } from '@/hooks/useTimeOfDay';
@@ -43,6 +43,17 @@ import type { AgentId } from '@/lib/types';
 const WORLD_W = 960;
 const WORLD_H = 540;
 
+// Layer band z-index model. Bands are spaced by >WORLD_HEIGHT (540) so
+// Math.round(y) depth sort within a band can never leak above the next
+// band. Example: grounding pad at y=477 → 1000+477 = 1477; scene house
+// at y=350 → 2000+350 = 2350. Pad always under scene regardless of y.
+const Z = {
+  plaza: 0,
+  groundingPad: 1000,
+  scene: 2000,
+  effects: 5000,
+} as const;
+
 // Plaza anchor points. Tuned against town-square.png where the four
 // diagonal paths terminate; nudged per R4 feedback so houses sit on
 // the dirt pads instead of on grass.
@@ -57,12 +68,34 @@ interface Destination {
   y: number;
   spriteWidth?: number;
   spriteSrc?: string;
+
+  /** Full display / aria name. */
   label: string;
+  /** Full accessibility label (more descriptive than visible label). */
+  ariaLabel?: string;
+
   route?: string;
   disabled?: boolean;
-  /** Sign y-offset below foot anchor. Gym sign sits above the lamp,
-   *  so its signY is computed separately in the HUD render. */
-  signOffsetY?: number;
+
+  /** Shared grounding pad under the house base. */
+  groundingPad?: {
+    x: number;
+    y: number;
+    width: number;
+    anchorX?: number;
+    anchorY?: number;
+  };
+
+  /** Diegetic prop breaking the house base seam. */
+  prop?: {
+    src: string;
+    x: number;
+    y: number;
+    width: number;
+    anchorX?: number;
+    anchorY?: number;
+    zOffset?: number;
+  };
 }
 
 const DESTINATIONS: Destination[] = [
@@ -71,6 +104,7 @@ const DESTINATIONS: Destination[] = [
     x: 480,
     y: 210,
     label: 'Trading Gym',
+    ariaLabel: 'Enter the Trading Gym communal roster',
     route: '/gym',
   },
   {
@@ -80,8 +114,10 @@ const DESTINATIONS: Destination[] = [
     spriteWidth: 180,
     spriteSrc: '/houses/apex.png',
     label: 'Apex',
+    ariaLabel: "Enter Apex's dojo",
     route: '/apex',
-    signOffsetY: 34,
+    groundingPad: { x: 180, y: 352, width: 160 },
+    prop: { src: '/props/apex-stones.png', x: 210, y: 358, width: 56 },
   },
   {
     id: 'metheus',
@@ -90,8 +126,10 @@ const DESTINATIONS: Destination[] = [
     spriteWidth: 180,
     spriteSrc: '/houses/metheus.png',
     label: 'Metheus',
+    ariaLabel: "Enter Metheus's study",
     route: '/metheus',
-    signOffsetY: 34,
+    groundingPad: { x: 780, y: 352, width: 160 },
+    prop: { src: '/props/metheus-mailbox.png', x: 755, y: 358, width: 48 },
   },
   {
     id: 'gale',
@@ -100,8 +138,10 @@ const DESTINATIONS: Destination[] = [
     spriteWidth: 155,
     spriteSrc: '/houses/gale.png',
     label: 'Gale',
+    ariaLabel: "Enter Gale's loft",
     route: '/gale',
-    signOffsetY: 30,
+    groundingPad: { x: 225, y: 477, width: 140 },
+    prop: { src: '/props/gale-fence.png', x: 260, y: 482, width: 56 },
   },
   {
     id: 'comingSoon',
@@ -110,8 +150,10 @@ const DESTINATIONS: Destination[] = [
     spriteWidth: 160,
     spriteSrc: '/houses/coming-soon-house.png',
     label: 'Coming soon',
+    ariaLabel: 'Future agent home coming soon',
     disabled: true,
-    signOffsetY: 30,
+    groundingPad: { x: 735, y: 477, width: 140 },
+    prop: { src: '/props/coming-soon-debris.png', x: 710, y: 482, width: 48 },
   },
 ];
 
@@ -145,7 +187,6 @@ export function TownSquarePage() {
 
   const viewportRef = useRef<HTMLDivElement>(null);
   const [viewport, setViewport] = useState({ w: 800, h: 600 });
-  const [scrollX, setScrollX] = useState(0);
 
   const [avatarPos, setAvatarPos] = useState(AVATAR_SPAWN);
   const [avatarFacing, setAvatarFacing] = useState<Facing>('south');
@@ -157,6 +198,17 @@ export function TownSquarePage() {
       return localStorage.getItem('plazaOnboarded') !== 'true';
     } catch {
       return true;
+    }
+  });
+
+  const [showPanHint, setShowPanHint] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    // Desktop: no hint.
+    if (window.matchMedia('(min-width: 768px)').matches) return false;
+    try {
+      return localStorage.getItem('panHintShown') !== 'true';
+    } catch {
+      return false;
     }
   });
 
@@ -174,6 +226,26 @@ export function TownSquarePage() {
     const t = window.setTimeout(() => setAvatarState('idle'), AVATAR_DROP_DURATION_MS);
     return () => window.clearTimeout(t);
   }, [avatarState]);
+
+  useEffect(() => {
+    if (showWelcome || !showPanHint) return;
+    const t = window.setTimeout(() => {
+      setShowPanHint(false);
+      // Only mark permanently shown if the user was actually visible-to-page
+      // when the timer fired. If they were tab-switched away, let them see it
+      // next visit. Graceful: document may not exist in SSR.
+      const isVisible =
+        typeof document !== 'undefined' && document.visibilityState === 'visible';
+      if (isVisible) {
+        try {
+          localStorage.setItem('panHintShown', 'true');
+        } catch {
+          // ignore storage failures
+        }
+      }
+    }, 4000);
+    return () => window.clearTimeout(t);
+  }, [showWelcome, showPanHint]);
 
   const dismissWelcome = useCallback(() => {
     try {
@@ -195,14 +267,6 @@ export function TownSquarePage() {
     return () => observer.disconnect();
   }, []);
 
-  // Scroll tracking — drives HUD label positions.
-  useEffect(() => {
-    const el = viewportRef.current;
-    if (!el) return;
-    const onScroll = () => setScrollX(el.scrollLeft);
-    el.addEventListener('scroll', onScroll, { passive: true });
-    return () => el.removeEventListener('scroll', onScroll);
-  }, []);
 
   const scale = useMemo(() => {
     if (viewport.w <= 0 || viewport.h <= 0) return 1;
@@ -224,7 +288,6 @@ export function TownSquarePage() {
       Math.min(worldDisplay.w - viewport.w, targetScroll),
     );
     el.scrollLeft = clamped;
-    setScrollX(clamped);
   }, [scale, viewport.w, worldDisplay.w]);
 
   // Body attributes.
@@ -279,11 +342,6 @@ export function TownSquarePage() {
     [avatarPos, isWalking, navigate, scale, viewport.w, worldDisplay.w],
   );
 
-  // Project a world (x, y) into viewport/screen coords so the HUD
-  // can paint labels that sit over the correct world feature.
-  const projectX = (worldX: number) => worldX * scale - scrollX;
-  const projectY = (worldY: number) => worldY * scale;
-
   return (
     <>
       <div ref={viewportRef} className="town-viewport">
@@ -317,6 +375,7 @@ export function TownSquarePage() {
                     className="town-gym-hit"
                     onClick={() => walkTo(dest)}
                     aria-label={dest.label}
+                    data-agent-name={dest.label}
                     style={{
                       left: dest.x - 180,
                       top: 50,
@@ -328,7 +387,7 @@ export function TownSquarePage() {
               }
               const isPulsing =
                 dest.id !== 'comingSoon' && pulsing.has(dest.id as AgentId);
-              const zIndex = Math.round(dest.y);
+              const zIndex = Z.scene + Math.round(dest.y);
               return (
                 <button
                   key={dest.id}
@@ -341,6 +400,7 @@ export function TownSquarePage() {
                       ? 'Future agent — arriving soon'
                       : `Enter ${dest.label}'s room`
                   }
+                  data-agent-name={dest.label}
                   style={{
                     left: dest.x,
                     top: dest.y,
@@ -359,6 +419,51 @@ export function TownSquarePage() {
               );
             })}
 
+            {/* Grounding pad layer — under each house, above plaza. Renders before
+                the house sprite in DOM order AND has a lower z-index band. */}
+            {DESTINATIONS.filter((d) => d.groundingPad).map((dest) => {
+              const pad = dest.groundingPad!;
+              return (
+                <img
+                  key={`pad-${dest.id}`}
+                  src="/props/grounding-pad.png"
+                  alt=""
+                  className="town-grounding-pad"
+                  draggable={false}
+                  style={{
+                    left: pad.x,
+                    top: pad.y,
+                    width: pad.width,
+                    transform: `translate(-${pad.anchorX ?? 50}%, -${pad.anchorY ?? 100}%)`,
+                    zIndex: Z.groundingPad + Math.round(pad.y),
+                  }}
+                />
+              );
+            })}
+
+            {/* Diegetic prop layer — stones / mailbox / fence / debris. Overlaps
+                the seam where the house base meets the plaza. Shares the scene
+                layer band with houses + avatar for proper depth sort. */}
+            {DESTINATIONS.filter((d) => d.prop).map((dest) => {
+              const p = dest.prop!;
+              return (
+                <img
+                  key={`prop-${dest.id}`}
+                  src={p.src}
+                  alt=""
+                  className="town-house-prop"
+                  draggable={false}
+                  style={{
+                    left: p.x,
+                    top: p.y,
+                    width: p.width,
+                    transform: `translate(-${p.anchorX ?? 50}%, -${p.anchorY ?? 100}%)`,
+                    zIndex: Z.scene + Math.round(p.y) + (p.zOffset ?? 0),
+                  }}
+                />
+              );
+            })}
+
             {/* Avatar stays inside the world so it scales with
                 everything else; sprite size is 72 world-pixels, not
                 the 48 R4 shipped. */}
@@ -374,6 +479,7 @@ export function TownSquarePage() {
                 top: avatarPos.y,
                 width: AVATAR_SIZE,
                 height: AVATAR_SIZE,
+                zIndex: Z.scene + Math.round(avatarPos.y),
               }}
             />
           </div>
@@ -385,32 +491,6 @@ export function TownSquarePage() {
           welcome-back bulletin, and the ambient leaf particles live
           here. */}
       <div className="town-hud" aria-hidden="false">
-        {/* Wooden signpost labels — projected from world coords. Gym
-            sign sits higher than its foot anchor so it doesn't clip
-            the lamp post. */}
-        {DESTINATIONS.map((dest) => {
-          const isGym = dest.id === 'gym';
-          const screenX = projectX(dest.x);
-          const screenY = isGym
-            ? projectY(dest.y - 60) // lift the Gym sign above the lamp
-            : projectY(dest.y + (dest.signOffsetY ?? 30));
-          return (
-            <button
-              key={`hud-sign-${dest.id}`}
-              type="button"
-              className={`town-sign-hud${dest.disabled ? ' town-sign-hud--disabled' : ''}`}
-              onClick={() => {
-                if (!dest.disabled) walkTo(dest);
-              }}
-              disabled={dest.disabled}
-              style={{ left: screenX, top: screenY }}
-              aria-label={dest.label}
-            >
-              {dest.label}
-            </button>
-          );
-        })}
-
         {delta && (
           <motion.div
             key="welcome-back"
@@ -439,6 +519,21 @@ export function TownSquarePage() {
               }}
             />
           ))}
+
+        <AnimatePresence>
+          {showPanHint && !showWelcome && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+              transition={{ duration: 0.35 }}
+              className="town-pan-hint"
+              aria-hidden="true"
+            >
+              ← Drag to explore →
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <WelcomeModal show={showWelcome} onDismiss={dismissWelcome} />

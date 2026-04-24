@@ -37,7 +37,7 @@
    Gym is the hero/default; only the active agent's room fades in over it. */
 .gym-room-bg {
   opacity: 0;
-  transition: opacity 500ms ease, filter 300ms ease;
+  transition: opacity 500ms ease, filter 1500ms ease;
   will-change: opacity, filter;
 }
 .gym-room-bg--gym {
@@ -593,7 +593,7 @@ body[data-room="gale"] .weather-window {
   background-size: 100% 100%;
   background-repeat: no-repeat;
   image-rendering: pixelated;
-  transition: filter 500ms ease;
+  transition: filter 1500ms ease;
   z-index: 0;
 }
 body[data-mode="dusk"] .town-world-bg {
@@ -647,6 +647,23 @@ body[data-mode="moonlit"] .town-world-lamp-glow {
   opacity: 1;
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes lamp-flicker-dusk {
+    0%, 100% { opacity: 0.88; transform: translate(-50%, -50%) scale(0.98); }
+    50%      { opacity: 1.0;  transform: translate(-50%, -50%) scale(1.02); }
+  }
+  @keyframes lamp-flicker-moonlit {
+    0%, 100% { opacity: 0.75; transform: translate(-50%, -50%) scale(0.98); }
+    50%      { opacity: 1.0;  transform: translate(-50%, -50%) scale(1.02); }
+  }
+  body[data-mode="dusk"] .town-world-lamp-glow {
+    animation: hotspot-breathe 5s ease-in-out infinite, lamp-flicker-dusk 2.4s ease-in-out infinite;
+  }
+  body[data-mode="moonlit"] .town-world-lamp-glow {
+    animation: hotspot-breathe 5s ease-in-out infinite, lamp-flicker-moonlit 2.4s ease-in-out infinite;
+  }
+}
+
 /* Invisible gym hit target — fully transparent even on hover/focus.
    Peer review flagged R4's warm-tint hover as a white rectangle over
    the gym facade; the HUD sign is the visible affordance now. */
@@ -677,22 +694,9 @@ body[data-mode="moonlit"] .town-world-lamp-glow {
   padding: 0;
   margin: 0;
   cursor: pointer;
-  transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1), filter 500ms ease;
+  transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1), filter 1500ms ease;
   will-change: transform;
   line-height: 0;
-}
-.town-house::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: -6px;
-  width: 72%;
-  height: 14px;
-  transform: translateX(-50%);
-  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.5) 0%, transparent 70%);
-  filter: blur(2px);
-  pointer-events: none;
-  z-index: -1;
 }
 .town-house:hover,
 .town-house:focus-visible {
@@ -709,6 +713,50 @@ body[data-mode="moonlit"] .town-world-lamp-glow {
 .town-house--disabled:focus-visible {
   transform: translate(-50%, -100%);
 }
+
+/* Desktop hover tooltip — shows the destination name on mouseover.
+   Suppressed on touch devices (pointer: coarse) so mobile users don't
+   see stale labels. Applies to both .town-house (agent homes) and
+   .town-gym-hit (the gym facade hit target) for consistency.
+   Uses data-agent-name attribute on each interactive button. */
+@media (pointer: fine) {
+  .town-house::after,
+  .town-gym-hit::after {
+    content: attr(data-agent-name);
+    position: absolute;
+    bottom: calc(100% + 12px);
+    left: 50%;
+    transform: translateX(-50%);
+    display: inline-block;
+    padding: 6px 14px;
+    font-family: var(--font-display);
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 1;
+    color: #f5e9d0;
+    background: rgba(20, 15, 8, 0.88);
+    border-radius: 3px;
+    white-space: nowrap;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 180ms ease;
+    z-index: 10;
+    /* Stabilize sub-pixel rendering against the world's scale transform. */
+    transform-origin: center bottom;
+    backface-visibility: hidden;
+  }
+  .town-house:hover::after,
+  .town-house:focus-visible::after,
+  .town-gym-hit:hover::after,
+  .town-gym-hit:focus-visible::after {
+    opacity: 1;
+  }
+  /* Disabled houses (Coming Soon) do not show a name tooltip. */
+  .town-house--disabled::after {
+    content: none;
+  }
+}
+
 body[data-mode="dusk"] .town-house {
   filter: brightness(0.86) saturate(1.15);
 }
@@ -737,6 +785,67 @@ body[data-mode="moonlit"] .town-house {
   z-index: 10;
 }
 
+/* Shared grounding pad under each house base. Irregular dirt/grass
+   patch that softens the hard PNG seam where the house sprite meets
+   the plaza. Replaces the 14px CSS ::after radial shadow from PR #9.
+   Time-of-day tint applies (rules further below). */
+.town-grounding-pad {
+  position: absolute;
+  image-rendering: pixelated;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  transition: filter 1500ms ease;
+}
+
+/* Per-house diegetic prop — stones / mailbox / fence / debris. Bleeds
+   onto the plaza from the house base edge. pointer-events:none so it
+   never blocks the house tap. */
+.town-house-prop {
+  position: absolute;
+  image-rendering: pixelated;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  transition: filter 1500ms ease;
+}
+
+/* Time-of-day tinting applies to every new in-world pixel-art layer */
+body[data-mode="dusk"] .town-house-prop,
+body[data-mode="dusk"] .town-grounding-pad {
+  filter: brightness(0.86) saturate(1.15);
+}
+body[data-mode="moonlit"] .town-house-prop,
+body[data-mode="moonlit"] .town-grounding-pad {
+  filter: brightness(0.58) saturate(0.78);
+}
+
+/* Mobile pan hint — ephemeral "Drag to explore" toast that appears
+   once after welcome dismiss on mobile viewports. Hidden on desktop
+   (≥768px) and after the first timeout fires (localStorage-guarded in
+   the component). */
+.town-pan-hint {
+  position: fixed;
+  bottom: max(24px, env(safe-area-inset-bottom, 24px));
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 18px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(20, 14, 8, 0.78);
+  border-radius: 20px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  pointer-events: none;
+  z-index: 9999;
+  letter-spacing: 0.02em;
+}
+@media (min-width: 768px) {
+  .town-pan-hint { display: none; }
+}
+
 /* Screen-space HUD layer. Sibling of .town-viewport (not a child),
    sits on top and doesn't scroll with the world. Labels + bulletin +
    ambient leaves live here so they stay readable regardless of world
@@ -747,50 +856,6 @@ body[data-mode="moonlit"] .town-house {
   pointer-events: none;
   z-index: 150;
   overflow: hidden;
-}
-
-/* Wooden-signpost labels projected from world coords. Replaces the
-   old in-world .town-sign that got clipped by the viewport's
-   overflow-y: hidden. These are screen-space and never clip. */
-.town-sign-hud {
-  position: absolute;
-  transform: translate(-50%, 0);
-  padding: 6px 14px;
-  font-family: var(--font-display);
-  font-size: clamp(12px, 2.1vmin, 17px);
-  font-weight: 700;
-  color: #2b1d0f;
-  white-space: nowrap;
-  letter-spacing: 0.02em;
-  background: linear-gradient(180deg, #d3ac74 0%, #b78a4b 100%);
-  border: 2px solid #6b4a2a;
-  border-radius: 4px;
-  box-shadow:
-    0 3px 0 #6b4a2a,
-    0 6px 10px rgba(0, 0, 0, 0.45),
-    inset 0 1px 0 rgba(255, 255, 255, 0.25);
-  pointer-events: auto;
-  cursor: pointer;
-  transition: transform 180ms ease, filter 180ms ease;
-}
-.town-sign-hud:hover,
-.town-sign-hud:focus-visible {
-  transform: translate(-50%, -1px);
-  filter: brightness(1.05);
-  outline: none;
-}
-.town-sign-hud:active {
-  transform: translate(-50%, 1px);
-  box-shadow:
-    0 1px 0 #6b4a2a,
-    0 2px 4px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.25);
-}
-.town-sign-hud--disabled {
-  opacity: 0.72;
-  filter: saturate(0.55);
-  cursor: not-allowed;
-  pointer-events: none;
 }
 
 /* Welcome-back notice, HUD version. Parchment card pinned in the top
@@ -813,6 +878,9 @@ body[data-mode="moonlit"] .town-house {
     0 6px 8px rgba(0, 0, 0, 0.35);
   pointer-events: none;
   z-index: 5;
+  max-width: min(320px, calc(100vw - 32px));
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .town-bulletin-hud::before {
   content: "";
@@ -887,10 +955,9 @@ body[data-mode="moonlit"] .town-house {
 .town-avatar {
   position: absolute;
   transform: translate(-50%, -100%);
-  transition: left 800ms linear, top 800ms linear;
+  transition: left 800ms linear, top 800ms linear, filter 1500ms ease;
   image-rendering: pixelated;
   pointer-events: none;
-  z-index: 100;
   -webkit-user-drag: none;
   user-select: none;
 }
