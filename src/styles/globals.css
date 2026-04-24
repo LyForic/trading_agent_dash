@@ -37,7 +37,7 @@
    Gym is the hero/default; only the active agent's room fades in over it. */
 .gym-room-bg {
   opacity: 0;
-  transition: opacity 500ms ease, filter 300ms ease;
+  transition: opacity 500ms ease, filter 1500ms ease;
   will-change: opacity, filter;
 }
 .gym-room-bg--gym {
@@ -593,7 +593,7 @@ body[data-room="gale"] .weather-window {
   background-size: 100% 100%;
   background-repeat: no-repeat;
   image-rendering: pixelated;
-  transition: filter 500ms ease;
+  transition: filter 1500ms ease;
   z-index: 0;
 }
 body[data-mode="dusk"] .town-world-bg {
@@ -647,6 +647,23 @@ body[data-mode="moonlit"] .town-world-lamp-glow {
   opacity: 1;
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes lamp-flicker-dusk {
+    0%, 100% { opacity: 0.88; transform: translate(-50%, -50%) scale(0.98); }
+    50%      { opacity: 1.0;  transform: translate(-50%, -50%) scale(1.02); }
+  }
+  @keyframes lamp-flicker-moonlit {
+    0%, 100% { opacity: 0.75; transform: translate(-50%, -50%) scale(0.98); }
+    50%      { opacity: 1.0;  transform: translate(-50%, -50%) scale(1.02); }
+  }
+  body[data-mode="dusk"] .town-world-lamp-glow {
+    animation: hotspot-breathe 5s ease-in-out infinite, lamp-flicker-dusk 2.4s ease-in-out infinite;
+  }
+  body[data-mode="moonlit"] .town-world-lamp-glow {
+    animation: hotspot-breathe 5s ease-in-out infinite, lamp-flicker-moonlit 2.4s ease-in-out infinite;
+  }
+}
+
 /* Invisible gym hit target — fully transparent even on hover/focus.
    Peer review flagged R4's warm-tint hover as a white rectangle over
    the gym facade; the HUD sign is the visible affordance now. */
@@ -677,7 +694,7 @@ body[data-mode="moonlit"] .town-world-lamp-glow {
   padding: 0;
   margin: 0;
   cursor: pointer;
-  transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1), filter 500ms ease;
+  transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1), filter 1500ms ease;
   will-change: transform;
   line-height: 0;
 }
@@ -778,6 +795,7 @@ body[data-mode="moonlit"] .town-house {
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
+  transition: filter 1500ms ease;
 }
 
 /* Per-house diegetic prop — stones / mailbox / fence / debris. Bleeds
@@ -789,26 +807,7 @@ body[data-mode="moonlit"] .town-house {
   pointer-events: none;
   user-select: none;
   -webkit-user-drag: none;
-}
-
-/* Foreground tree canopies at plaza edges. Pixelated rendering for
-   crisp 16-bit look; pointer-events none so they never block taps on
-   houses, signposts, or the gym hit target behind them. */
-.town-foreground-tree {
-  position: absolute;
-  image-rendering: pixelated;
-  pointer-events: none;
-  user-select: none;
-  -webkit-user-drag: none;
-}
-
-/* Time-of-day tint — trees receive the same dim as houses/props/grounding-
-   pads so the lighting stays unified. */
-body[data-mode="dusk"] .town-foreground-tree {
-  filter: brightness(0.86) saturate(1.15);
-}
-body[data-mode="moonlit"] .town-foreground-tree {
-  filter: brightness(0.58) saturate(0.78);
+  transition: filter 1500ms ease;
 }
 
 /* Time-of-day tinting applies to every new in-world pixel-art layer */
@@ -956,7 +955,7 @@ body[data-mode="moonlit"] .town-grounding-pad {
 .town-avatar {
   position: absolute;
   transform: translate(-50%, -100%);
-  transition: left 800ms linear, top 800ms linear;
+  transition: left 800ms linear, top 800ms linear, filter 1500ms ease;
   image-rendering: pixelated;
   pointer-events: none;
   -webkit-user-drag: none;

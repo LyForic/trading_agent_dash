@@ -179,17 +179,6 @@ const LEAVES = Array.from({ length: 8 }, (_, i) => ({
   variant: i % 3,
 }));
 
-// Foreground tree canopies scattered at plaza corners. Share the Z.scene
-// layer band + Math.round(y) with houses/avatar/props, so top trees
-// (low y) paint behind the scene and bottom trees (high y) paint in
-// front of houses — the Stardew/Zelda foreground-occlusion trick.
-const FOREGROUND_TREES: { key: string; x: number; y: number; flip: boolean }[] = [
-  { key: 'tree-tl', x: 80,  y: 120, flip: false },
-  { key: 'tree-tr', x: 880, y: 120, flip: true  },
-  { key: 'tree-bl', x: 70,  y: 520, flip: false },
-  { key: 'tree-br', x: 890, y: 520, flip: true  },
-];
-
 export function TownSquarePage() {
   const navigate = useNavigate();
   const autoMode = useTimeOfDay();
@@ -474,27 +463,6 @@ export function TownSquarePage() {
                 />
               );
             })}
-
-            {/* Foreground tree occlusion — 4 canopy instances at plaza corners.
-                Top pair paint behind scene (low y); bottom pair paint in front of
-                houses when avatar walks south of them. Right pair flipped for
-                visual asymmetry. */}
-            {FOREGROUND_TREES.map((tree) => (
-              <img
-                key={tree.key}
-                src="/props/tree-tops.png"
-                alt=""
-                className="town-foreground-tree"
-                draggable={false}
-                style={{
-                  left: tree.x,
-                  top: tree.y,
-                  width: 64,
-                  transform: `translate(-50%, -100%)${tree.flip ? ' scaleX(-1)' : ''}`,
-                  zIndex: Z.scene + Math.round(tree.y),
-                }}
-              />
-            ))}
 
             {/* Avatar stays inside the world so it scales with
                 everything else; sprite size is 72 world-pixels, not
