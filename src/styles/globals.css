@@ -681,19 +681,6 @@ body[data-mode="moonlit"] .town-world-lamp-glow {
   will-change: transform;
   line-height: 0;
 }
-.town-house::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  bottom: -6px;
-  width: 72%;
-  height: 14px;
-  transform: translateX(-50%);
-  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.5) 0%, transparent 70%);
-  filter: blur(2px);
-  pointer-events: none;
-  z-index: -1;
-}
 .town-house:hover,
 .town-house:focus-visible {
   transform: translate(-50%, -103%) scale(1.04);
@@ -873,50 +860,6 @@ body[data-mode="moonlit"] .town-signpost-sprite {
   pointer-events: none;
   z-index: 150;
   overflow: hidden;
-}
-
-/* Wooden-signpost labels projected from world coords. Replaces the
-   old in-world .town-sign that got clipped by the viewport's
-   overflow-y: hidden. These are screen-space and never clip. */
-.town-sign-hud {
-  position: absolute;
-  transform: translate(-50%, 0);
-  padding: 6px 14px;
-  font-family: var(--font-display);
-  font-size: clamp(12px, 2.1vmin, 17px);
-  font-weight: 700;
-  color: #2b1d0f;
-  white-space: nowrap;
-  letter-spacing: 0.02em;
-  background: linear-gradient(180deg, #d3ac74 0%, #b78a4b 100%);
-  border: 2px solid #6b4a2a;
-  border-radius: 4px;
-  box-shadow:
-    0 3px 0 #6b4a2a,
-    0 6px 10px rgba(0, 0, 0, 0.45),
-    inset 0 1px 0 rgba(255, 255, 255, 0.25);
-  pointer-events: auto;
-  cursor: pointer;
-  transition: transform 180ms ease, filter 180ms ease;
-}
-.town-sign-hud:hover,
-.town-sign-hud:focus-visible {
-  transform: translate(-50%, -1px);
-  filter: brightness(1.05);
-  outline: none;
-}
-.town-sign-hud:active {
-  transform: translate(-50%, 1px);
-  box-shadow:
-    0 1px 0 #6b4a2a,
-    0 2px 4px rgba(0, 0, 0, 0.4),
-    inset 0 1px 0 rgba(255, 255, 255, 0.25);
-}
-.town-sign-hud--disabled {
-  opacity: 0.72;
-  filter: saturate(0.55);
-  cursor: not-allowed;
-  pointer-events: none;
 }
 
 /* Welcome-back notice, HUD version. Parchment card pinned in the top
