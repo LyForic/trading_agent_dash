@@ -386,6 +386,7 @@ export function TownSquarePage() {
                     className="town-gym-hit"
                     onClick={() => walkTo(dest)}
                     aria-label={dest.label}
+                    data-agent-name={dest.label}
                     style={{
                       left: dest.x - 180,
                       top: 50,

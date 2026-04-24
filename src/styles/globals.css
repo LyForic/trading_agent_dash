@@ -697,20 +697,25 @@ body[data-mode="moonlit"] .town-world-lamp-glow {
   transform: translate(-50%, -100%);
 }
 
-/* Desktop hover tooltip — shows agent name on mouseover. Suppressed on
-   touch devices (pointer: coarse) so mobile users don't see stale
-   labels. Uses data-agent-name attribute on the house button. */
+/* Desktop hover tooltip — shows the destination name on mouseover.
+   Suppressed on touch devices (pointer: coarse) so mobile users don't
+   see stale labels. Applies to both .town-house (agent homes) and
+   .town-gym-hit (the gym facade hit target) for consistency.
+   Uses data-agent-name attribute on each interactive button. */
 @media (pointer: fine) {
-  .town-house::after {
+  .town-house::after,
+  .town-gym-hit::after {
     content: attr(data-agent-name);
     position: absolute;
-    bottom: calc(100% + 8px);
+    bottom: calc(100% + 12px);
     left: 50%;
     transform: translateX(-50%);
-    padding: 4px 10px;
+    display: inline-block;
+    padding: 6px 14px;
     font-family: var(--font-display);
     font-size: 12px;
     font-weight: 700;
+    line-height: 1;
     color: #f5e9d0;
     background: rgba(20, 15, 8, 0.88);
     border-radius: 3px;
@@ -719,12 +724,17 @@ body[data-mode="moonlit"] .town-world-lamp-glow {
     opacity: 0;
     transition: opacity 180ms ease;
     z-index: 10;
+    /* Stabilize sub-pixel rendering against the world's scale transform. */
+    transform-origin: center bottom;
+    backface-visibility: hidden;
   }
   .town-house:hover::after,
-  .town-house:focus-visible::after {
+  .town-house:focus-visible::after,
+  .town-gym-hit:hover::after,
+  .town-gym-hit:focus-visible::after {
     opacity: 1;
   }
-  /* Disabled houses (Coming Soon) don't need a name tooltip. */
+  /* Disabled houses (Coming Soon) do not show a name tooltip. */
   .town-house--disabled::after {
     content: none;
   }
