@@ -91,6 +91,8 @@ interface Destination {
     anchorX?: number; // %, default 50
     anchorY?: number; // %, default 100
     width?: number;   // world px, default DEFAULT_SIGNPOST_WIDTH (64)
+    src?: string;     // default '/signposts/signpost.png'
+    labelTop?: string; // default '28%' — CSS var for label vertical position within plaque
   };
 
   /** Shared grounding pad under the house base. */
@@ -123,7 +125,13 @@ const DESTINATIONS: Destination[] = [
     signText: 'Trading\nGym',
     ariaLabel: 'Enter the Trading Gym communal roster',
     route: '/gym',
-    signpost: { x: 605, y: 235 },
+    signpost: {
+      x: 480,
+      y: 155,
+      src: '/signposts/gym-plaque.png',
+      width: 128,
+      labelTop: '50%',
+    },
   },
   {
     id: 'apex',
@@ -512,11 +520,12 @@ export function TownSquarePage() {
                     width: sp.width ?? DEFAULT_SIGNPOST_WIDTH,
                     transform: `translate(-${sp.anchorX ?? 50}%, -${sp.anchorY ?? 100}%)`,
                     zIndex: Z.signpost + Math.round(sp.y),
-                  }}
+                    ['--signpost-label-top' as string]: sp.labelTop ?? '28%',
+                  } as React.CSSProperties}
                 >
                   <span className="town-signpost-inner">
                     <img
-                      src="/signposts/signpost.png"
+                      src={sp.src ?? '/signposts/signpost.png'}
                       alt=""
                       className="town-signpost-sprite"
                       draggable={false}
