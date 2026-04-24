@@ -737,6 +737,132 @@ body[data-mode="moonlit"] .town-house {
   z-index: 10;
 }
 
+/* Shared grounding pad under each house base. Irregular dirt/grass
+   patch that softens the hard PNG seam where the house sprite meets
+   the plaza. Replaces the 14px CSS ::after radial shadow from PR #9.
+   Time-of-day tint applies (rules further below). */
+.town-grounding-pad {
+  position: absolute;
+  image-rendering: pixelated;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* Per-house diegetic prop — stones / mailbox / fence / debris. Bleeds
+   onto the plaza from the house base edge. pointer-events:none so it
+   never blocks the house tap. */
+.town-house-prop {
+  position: absolute;
+  image-rendering: pixelated;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* In-world wooden signpost — replaces all 5 HUD signs from R5. Lives
+   inside .town-world, scales with the world transform, always readable
+   via the Z.signpost layer band. Text is CSS-overlaid on the plaque
+   using the 16px + scale(0.5) pattern to avoid iOS Safari's aggressive
+   anti-aliasing below ~10px.
+
+   The outer .town-signpost button holds the world-anchor transform
+   (translate to anchorX/Y). Hover effects apply to .town-signpost-inner
+   so they don't fight the anchor transform. */
+.town-signpost {
+  position: absolute;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  pointer-events: auto;
+  line-height: 0;
+}
+.town-signpost:focus-visible {
+  outline: none;
+}
+.town-signpost-inner {
+  display: block;
+  position: relative;
+  transition: transform 180ms ease, filter 180ms ease;
+}
+.town-signpost:hover .town-signpost-inner,
+.town-signpost:focus-visible .town-signpost-inner {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+}
+.town-signpost-sprite {
+  display: block;
+  width: 100%;
+  height: auto;
+  image-rendering: pixelated;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+.town-signpost-label {
+  position: absolute;
+  top: 28%;    /* lands on plaque face; tune per actual asset */
+  left: 50%;
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+  color: #2b1d0f;
+  letter-spacing: 0.01em;
+  white-space: pre-line;   /* honor \n in signText for multi-line */
+  text-align: center;
+  line-height: 0.9;
+  pointer-events: none;
+  transform: translate(-50%, -50%) scale(0.5);
+  transform-origin: center center;
+}
+.town-signpost--disabled {
+  cursor: not-allowed;
+  opacity: 0.78;
+  filter: saturate(0.6);
+}
+.town-signpost--disabled:hover .town-signpost-inner,
+.town-signpost--disabled:focus-visible .town-signpost-inner {
+  transform: none;  /* no hover lift on disabled */
+}
+
+/* Time-of-day tinting applies to every new in-world pixel-art layer */
+body[data-mode="dusk"] .town-house-prop,
+body[data-mode="dusk"] .town-grounding-pad,
+body[data-mode="dusk"] .town-signpost-sprite {
+  filter: brightness(0.86) saturate(1.15);
+}
+body[data-mode="moonlit"] .town-house-prop,
+body[data-mode="moonlit"] .town-grounding-pad,
+body[data-mode="moonlit"] .town-signpost-sprite {
+  filter: brightness(0.58) saturate(0.78);
+}
+
+/* Mobile pan hint — ephemeral "Drag to explore" toast that appears
+   once after welcome dismiss on mobile viewports. Hidden on desktop
+   (≥768px) and after the first timeout fires (localStorage-guarded in
+   the component). */
+.town-pan-hint {
+  position: fixed;
+  bottom: max(24px, env(safe-area-inset-bottom, 24px));
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 18px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(20, 14, 8, 0.78);
+  border-radius: 20px;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  pointer-events: none;
+  z-index: 9999;
+  letter-spacing: 0.02em;
+}
+@media (min-width: 768px) {
+  .town-pan-hint { display: none; }
+}
+
 /* Screen-space HUD layer. Sibling of .town-viewport (not a child),
    sits on top and doesn't scroll with the world. Labels + bulletin +
    ambient leaves live here so they stay readable regardless of world
