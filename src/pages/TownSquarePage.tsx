@@ -54,7 +54,6 @@ const Z = {
   signpost: 4000,
   effects: 5000,
 } as const;
-void Z; // used in future tasks
 
 // Default rendered width for the signpost sprite (in world pixels).
 // Can be overridden per-destination via signpost.width.
@@ -398,7 +397,7 @@ export function TownSquarePage() {
               }
               const isPulsing =
                 dest.id !== 'comingSoon' && pulsing.has(dest.id as AgentId);
-              const zIndex = Math.round(dest.y);
+              const zIndex = Z.scene + Math.round(dest.y);
               return (
                 <button
                   key={dest.id}
@@ -444,6 +443,7 @@ export function TownSquarePage() {
                 top: avatarPos.y,
                 width: AVATAR_SIZE,
                 height: AVATAR_SIZE,
+                zIndex: Z.scene + Math.round(avatarPos.y),
               }}
             />
           </div>

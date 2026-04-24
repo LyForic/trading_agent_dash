@@ -890,7 +890,6 @@ body[data-mode="moonlit"] .town-house {
   transition: left 800ms linear, top 800ms linear;
   image-rendering: pixelated;
   pointer-events: none;
-  z-index: 100;
   -webkit-user-drag: none;
   user-select: none;
 }
