@@ -51,13 +51,8 @@ const Z = {
   plaza: 0,
   groundingPad: 1000,
   scene: 2000,
-  signpost: 4000,
   effects: 5000,
 } as const;
-
-// Default rendered width for the signpost sprite (in world pixels).
-// Can be overridden per-destination via signpost.width.
-const DEFAULT_SIGNPOST_WIDTH = 64;
 
 // Plaza anchor points. Tuned against town-square.png where the four
 // diagonal paths terminate; nudged per R4 feedback so houses sit on
@@ -76,27 +71,11 @@ interface Destination {
 
   /** Full display / aria name. */
   label: string;
-  /** Short text painted on the signpost plaque. Defaults to label. */
-  signText?: string;
   /** Full accessibility label (more descriptive than visible label). */
   ariaLabel?: string;
 
   route?: string;
   disabled?: boolean;
-
-  /** Signpost placement in world coords. */
-  signpost?: {
-    x: number;
-    y: number;
-    anchorX?: number; // %, default 50
-    anchorY?: number; // %, default 100
-    width?: number;   // world px, default DEFAULT_SIGNPOST_WIDTH (64)
-    src?: string;     // default '/signposts/signpost.png'
-    labelTop?: string; // default '28%' — CSS var for label vertical position within plaque
-    labelLeft?: string; // default '50%' — CSS var for label horizontal position
-    labelWidth?: string; // default 'auto' — constrain label text to a width (e.g. '36px')
-    labelBackdrop?: boolean; // default false — if true, adds a dark semi-transparent pill backdrop behind the text
-  };
 
   /** Shared grounding pad under the house base. */
   groundingPad?: {
@@ -125,17 +104,8 @@ const DESTINATIONS: Destination[] = [
     x: 480,
     y: 210,
     label: 'Trading Gym',
-    signText: 'Trading\nGym',
     ariaLabel: 'Enter the Trading Gym communal roster',
     route: '/gym',
-    signpost: {
-      x: 480,
-      y: 175,
-      src: '/signage/gym-beam-sign.png',
-      width: 128,
-      labelTop: '50%',
-      labelLeft: '50%',
-    },
   },
   {
     id: 'apex',
@@ -144,18 +114,8 @@ const DESTINATIONS: Destination[] = [
     spriteWidth: 180,
     spriteSrc: '/houses/apex.png',
     label: 'Apex',
-    signText: 'Apex',
     ariaLabel: "Enter Apex's dojo",
     route: '/apex',
-    signpost: {
-      x: 240,
-      y: 345,
-      src: '/signage/apex-banner.png',
-      width: 56,
-      labelTop: '70%',
-      labelLeft: '50%',
-      labelWidth: '40px',
-    },
     groundingPad: { x: 180, y: 352, width: 160 },
     prop: { src: '/props/apex-stones.png', x: 210, y: 358, width: 56 },
   },
@@ -166,18 +126,8 @@ const DESTINATIONS: Destination[] = [
     spriteWidth: 180,
     spriteSrc: '/houses/metheus.png',
     label: 'Metheus',
-    signText: 'Metheus',
     ariaLabel: "Enter Metheus's study",
     route: '/metheus',
-    signpost: {
-      x: 695,
-      y: 355,
-      src: '/signage/metheus-brass-plaque.png',
-      width: 52,
-      labelTop: '50%',
-      labelLeft: '50%',
-      labelBackdrop: true,
-    },
     groundingPad: { x: 780, y: 352, width: 160 },
     prop: { src: '/props/metheus-mailbox.png', x: 755, y: 358, width: 48 },
   },
@@ -188,18 +138,8 @@ const DESTINATIONS: Destination[] = [
     spriteWidth: 155,
     spriteSrc: '/houses/gale.png',
     label: 'Gale',
-    signText: 'Gale',
     ariaLabel: "Enter Gale's loft",
     route: '/gale',
-    signpost: {
-      x: 310,
-      y: 480,
-      src: '/signage/gale-mailbox.png',
-      width: 56,
-      labelTop: '45%',
-      labelLeft: '45%',
-      labelWidth: '28px',
-    },
     groundingPad: { x: 225, y: 477, width: 140 },
     prop: { src: '/props/gale-fence.png', x: 260, y: 482, width: 56 },
   },
@@ -210,18 +150,8 @@ const DESTINATIONS: Destination[] = [
     spriteWidth: 160,
     spriteSrc: '/houses/coming-soon-house.png',
     label: 'Coming soon',
-    signText: 'Coming\nSoon',
     ariaLabel: 'Future agent home coming soon',
     disabled: true,
-    signpost: {
-      x: 650,
-      y: 480,
-      src: '/signage/coming-soon-board.png',
-      width: 56,
-      labelTop: '35%',
-      labelLeft: '50%',
-      labelWidth: '44px',
-    },
     groundingPad: { x: 735, y: 477, width: 140 },
     prop: { src: '/props/coming-soon-debris.png', x: 710, y: 482, width: 48 },
   },
@@ -480,6 +410,7 @@ export function TownSquarePage() {
                       ? 'Future agent — arriving soon'
                       : `Enter ${dest.label}'s room`
                   }
+                  data-agent-name={dest.label}
                   style={{
                     left: dest.x,
                     top: dest.y,
@@ -540,50 +471,6 @@ export function TownSquarePage() {
                     zIndex: Z.scene + Math.round(p.y) + (p.zOffset ?? 0),
                   }}
                 />
-              );
-            })}
-
-            {/* In-world wooden signposts — 5 destinations, Gym + 4 houses.
-                Replaces the screen-space .town-sign-hud elements from R5. Tappable
-                as secondary walkTo targets; house sprite remains primary tap.
-
-                Outer button holds the anchor transform; inner wrapper holds the
-                hover transform so the two don't fight. */}
-            {DESTINATIONS.filter((d) => d.signpost).map((dest) => {
-              const sp = dest.signpost!;
-              return (
-                <button
-                  key={`signpost-${dest.id}`}
-                  type="button"
-                  className={`town-signpost${dest.disabled ? ' town-signpost--disabled' : ''}${sp.labelBackdrop ? ' town-signpost--backdrop' : ''}`}
-                  onClick={() => {
-                    if (!dest.disabled) walkTo(dest);
-                  }}
-                  aria-disabled={dest.disabled ? 'true' : undefined}
-                  aria-label={dest.ariaLabel ?? dest.label}
-                  style={{
-                    left: sp.x,
-                    top: sp.y,
-                    width: sp.width ?? DEFAULT_SIGNPOST_WIDTH,
-                    transform: `translate(-${sp.anchorX ?? 50}%, -${sp.anchorY ?? 100}%)`,
-                    zIndex: Z.signpost + Math.round(sp.y),
-                    ['--signpost-label-top' as string]: sp.labelTop ?? '28%',
-                    ['--signpost-label-left' as string]: sp.labelLeft ?? '50%',
-                    ['--signpost-label-width' as string]: sp.labelWidth ?? 'auto',
-                  } as React.CSSProperties}
-                >
-                  <span className="town-signpost-inner">
-                    <img
-                      src={sp.src ?? '/signposts/signpost.png'}
-                      alt=""
-                      className="town-signpost-sprite"
-                      draggable={false}
-                    />
-                    <span className="town-signpost-label">
-                      {dest.signText ?? dest.label}
-                    </span>
-                  </span>
-                </button>
               );
             })}
 
