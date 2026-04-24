@@ -541,6 +541,475 @@ body[data-room="gale"] .weather-window {
   to   { transform: translateY(0);    opacity: 1; }
 }
 
+/* ---- Phase 4 Slice 3 R4: Town Square (world-canvas model) ----
+
+   Architecture shift: a fixed 960×540 world div holds everything —
+   the plaza background, tint overlay, lamp glow, house sprites, signs,
+   pulse dots, avatar, and the bulletin. That world div is transformed
+   as one unit (scale) so nothing goes out of alignment as the viewport
+   changes. Mobile portrait uses overflow-x: auto on the viewport so
+   users can pan horizontally; the initial scroll centers on the lamp.
+   Every coordinate in the component is in WORLD pixels.
+
+   Base colors carried over from R3: paper for signs, world-ink for
+   chrome, and the same hsl tint values for dusk/moonlit to match the
+   interior rooms. Houses are FOOT-anchored (translate -50% -100%) and
+   carry a CSS ::after ground shadow so they sit in the world. */
+
+.town-viewport {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background-color: #0d1612;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.town-viewport::-webkit-scrollbar {
+  display: none;
+}
+
+/* Canvas holds the scaled world and carries the layout box matching
+   the scaled size so the viewport can scroll correctly. */
+.town-canvas {
+  position: relative;
+}
+
+/* The world itself — FIXED 960×540. Position and scale are stamped
+   via inline style. Everything inside positions in world pixels. */
+.town-world {
+  position: absolute;
+  top: 0;
+  left: 0;
+  image-rendering: pixelated;
+}
+
+.town-world-bg {
+  position: absolute;
+  inset: 0;
+  background-image: url("/rooms/town-square.png");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  image-rendering: pixelated;
+  transition: filter 500ms ease;
+  z-index: 0;
+}
+body[data-mode="dusk"] .town-world-bg {
+  filter: brightness(0.86) saturate(1.15);
+}
+body[data-mode="moonlit"] .town-world-bg {
+  filter: brightness(0.58) saturate(0.78);
+}
+
+/* Time-of-day multiply tint — same pattern as the interior rooms. */
+.town-world-tint {
+  position: absolute;
+  inset: 0;
+  mix-blend-mode: multiply;
+  background-color: transparent;
+  transition: background-color 500ms ease;
+  pointer-events: none;
+  z-index: 3;
+}
+body[data-mode="dusk"] .town-world-tint {
+  background-color: hsl(22 60% 58%);
+}
+body[data-mode="moonlit"] .town-world-tint {
+  background-color: hsl(222 55% 32%);
+}
+
+/* Lamp post warm glow. Positioned absolutely in world pixels; the
+   component stamps left/top. */
+.town-world-lamp-glow {
+  position: absolute;
+  width: 180px;
+  height: 180px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  opacity: 0;
+  z-index: 4;
+  background: radial-gradient(
+    circle,
+    rgba(255, 220, 140, 0.55) 0%,
+    rgba(255, 180, 80, 0.18) 38%,
+    transparent 70%
+  );
+  mix-blend-mode: screen;
+  transition: opacity 500ms ease;
+  animation: hotspot-breathe 5s ease-in-out infinite;
+}
+body[data-mode="dusk"] .town-world-lamp-glow {
+  opacity: 0.75;
+}
+body[data-mode="moonlit"] .town-world-lamp-glow {
+  opacity: 1;
+}
+
+/* Invisible gym hit target — fully transparent even on hover/focus.
+   Peer review flagged R4's warm-tint hover as a white rectangle over
+   the gym facade; the HUD sign is the visible affordance now. */
+.town-gym-hit {
+  position: absolute;
+  border: none;
+  padding: 0;
+  margin: 0;
+  background-color: transparent;
+  cursor: pointer;
+  z-index: 20;
+}
+.town-gym-hit:hover,
+.town-gym-hit:focus-visible {
+  background-color: transparent;
+  outline: none;
+}
+
+/* Houses — foot-anchored buttons. (left, top) = where the door touches
+   the ground; the sprite sits above via translate -50%/-100%. Ground
+   shadow via ::after. z-index is stamped inline from the y-coordinate
+   so lower houses render in front of higher ones. */
+.town-house {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  border: none;
+  background: transparent;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  transition: transform 220ms cubic-bezier(0.2, 0.8, 0.2, 1), filter 500ms ease;
+  will-change: transform;
+  line-height: 0;
+}
+.town-house::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: -6px;
+  width: 72%;
+  height: 14px;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.5) 0%, transparent 70%);
+  filter: blur(2px);
+  pointer-events: none;
+  z-index: -1;
+}
+.town-house:hover,
+.town-house:focus-visible {
+  transform: translate(-50%, -103%) scale(1.04);
+  outline: none;
+}
+.town-house:active {
+  transform: translate(-50%, -99%) scale(0.98);
+}
+.town-house--disabled {
+  cursor: not-allowed;
+}
+.town-house--disabled:hover,
+.town-house--disabled:focus-visible {
+  transform: translate(-50%, -100%);
+}
+body[data-mode="dusk"] .town-house {
+  filter: brightness(0.86) saturate(1.15);
+}
+body[data-mode="moonlit"] .town-house {
+  filter: brightness(0.58) saturate(0.78);
+}
+.town-house-sprite {
+  display: block;
+  width: 100%;
+  height: auto;
+  image-rendering: pixelated;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+.town-house-pulse {
+  position: absolute;
+  top: -6px;
+  right: 12%;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background-color: var(--color-gain);
+  box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-gain) 60%, transparent);
+  animation: in-battle-pulse 1.8s ease-out infinite;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Screen-space HUD layer. Sibling of .town-viewport (not a child),
+   sits on top and doesn't scroll with the world. Labels + bulletin +
+   ambient leaves live here so they stay readable regardless of world
+   scale or scroll offset. */
+.town-hud {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 150;
+  overflow: hidden;
+}
+
+/* Wooden-signpost labels projected from world coords. Replaces the
+   old in-world .town-sign that got clipped by the viewport's
+   overflow-y: hidden. These are screen-space and never clip. */
+.town-sign-hud {
+  position: absolute;
+  transform: translate(-50%, 0);
+  padding: 6px 14px;
+  font-family: var(--font-display);
+  font-size: clamp(12px, 2.1vmin, 17px);
+  font-weight: 700;
+  color: #2b1d0f;
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+  background: linear-gradient(180deg, #d3ac74 0%, #b78a4b 100%);
+  border: 2px solid #6b4a2a;
+  border-radius: 4px;
+  box-shadow:
+    0 3px 0 #6b4a2a,
+    0 6px 10px rgba(0, 0, 0, 0.45),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  pointer-events: auto;
+  cursor: pointer;
+  transition: transform 180ms ease, filter 180ms ease;
+}
+.town-sign-hud:hover,
+.town-sign-hud:focus-visible {
+  transform: translate(-50%, -1px);
+  filter: brightness(1.05);
+  outline: none;
+}
+.town-sign-hud:active {
+  transform: translate(-50%, 1px);
+  box-shadow:
+    0 1px 0 #6b4a2a,
+    0 2px 4px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+}
+.town-sign-hud--disabled {
+  opacity: 0.72;
+  filter: saturate(0.55);
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* Welcome-back notice, HUD version. Parchment card pinned in the top
+   corner so it stays put as the user pans the plaza. */
+.town-bulletin-hud {
+  position: absolute;
+  top: max(16px, env(safe-area-inset-top, 16px));
+  right: max(16px, env(safe-area-inset-right, 16px));
+  padding: 8px 14px;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 600;
+  color: #3a2f1f;
+  white-space: nowrap;
+  background: #f1e2c2;
+  border: 2px solid #6b4a2a;
+  border-radius: 3px;
+  box-shadow:
+    0 3px 0 #6b4a2a,
+    0 6px 8px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  z-index: 5;
+}
+.town-bulletin-hud::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: -4px;
+  transform: translateX(-50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #3a2f1f;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+/* Ambient wind leaves — tiny colored squares that drift across the
+   screen to sell "this world has air moving through it." Daytime +
+   dusk only (moonlit stays still). Three color variants distributed
+   across the leaf population. */
+.town-leaf {
+  position: absolute;
+  left: -24px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50% 0 50% 0;
+  opacity: 0.65;
+  pointer-events: none;
+  animation: town-leaf-drift linear infinite;
+  will-change: transform;
+  filter: drop-shadow(0 1px 0 rgba(0, 0, 0, 0.3));
+}
+.town-leaf--0 {
+  background-color: #7ca84a; /* fresh green */
+}
+.town-leaf--1 {
+  background-color: #b6823f; /* autumn orange */
+}
+.town-leaf--2 {
+  background-color: #4f7c34; /* dark leaf */
+}
+@keyframes town-leaf-drift {
+  0% {
+    transform: translate3d(0, 0, 0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.7;
+  }
+  50% {
+    transform: translate3d(50vw, -10px, 0) rotate(180deg);
+  }
+  90% {
+    opacity: 0.4;
+  }
+  100% {
+    transform: translate3d(110vw, 20px, 0) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* Avatar — Brandon's 4-direction idle sprite, rendered at 72 world-
+   pixels (up from R4's 48) so the character actually reads as the
+   player anchor. Facing swaps between N/S/E/W on walk direction;
+   position transitions via CSS when walking.
+
+   Three animation states, mutually exclusive:
+     .town-avatar--hidden   : opacity 0, no animation (welcome modal up)
+     .town-avatar--dropping : falls from above with a landing squash
+     .town-avatar--idle     : gentle bob; resumes after the drop
+
+   .town-avatar--walking is additive — suppresses the idle bob while
+   the avatar is in motion so the transform animation owns the visual. */
+.town-avatar {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  transition: left 800ms linear, top 800ms linear;
+  image-rendering: pixelated;
+  pointer-events: none;
+  z-index: 100;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+.town-avatar--hidden {
+  opacity: 0;
+}
+.town-avatar--dropping {
+  opacity: 1;
+  animation: avatar-drop-in 520ms cubic-bezier(0.25, 1.3, 0.5, 1) forwards;
+}
+.town-avatar--idle {
+  opacity: 1;
+  animation: avatar-idle-bob 2s ease-in-out infinite;
+}
+.town-avatar--walking {
+  animation: none !important;
+}
+@keyframes avatar-idle-bob {
+  0%, 100% { transform: translate(-50%, -100%); }
+  50%      { transform: translate(-50%, -105%); }
+}
+@keyframes avatar-drop-in {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -360%) scale(0.7);
+  }
+  55% {
+    opacity: 1;
+    transform: translate(-50%, -96%) scale(1.12);
+  }
+  75% {
+    transform: translate(-50%, -104%) scale(0.94);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -100%) scale(1);
+  }
+}
+body[data-mode="dusk"] .town-avatar {
+  filter: brightness(0.88) saturate(1.1) drop-shadow(0 2px 0 rgba(0, 0, 0, 0.4));
+}
+body[data-mode="moonlit"] .town-avatar {
+  filter: brightness(0.6) saturate(0.8) drop-shadow(0 2px 0 rgba(0, 0, 0, 0.5));
+}
+body[data-mode="daytime"] .town-avatar {
+  filter: drop-shadow(0 2px 0 rgba(0, 0, 0, 0.35));
+}
+
+/* Welcome modal — first-visit onboarding. Semi-transparent backdrop,
+   paper card with display font and a warm tone matching the plaza. */
+.welcome-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background-color: rgba(0, 0, 0, 0.55);
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  backdrop-filter: blur(3px);
+  -webkit-backdrop-filter: blur(3px);
+}
+.welcome-card {
+  max-width: 380px;
+  width: 100%;
+  padding: 22px 22px 18px 22px;
+  border-radius: 14px;
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  border: 2px solid #6b4a2a;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+}
+.welcome-card-eyebrow {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--color-ink-muted);
+  margin-bottom: 6px;
+}
+.welcome-card-title {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 10px 0;
+  line-height: 1.15;
+}
+.welcome-card-body {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  line-height: 1.45;
+}
+.welcome-card-body-muted {
+  color: var(--color-ink-muted);
+  font-size: 13px;
+}
+.welcome-card-cta {
+  margin-top: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  border: 2px solid #6b4a2a;
+  border-radius: 8px;
+  background: linear-gradient(180deg, #d3ac74 0%, #b78a4b 100%);
+  color: #2b1d0f;
+  cursor: pointer;
+  box-shadow: 0 3px 0 #6b4a2a;
+  transition: transform 120ms ease;
+}
+.welcome-card-cta:hover,
+.welcome-card-cta:focus-visible {
+  transform: translateY(-1px);
+  outline: none;
+}
+.welcome-card-cta:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 0 #6b4a2a;
+}
+
 /* Baseline body styling */
 body {
   margin: 0;
