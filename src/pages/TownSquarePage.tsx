@@ -28,17 +28,33 @@ import type { AgentId } from '@/lib/types';
  * a curiosity surface, not a data dashboard.
  */
 
-// Coordinates tuned for the generated plaza art (gym facade at top,
-// fountain center, four corners of grass). Percentages of the plaza's
-// native 200×112 rectangle; CSS scales them with the image.
+// Four-corner spatial grammar per R2 feedback: agents at the corners,
+// plaza center left open (future avatar spawn / fountain focal point),
+// gym painted at top. Percentages are CENTER-anchored via CSS
+// translate(-50%, -50%) so a sprite placed at (18%, 50%) has its middle
+// at (18%, 50%) of the plaza and never overruns the stage edges.
+//
+//   Apex  NW (18%, 50%)       ·       Metheus  NE (82%, 50%)
+//   Gale  SW (18%, 80%)       ·       Coming-Soon  SE (82%, 80%)
+//
+// The NE/SW/SE positions are symmetric around the plaza center, and
+// the NW/NE pair stays below the painted gym facade at the top.
 const HOUSE_POSITIONS: Record<AgentId, { left: string; top: string }> = {
-  apex: { left: '14%', top: '54%' },
-  gale: { left: '50%', top: '74%' },
-  metheus: { left: '86%', top: '54%' },
+  apex: { left: '18%', top: '50%' },
+  gale: { left: '18%', top: '80%' },
+  metheus: { left: '82%', top: '50%' },
 };
 
+// Future-tenant lot anchored in the SE corner, symmetric to Gale. Signals
+// "this world can grow" without needing a new art asset — CSS dashed plot
+// + "?" sign. Swap to a real house sprite whenever the fourth agent
+// launches.
+const COMING_SOON_POSITION = { left: '82%', top: '80%' };
+
 // The gym facade in the plaza art sits at the top spanning ~center.
-// Hit target matches roughly where the double doors are painted.
+// Hit target matches roughly where the double doors are painted; the
+// label pill sits at the bottom of the hit rect, just under the painted
+// doorway, so users can see the tap target is clickable.
 const GYM_FACADE_RECT = {
   left: '32%',
   top: '4%',
@@ -82,7 +98,12 @@ export function TownSquarePage() {
   }, [delta]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-[#0a0a0a]">
+    <div className="town-square-page">
+      {/* Blurred plaza copy fills whatever space the contained stage
+          doesn't — so the letterbox reads as atmospheric depth instead
+          of empty chrome. Same image, downscaled and blurred. */}
+      <div className="town-square-backdrop" aria-hidden />
+
       <div className="town-square-stage">
         {/* Plaza base — pixel-scaled background image */}
         <div className="town-square-bg" aria-hidden />
@@ -92,7 +113,7 @@ export function TownSquarePage() {
             and the warm/cool/neutral color via body[data-plaza-mood]. */}
         <div className="town-square-fountain-glow ambient-motion" aria-hidden />
 
-        {/* Three house sprites as Link tap targets */}
+        {/* Three house sprites as Link tap targets, one per agent. */}
         {AGENT_IDS.map((id) => {
           const pos = HOUSE_POSITIONS[id];
           const meta = AGENT_META[id];
@@ -117,14 +138,31 @@ export function TownSquarePage() {
           );
         })}
 
-        {/* Gym facade — invisible hit target over the painted double
-            doors, routes to the communal /gym view. */}
+        {/* Coming-Soon future-tenant lot — CSS-only placeholder (dashed
+            plot + "?" sign). Non-interactive; communicates growth. */}
+        <div
+          className="town-square-coming-soon"
+          style={{ left: COMING_SOON_POSITION.left, top: COMING_SOON_POSITION.top }}
+          role="img"
+          aria-label="Future agent — arriving soon"
+        >
+          <div className="coming-soon-plot" aria-hidden>
+            ?
+          </div>
+          <span className="house-label coming-soon-label">Coming soon</span>
+        </div>
+
+        {/* Gym facade hit target — routes to /gym. Now shows a visible
+            "Trading Gym" label pill at the bottom of the hit rect so
+            first-time users recognize the painted doors as tappable. */}
         <Link
           to="/gym"
           aria-label="Enter the communal gym"
           className="town-square-gym-hit"
           style={GYM_FACADE_RECT}
-        />
+        >
+          <span className="town-square-gym-label">Trading Gym</span>
+        </Link>
       </div>
 
       {/* Small welcome-back strip floating below the plaza when the
@@ -135,7 +173,7 @@ export function TownSquarePage() {
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, delay: 0.2 }}
-          className="mt-3 text-[12px] text-center"
+          className="town-square-welcome"
           style={{ color: 'var(--world-ink)' }}
         >
           {delta.totalNewTrades} new trade{delta.totalNewTrades === 1 ? '' : 's'} since your last visit

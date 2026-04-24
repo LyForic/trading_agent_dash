@@ -541,15 +541,56 @@ body[data-room="gale"] .weather-window {
   to   { transform: translateY(0);    opacity: 1; }
 }
 
-/* ---- Phase 4 Slice 3: Town Square ----
-   The plaza exterior lives at /. Houses are 192×192 transparent PNGs
-   composited onto a 200×112 plaza PNG. Everything scales together at
-   any viewport width because positions/sizes are % of the stage. */
+/* ---- Phase 4 Slice 3 R2: Town Square ----
+   Four-corner grammar: agents at NW/NE/SW/SE, center of plaza kept
+   open for the future avatar spawn. Gym painted at top.
+   Mobile-full-bleed: stage sized by min() so it maxes out the shorter
+   viewport axis; a blurred copy of the plaza fills any letterbox so
+   the screen never feels half-empty. */
 
+.town-square-page {
+  position: relative;
+  min-height: 100dvh;
+  width: 100vw;
+  display: grid;
+  place-items: center;
+  padding:
+    max(12px, env(safe-area-inset-top, 12px))
+    max(12px, env(safe-area-inset-right, 12px))
+    max(16px, env(safe-area-inset-bottom, 16px))
+    max(12px, env(safe-area-inset-left, 12px));
+  overflow: hidden;
+  background-color: #0a0a0a;
+}
+
+/* Enlarged, blurred, darkened copy of the plaza art. Fills the entire
+   page behind the contained stage so letterbox feels like atmospheric
+   depth, not chrome. Scale slightly above 100% so the blur edges don't
+   halo the page edges. */
+.town-square-backdrop {
+  position: absolute;
+  inset: 0;
+  background-image: url("/rooms/town-square.png");
+  background-size: cover;
+  background-position: center;
+  filter: blur(32px) brightness(0.5) saturate(1.1);
+  transform: scale(1.2);
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* Stage = the actual plaza + sprites. Sized to max out the shorter
+   viewport axis while preserving the 200:112 aspect. The min() means
+   on narrow portrait phones we're height-bound, on wide desktop we're
+   width-bound, no manual breakpoint needed. */
 .town-square-stage {
   position: relative;
-  width: 100%;
-  max-width: 640px;
+  z-index: 1;
+  width: min(
+    96vw,
+    calc((100dvh - 48px) * 200 / 112),
+    1120px
+  );
   aspect-ratio: 200 / 112;
   image-rendering: pixelated;
   overflow: visible;
@@ -603,13 +644,15 @@ body[data-plaza-mood="loss"] .town-square-fountain-glow {
   );
 }
 
-/* House sprite tap targets. Each Link is absolutely positioned on the
-   plaza; the img inside is the 192×192 PNG scaled to ~28% of plaza
-   width. Translate -50% centers the sprite on the (left, top) anchor. */
+/* House sprite tap targets. Center-anchored via translate(-50%, -50%)
+   so the (left, top) pair is the CENTER of the sprite — makes corner
+   placement predictable and prevents clipping at the stage edges.
+   Reduced to 22% width (from 28%) so four corner destinations fit
+   without overlap. */
 .town-square-house {
   position: absolute;
-  transform: translate(-50%, -85%);
-  width: 28%;
+  transform: translate(-50%, -50%);
+  width: 22%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -621,11 +664,11 @@ body[data-plaza-mood="loss"] .town-square-fountain-glow {
 }
 .town-square-house:hover,
 .town-square-house:focus-visible {
-  transform: translate(-50%, -88%) scale(1.05);
+  transform: translate(-50%, -52%) scale(1.05);
   outline: none;
 }
 .town-square-house:active {
-  transform: translate(-50%, -84%) scale(0.98);
+  transform: translate(-50%, -49%) scale(0.98);
 }
 .house-sprite {
   width: 100%;
@@ -663,13 +706,19 @@ body[data-plaza-mood="loss"] .town-square-fountain-glow {
   pointer-events: none;
 }
 
-/* Invisible hit target for the gym facade painted at the top of the
-   plaza. Sized to the double-door area; adjust if the plaza art
-   changes. Subtle hover brightening gives it a tap affordance. */
+/* Gym facade hit target. Now carries a visible label pill anchored at
+   its bottom so first-time users recognize the painted doors as
+   tappable. Hover brightens the whole rect slightly as a secondary
+   affordance. */
 .town-square-gym-hit {
   position: absolute;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 4px;
   border-radius: 6px;
   background-color: transparent;
+  text-decoration: none;
   transition: background-color 180ms ease;
   cursor: pointer;
 }
@@ -677,6 +726,72 @@ body[data-plaza-mood="loss"] .town-square-fountain-glow {
 .town-square-gym-hit:focus-visible {
   background-color: rgba(255, 230, 180, 0.18);
   outline: none;
+}
+.town-square-gym-label {
+  font-family: var(--font-display);
+  font-size: clamp(10px, 1.7vw, 14px);
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 6px;
+  background-color: color-mix(in srgb, var(--color-paper) 92%, transparent);
+  color: var(--color-ink);
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.28);
+  letter-spacing: 0.02em;
+}
+
+/* Future-tenant lot — CSS-only placeholder sitting on the SE corner of
+   the plaza, symmetric to Gale's SW house. Dashed dirt plot + "?" in
+   the style of a construction foundation. Non-interactive (no Link)
+   since the agent doesn't exist yet; swap to a real house sprite when
+   the fourth agent launches. */
+.town-square-coming-soon {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  width: 22%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  pointer-events: none;
+}
+.coming-soon-plot {
+  width: 78%;
+  aspect-ratio: 1 / 1;
+  border: 2px dashed color-mix(in srgb, var(--world-ink) 65%, transparent);
+  border-radius: 10px;
+  background-color: rgba(120, 90, 60, 0.30);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: color-mix(in srgb, var(--world-ink) 85%, transparent);
+  font-family: var(--font-display);
+  font-size: clamp(22px, 5vw, 44px);
+  font-weight: 700;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.22);
+  animation: hotspot-breathe 4s ease-in-out infinite;
+}
+.coming-soon-label {
+  opacity: 0.85;
+  letter-spacing: 0.02em;
+}
+
+/* Welcome-back strip — sits below the plaza stage, in the safe-area
+   padding. Centered, paper-pill for legibility against the blurred
+   backdrop. */
+.town-square-welcome {
+  position: relative;
+  z-index: 2;
+  margin-top: 14px;
+  padding: 6px 14px;
+  font-size: 12px;
+  text-align: center;
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--color-paper) 80%, transparent);
+  color: var(--color-ink);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
 }
 
 /* Baseline body styling */
