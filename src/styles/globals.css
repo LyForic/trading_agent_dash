@@ -768,6 +768,36 @@ body[data-mode="moonlit"] .town-house {
 .town-signpost:focus-visible {
   outline: none;
 }
+
+/* Warm lantern glow behind each signpost. Hidden at daytime; fades in
+   for dusk, fuller at moonlit. Sits behind the sprite so text + wood
+   both sit on a subtle warm bloom. */
+.town-signpost::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 180%;
+  height: 180%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 210, 130, 0.55) 0%,
+    rgba(255, 180, 100, 0.25) 35%,
+    rgba(255, 160, 80, 0.08) 65%,
+    transparent 80%
+  );
+  transition: opacity 500ms ease;
+}
+body[data-mode="dusk"] .town-signpost::before {
+  opacity: 0.55;
+}
+body[data-mode="moonlit"] .town-signpost::before {
+  opacity: 0.95;
+}
 .town-signpost-inner {
   display: block;
   position: relative;
@@ -802,6 +832,31 @@ body[data-mode="moonlit"] .town-house {
   transform: translate(-50%, -50%) scale(0.5);
   transform-origin: center center;
 }
+
+/* Dusk: warm parchment text with a subtle dark outline for legibility
+   on the slightly-brighter wood. */
+body[data-mode="dusk"] .town-signpost-label {
+  color: #f5e9d0;
+  text-shadow:
+    0 1px 0 #1d1308,
+    1px 0 0 #1d1308,
+    -1px 0 0 #1d1308,
+    0 -1px 0 #1d1308,
+    0 0 4px rgba(255, 210, 150, 0.4);
+}
+
+/* Moonlit: cream text with a stronger dark outline + warm glow so it
+   reads against the darkened wood. Treat signs as light receivers. */
+body[data-mode="moonlit"] .town-signpost-label {
+  color: #f5e9d0;
+  text-shadow:
+    0 1px 0 #1d1308,
+    1px 0 0 #1d1308,
+    -1px 0 0 #1d1308,
+    0 -1px 0 #1d1308,
+    0 0 5px rgba(255, 223, 155, 0.55);
+}
+
 .town-signpost--disabled {
   cursor: not-allowed;
   opacity: 0.78;
@@ -814,14 +869,22 @@ body[data-mode="moonlit"] .town-house {
 
 /* Time-of-day tinting applies to every new in-world pixel-art layer */
 body[data-mode="dusk"] .town-house-prop,
-body[data-mode="dusk"] .town-grounding-pad,
-body[data-mode="dusk"] .town-signpost-sprite {
+body[data-mode="dusk"] .town-grounding-pad {
   filter: brightness(0.86) saturate(1.15);
 }
 body[data-mode="moonlit"] .town-house-prop,
-body[data-mode="moonlit"] .town-grounding-pad,
-body[data-mode="moonlit"] .town-signpost-sprite {
+body[data-mode="moonlit"] .town-grounding-pad {
   filter: brightness(0.58) saturate(0.78);
+}
+
+/* Signpost sprite stays more legible at night — these are navigation,
+   not set dressing. Reduce moonlit dimming so the wood reads dark-tan
+   instead of near-black. Dusk gets a tiny warm lift. */
+body[data-mode="dusk"] .town-signpost-sprite {
+  filter: brightness(1.02) saturate(1.08);
+}
+body[data-mode="moonlit"] .town-signpost-sprite {
+  filter: brightness(0.9) saturate(0.92);
 }
 
 /* Mobile pan hint — ephemeral "Drag to explore" toast that appears
@@ -882,6 +945,9 @@ body[data-mode="moonlit"] .town-signpost-sprite {
     0 6px 8px rgba(0, 0, 0, 0.35);
   pointer-events: none;
   z-index: 5;
+  max-width: min(320px, calc(100vw - 32px));
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .town-bulletin-hud::before {
   content: "";
