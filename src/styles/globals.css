@@ -747,6 +747,26 @@ body[data-mode="moonlit"] .town-house {
   -webkit-user-drag: none;
 }
 
+/* Foreground tree canopies at plaza edges. Pixelated rendering for
+   crisp 16-bit look; pointer-events none so they never block taps on
+   houses, signposts, or the gym hit target behind them. */
+.town-foreground-tree {
+  position: absolute;
+  image-rendering: pixelated;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* Time-of-day tint — trees receive the same dim as houses/props/grounding-
+   pads so the lighting stays unified. */
+body[data-mode="dusk"] .town-foreground-tree {
+  filter: brightness(0.86) saturate(1.15);
+}
+body[data-mode="moonlit"] .town-foreground-tree {
+  filter: brightness(0.58) saturate(0.78);
+}
+
 /* In-world wooden signpost — replaces all 5 HUD signs from R5. Lives
    inside .town-world, scales with the world transform, always readable
    via the Z.signpost layer band. Text is CSS-overlaid on the plaque
