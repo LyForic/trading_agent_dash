@@ -1,0 +1,26 @@
+{
+  "character": {
+    "id": "f3de113c-b603-45fb-b73b-c79937848b5d",
+    "name": "Tiny pixel art trader character, Stardew Valley villager style, 32x32, transparent background, three-quarter south-facing idle pose. Warm brown hooded cloak over simple cream tunic, small leather satchel on hip, no hat, round friendly face with simple dot eyes. Short stature, chunky proportions, readable at small scale. Warm earthy color palette, brown boots. Cozy adventurer vibe, NOT a warrior, NOT armored.",
+    "prompt": "Tiny pixel art trader character, Stardew Valley villager style, 32x32, transparent background, three-quarter south-facing idle pose. Warm brown hooded cloak over simple cream tunic, small leather satchel on hip, no hat, round friendly face with simple dot eyes. Short stature, chunky proportions, readable at small scale. Warm earthy color palette, brown boots. Cozy adventurer vibe, NOT a warrior, NOT armored.",
+    "size": {
+      "width": 48,
+      "height": 48
+    },
+    "template_id": "mannequin",
+    "directions": 4,
+    "view": "low top-down",
+    "created_at": "2026-04-24T01:42:07.228503+00:00"
+  },
+  "frames": {
+    "rotations": {
+      "south": "rotations/south.png",
+      "west": "rotations/west.png",
+      "east": "rotations/east.png",
+      "north": "rotations/north.png"
+    },
+    "animations": {}
+  },
+  "export_version": "2.0",
+  "export_date": "2026-04-24T01:44:41.471163"
+}
