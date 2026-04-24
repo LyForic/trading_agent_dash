@@ -58,7 +58,6 @@ const Z = {
 // Default rendered width for the signpost sprite (in world pixels).
 // Can be overridden per-destination via signpost.width.
 const DEFAULT_SIGNPOST_WIDTH = 64;
-void DEFAULT_SIGNPOST_WIDTH; // used in future tasks
 
 // Plaza anchor points. Tuned against town-square.png where the four
 // diagonal paths terminate; nudged per R4 feedback so houses sit on
@@ -214,7 +213,6 @@ export function TownSquarePage() {
 
   const viewportRef = useRef<HTMLDivElement>(null);
   const [viewport, setViewport] = useState({ w: 800, h: 600 });
-  const [scrollX, setScrollX] = useState(0);
 
   const [avatarPos, setAvatarPos] = useState(AVATAR_SPAWN);
   const [avatarFacing, setAvatarFacing] = useState<Facing>('south');
@@ -264,14 +262,6 @@ export function TownSquarePage() {
     return () => observer.disconnect();
   }, []);
 
-  // Scroll tracking — drives HUD label positions.
-  useEffect(() => {
-    const el = viewportRef.current;
-    if (!el) return;
-    const onScroll = () => setScrollX(el.scrollLeft);
-    el.addEventListener('scroll', onScroll, { passive: true });
-    return () => el.removeEventListener('scroll', onScroll);
-  }, []);
 
   const scale = useMemo(() => {
     if (viewport.w <= 0 || viewport.h <= 0) return 1;
@@ -293,7 +283,6 @@ export function TownSquarePage() {
       Math.min(worldDisplay.w - viewport.w, targetScroll),
     );
     el.scrollLeft = clamped;
-    setScrollX(clamped);
   }, [scale, viewport.w, worldDisplay.w]);
 
   // Body attributes.
@@ -347,11 +336,6 @@ export function TownSquarePage() {
     },
     [avatarPos, isWalking, navigate, scale, viewport.w, worldDisplay.w],
   );
-
-  // Project a world (x, y) into viewport/screen coords so the HUD
-  // can paint labels that sit over the correct world feature.
-  const projectX = (worldX: number) => worldX * scale - scrollX;
-  const projectY = (worldY: number) => worldY * scale;
 
   return (
     <>
@@ -473,6 +457,47 @@ export function TownSquarePage() {
               );
             })}
 
+            {/* In-world wooden signposts — 5 destinations, Gym + 4 houses.
+                Replaces the screen-space .town-sign-hud elements from R5. Tappable
+                as secondary walkTo targets; house sprite remains primary tap.
+
+                Outer button holds the anchor transform; inner wrapper holds the
+                hover transform so the two don't fight. */}
+            {DESTINATIONS.filter((d) => d.signpost).map((dest) => {
+              const sp = dest.signpost!;
+              return (
+                <button
+                  key={`signpost-${dest.id}`}
+                  type="button"
+                  className={`town-signpost${dest.disabled ? ' town-signpost--disabled' : ''}`}
+                  onClick={() => {
+                    if (!dest.disabled) walkTo(dest);
+                  }}
+                  aria-disabled={dest.disabled ? 'true' : undefined}
+                  aria-label={dest.ariaLabel ?? dest.label}
+                  style={{
+                    left: sp.x,
+                    top: sp.y,
+                    width: sp.width ?? DEFAULT_SIGNPOST_WIDTH,
+                    transform: `translate(-${sp.anchorX ?? 50}%, -${sp.anchorY ?? 100}%)`,
+                    zIndex: Z.signpost + Math.round(sp.y),
+                  }}
+                >
+                  <span className="town-signpost-inner">
+                    <img
+                      src="/signposts/signpost.png"
+                      alt=""
+                      className="town-signpost-sprite"
+                      draggable={false}
+                    />
+                    <span className="town-signpost-label">
+                      {dest.signText ?? dest.label}
+                    </span>
+                  </span>
+                </button>
+              );
+            })}
+
             {/* Avatar stays inside the world so it scales with
                 everything else; sprite size is 72 world-pixels, not
                 the 48 R4 shipped. */}
@@ -500,32 +525,6 @@ export function TownSquarePage() {
           welcome-back bulletin, and the ambient leaf particles live
           here. */}
       <div className="town-hud" aria-hidden="false">
-        {/* Wooden signpost labels — projected from world coords. Gym
-            sign sits higher than its foot anchor so it doesn't clip
-            the lamp post. */}
-        {DESTINATIONS.map((dest) => {
-          const isGym = dest.id === 'gym';
-          const screenX = projectX(dest.x);
-          const screenY = isGym
-            ? projectY(dest.y - 60) // lift the Gym sign above the lamp
-            : projectY(dest.y + 30);
-          return (
-            <button
-              key={`hud-sign-${dest.id}`}
-              type="button"
-              className={`town-sign-hud${dest.disabled ? ' town-sign-hud--disabled' : ''}`}
-              onClick={() => {
-                if (!dest.disabled) walkTo(dest);
-              }}
-              disabled={dest.disabled}
-              style={{ left: screenX, top: screenY }}
-              aria-label={dest.label}
-            >
-              {dest.label}
-            </button>
-          );
-        })}
-
         {delta && (
           <motion.div
             key="welcome-back"
