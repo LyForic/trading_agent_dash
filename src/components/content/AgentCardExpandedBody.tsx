@@ -250,20 +250,6 @@ export function AgentCardExpandedBody({ agent }: { agent: Agent }) {
           </p>
         </div>
       )}
-
-      <div className="pt-1">
-        <button
-          type="button"
-          className="px-4 py-2 rounded-md text-sm font-medium border"
-          style={{
-            backgroundColor: 'var(--color-paper-raised)',
-            borderColor: 'var(--color-border-default)',
-            color: 'var(--color-ink)',
-          }}
-        >
-          View trade log →
-        </button>
-      </div>
     </div>
   );
 }

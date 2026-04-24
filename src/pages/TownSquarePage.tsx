@@ -8,55 +8,61 @@ import { WelcomeModal } from '@/components/town/WelcomeModal';
 import type { AgentId } from '@/lib/types';
 
 /**
- * Town Square R4 — world-canvas architecture.
+ * Town Square R5 — HUD/world split + drop-in avatar + ambient wind.
  *
- * The page renders a **fixed 960×540 world** inside a viewport that
- * scales the world uniformly via `transform: scale()`. Background,
- * houses, labels, avatar, shadows, time-of-day tint — everything lives
- * in that single world div and scales together. This replaces R3's
- * split model (background was `object-fit: cover` while overlays were
- * viewport-percentage), which was responsible for the mobile
- * truncation.
+ * Architecture change from R4: signs (labels) and the welcome-back
+ * bulletin move OUT of the scaled/scrolled world and into a screen-
+ * space HUD layer. The world still scales uniformly, but the HUD
+ * overlays it and reads a tracked scrollLeft + scale to compute each
+ * label's live position in viewport coords. That fixes every label-
+ * clipping bug the peer reviews kept flagging — Apex "Ape", Gale
+ * running past the bottom safe area — without needing a portrait-
+ * specific plaza PNG.
  *
- * Scale = max(viewportW / WORLD_W, viewportH / WORLD_H) — cover-style.
- * If the scaled world is wider than the viewport (true on portrait
- * phones), the outer viewport uses `overflow-x: auto` so users can
- * swipe horizontally to explore. Initial scroll centers on the lamp
- * post. When the avatar walks somewhere, we `scrollTo` the viewport
- * so the camera follows the player.
+ * Other R5 wins:
+ *   - Avatar bumped 48 → 72 world-pixels and drops in from above
+ *     after the welcome modal dismisses (or on mount for returning
+ *     users). Idle bob resumes after the landing squash.
+ *   - Gym facade hover no longer paints a white rectangle — the hit
+ *     target is fully transparent; cursor pointer + label hover is
+ *     the affordance.
+ *   - Trading Gym sign moved higher so it sits above the lamp post
+ *     instead of clipping it.
+ *   - Ambient leaf particles drift across the plaza (daytime + dusk
+ *     only; moonlit is still). Lantern already flickers from R4.
  *
- * Tap-to-walk: clicking a destination sets avatarPos to that node's
- * foot anchor; CSS transitions the avatar's position over 800ms; the
- * direction sprite (N/S/E/W) is picked from the walk vector; after
- * arrival the route changes. Simple, no pathfinding, no walk-cycle
- * frames yet (Brandon dropped 4 idle rotations only) — the direction
- * swap alone sells the motion.
- *
- * First-visit welcome modal gated on localStorage.plazaOnboarded.
+ * Not in R5 (by design, deferred):
+ *   - Virtual joystick. Peer review split: Brandon wants it, Gemini
+ *     flagged it as a V1 trap (60fps loop + collision math + native
+ *     swipe conflict). Current tap-to-walk + native horizontal swipe
+ *     is simple and works; revisit in Phase 5 with a "nipple" control
+ *     whose drag only moves the avatar, not arbitrary coords.
+ *   - Agent-card 24h/7d/lifetime P&L filter. Tracked for next round.
  */
 
-// Fixed logical world size. Every coordinate below is in world pixels.
 const WORLD_W = 960;
 const WORLD_H = 540;
 
-// Anchor points on the plaza art (door positions where paths end).
-// These scale uniformly with the world — never breakpoint-tuned.
+// Plaza anchor points. Tuned against town-square.png where the four
+// diagonal paths terminate; nudged per R4 feedback so houses sit on
+// the dirt pads instead of on grass.
 const LAMP_POST = { x: 480, y: 290 };
-const AVATAR_SPAWN = { x: 480, y: 380 };
+const AVATAR_SPAWN = { x: 480, y: 375 };
+const AVATAR_SIZE = 72;
+const AVATAR_DROP_DURATION_MS = 520;
 
 interface Destination {
   id: 'gym' | AgentId | 'comingSoon';
-  // Foot anchor: where the door meets the ground. Sprite (if any)
-  // sits above this point via translate(-50%, -100%) in CSS.
   x: number;
   y: number;
-  // Rendered sprite width in world pixels (for houses). Gym is
-  // painted into the base plaza PNG, so no sprite.
   spriteWidth?: number;
   spriteSrc?: string;
   label: string;
   route?: string;
   disabled?: boolean;
+  /** Sign y-offset below foot anchor. Gym sign sits above the lamp,
+   *  so its signY is computed separately in the HUD render. */
+  signOffsetY?: number;
 }
 
 const DESTINATIONS: Destination[] = [
@@ -69,39 +75,43 @@ const DESTINATIONS: Destination[] = [
   },
   {
     id: 'apex',
-    x: 175,
-    y: 340,
+    x: 180,
+    y: 350,
     spriteWidth: 180,
     spriteSrc: '/houses/apex.png',
     label: 'Apex',
     route: '/apex',
+    signOffsetY: 34,
   },
   {
     id: 'metheus',
-    x: 785,
-    y: 340,
+    x: 780,
+    y: 350,
     spriteWidth: 180,
     spriteSrc: '/houses/metheus.png',
     label: 'Metheus',
     route: '/metheus',
+    signOffsetY: 34,
   },
   {
     id: 'gale',
-    x: 220,
-    y: 490,
-    spriteWidth: 150,
+    x: 225,
+    y: 475,
+    spriteWidth: 155,
     spriteSrc: '/houses/gale.png',
     label: 'Gale',
     route: '/gale',
+    signOffsetY: 30,
   },
   {
     id: 'comingSoon',
-    x: 740,
-    y: 490,
-    spriteWidth: 155,
+    x: 735,
+    y: 475,
+    spriteWidth: 160,
     spriteSrc: '/houses/coming-soon-house.png',
     label: 'Coming soon',
     disabled: true,
+    signOffsetY: 30,
   },
 ];
 
@@ -117,6 +127,16 @@ function directionOf(from: { x: number; y: number }, to: { x: number; y: number 
 const WALK_DURATION_MS = 800;
 const PAUSE_AT_DOOR_MS = 220;
 
+// Ambient leaf particles (daytime + dusk). Position + timing seeded so
+// each mount renders a deterministic drift, no React jitter.
+const LEAVES = Array.from({ length: 8 }, (_, i) => ({
+  key: `leaf-${i}`,
+  topPct: 8 + ((i * 13) % 72),
+  delayS: (i * 1.7) % 14,
+  durationS: 14 + ((i * 1.3) % 8),
+  variant: i % 3,
+}));
+
 export function TownSquarePage() {
   const navigate = useNavigate();
   const autoMode = useTimeOfDay();
@@ -125,10 +145,8 @@ export function TownSquarePage() {
 
   const viewportRef = useRef<HTMLDivElement>(null);
   const [viewport, setViewport] = useState({ w: 800, h: 600 });
+  const [scrollX, setScrollX] = useState(0);
 
-  // Avatar state. Position lives in world coords; CSS transitions
-  // handle the visual walk. Facing flips between the four idle
-  // sprites Brandon dropped (north/south/east/west).
   const [avatarPos, setAvatarPos] = useState(AVATAR_SPAWN);
   const [avatarFacing, setAvatarFacing] = useState<Facing>('south');
   const [isWalking, setIsWalking] = useState(false);
@@ -142,17 +160,31 @@ export function TownSquarePage() {
     }
   });
 
+  // Drop-in animation state. Avatar is hidden until welcome is
+  // dismissed, then the CSS drop-in animation plays once.
+  const [avatarState, setAvatarState] = useState<'hidden' | 'dropping' | 'idle'>(
+    () => (showWelcome ? 'hidden' : 'dropping'),
+  );
+  useEffect(() => {
+    if (showWelcome) return;
+    if (avatarState === 'hidden') setAvatarState('dropping');
+  }, [showWelcome, avatarState]);
+  useEffect(() => {
+    if (avatarState !== 'dropping') return;
+    const t = window.setTimeout(() => setAvatarState('idle'), AVATAR_DROP_DURATION_MS);
+    return () => window.clearTimeout(t);
+  }, [avatarState]);
+
   const dismissWelcome = useCallback(() => {
     try {
       localStorage.setItem('plazaOnboarded', 'true');
     } catch {
-      // storage disabled; modal just won't remember. fine.
+      // ignore
     }
     setShowWelcome(false);
   }, []);
 
-  // Track viewport size via ResizeObserver. Recompute world scale +
-  // follows through to the scroll centering below.
+  // Viewport size tracking.
   useEffect(() => {
     if (!viewportRef.current) return;
     const el = viewportRef.current;
@@ -163,8 +195,15 @@ export function TownSquarePage() {
     return () => observer.disconnect();
   }, []);
 
-  // Cover-style scale: at least one axis fills the viewport, the other
-  // overflows and becomes scrollable.
+  // Scroll tracking — drives HUD label positions.
+  useEffect(() => {
+    const el = viewportRef.current;
+    if (!el) return;
+    const onScroll = () => setScrollX(el.scrollLeft);
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, []);
+
   const scale = useMemo(() => {
     if (viewport.w <= 0 || viewport.h <= 0) return 1;
     return Math.max(viewport.w / WORLD_W, viewport.h / WORLD_H);
@@ -175,21 +214,20 @@ export function TownSquarePage() {
     [scale],
   );
 
-  // Horizontal scroll defaults to centering the lamp post — puts the
-  // user at the plaza center, gym above, houses in the four corners
-  // reachable via pan.
+  // Center lamp post on initial load + resize.
   useEffect(() => {
     const el = viewportRef.current;
     if (!el) return;
     const targetScroll = LAMP_POST.x * scale - viewport.w / 2;
-    el.scrollLeft = Math.max(
+    const clamped = Math.max(
       0,
       Math.min(worldDisplay.w - viewport.w, targetScroll),
     );
+    el.scrollLeft = clamped;
+    setScrollX(clamped);
   }, [scale, viewport.w, worldDisplay.w]);
 
-  // Body attributes so the CSS can key off mode / route, matching the
-  // pattern the interior rooms already use.
+  // Body attributes.
   useEffect(() => {
     document.body.dataset.mode = autoMode;
   }, [autoMode]);
@@ -202,7 +240,6 @@ export function TownSquarePage() {
     };
   }, []);
 
-  // Who has a pulse dot today?
   const pulsing = useMemo(() => {
     if (!delta) return new Set<AgentId>();
     return new Set(delta.perAgent.map((a) => a.id));
@@ -215,7 +252,6 @@ export function TownSquarePage() {
       setAvatarFacing(directionOf(avatarPos, dest));
       setAvatarPos({ x: dest.x, y: dest.y });
 
-      // Camera pan follows the avatar.
       const el = viewportRef.current;
       if (el) {
         const targetScroll = dest.x * scale - viewport.w / 2;
@@ -234,11 +270,19 @@ export function TownSquarePage() {
           navigate(route, { state: { from: '/' } });
         }, WALK_DURATION_MS + PAUSE_AT_DOOR_MS);
       } else {
-        window.setTimeout(() => setIsWalking(false), WALK_DURATION_MS + PAUSE_AT_DOOR_MS);
+        window.setTimeout(
+          () => setIsWalking(false),
+          WALK_DURATION_MS + PAUSE_AT_DOOR_MS,
+        );
       }
     },
     [avatarPos, isWalking, navigate, scale, viewport.w, worldDisplay.w],
   );
+
+  // Project a world (x, y) into viewport/screen coords so the HUD
+  // can paint labels that sit over the correct world feature.
+  const projectX = (worldX: number) => worldX * scale - scrollX;
+  const projectY = (worldY: number) => worldY * scale;
 
   return (
     <>
@@ -256,23 +300,14 @@ export function TownSquarePage() {
               transformOrigin: 'top left',
             }}
           >
-            {/* Base plaza image, rendered at world-pixel size. */}
             <div className="town-world-bg" />
-
-            {/* Time-of-day multiply tint, same pattern as interior
-                rooms. Lives inside the world so it tints every
-                sprite uniformly. */}
             <div className="town-world-tint" aria-hidden />
-
-            {/* Lamp post warm glow — invisible at daytime, bright at
-                moonlit. Centered on the painted lamp post. */}
             <div
               className="town-world-lamp-glow ambient-motion"
               aria-hidden
               style={{ left: LAMP_POST.x, top: LAMP_POST.y }}
             />
 
-            {/* Houses + invisible gym hit target */}
             {DESTINATIONS.map((dest) => {
               if (dest.id === 'gym') {
                 return (
@@ -291,7 +326,8 @@ export function TownSquarePage() {
                   />
                 );
               }
-              const isPulsing = dest.id !== 'comingSoon' && pulsing.has(dest.id as AgentId);
+              const isPulsing =
+                dest.id !== 'comingSoon' && pulsing.has(dest.id as AgentId);
               const zIndex = Math.round(dest.y);
               return (
                 <button
@@ -301,7 +337,9 @@ export function TownSquarePage() {
                   onClick={() => walkTo(dest)}
                   disabled={dest.disabled}
                   aria-label={
-                    dest.disabled ? 'Future agent — arriving soon' : `Enter ${dest.label}'s room`
+                    dest.disabled
+                      ? 'Future agent — arriving soon'
+                      : `Enter ${dest.label}'s room`
                   }
                   style={{
                     left: dest.x,
@@ -321,51 +359,86 @@ export function TownSquarePage() {
               );
             })}
 
-            {/* Wooden sign labels on their own z-layer so a
-                neighbor sprite can never clip a label. */}
-            {DESTINATIONS.map((dest) => (
-              <span
-                key={`sign-${dest.id}`}
-                className={`town-sign${dest.disabled ? ' town-sign--disabled' : ''}`}
-                style={{
-                  left: dest.x,
-                  top: dest.y + (dest.id === 'gym' ? 24 : 30),
-                }}
-              >
-                {dest.label}
-              </span>
-            ))}
-
-            {/* Welcome-back notice — a small bulletin tacked in the
-                top-right corner of the world, clear of the gym facade
-                and the lamp glow. Only renders when there's a delta
-                since the user's last visit. */}
-            {delta && (
-              <motion.div
-                key="welcome-back"
-                initial={{ opacity: 0, y: 4 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.3, delay: 0.25 }}
-                className="town-bulletin"
-                style={{ left: 820, top: 80 }}
-              >
-                {delta.totalNewTrades} new trade
-                {delta.totalNewTrades === 1 ? '' : 's'} since last visit
-              </motion.div>
-            )}
-
-            {/* Avatar — the static idle sprite swaps between N/S/E/W
-                rotations based on walk direction. CSS transitions its
-                position over WALK_DURATION_MS. */}
+            {/* Avatar stays inside the world so it scales with
+                everything else; sprite size is 72 world-pixels, not
+                the 48 R4 shipped. */}
             <img
               src={`/sprites/player/rotations/${avatarFacing}.png`}
               alt="Your avatar"
-              className={`town-avatar${isWalking ? ' town-avatar--walking' : ''}`}
+              className={`town-avatar town-avatar--${avatarState}${
+                isWalking ? ' town-avatar--walking' : ''
+              }`}
               draggable={false}
-              style={{ left: avatarPos.x, top: avatarPos.y }}
+              style={{
+                left: avatarPos.x,
+                top: avatarPos.y,
+                width: AVATAR_SIZE,
+                height: AVATAR_SIZE,
+              }}
             />
           </div>
         </div>
+      </div>
+
+      {/* Screen-space HUD. Sibling of the scroll viewport, not a child,
+          so it doesn't scroll or scale with the world. Labels, the
+          welcome-back bulletin, and the ambient leaf particles live
+          here. */}
+      <div className="town-hud" aria-hidden="false">
+        {/* Wooden signpost labels — projected from world coords. Gym
+            sign sits higher than its foot anchor so it doesn't clip
+            the lamp post. */}
+        {DESTINATIONS.map((dest) => {
+          const isGym = dest.id === 'gym';
+          const screenX = projectX(dest.x);
+          const screenY = isGym
+            ? projectY(dest.y - 60) // lift the Gym sign above the lamp
+            : projectY(dest.y + (dest.signOffsetY ?? 30));
+          return (
+            <button
+              key={`hud-sign-${dest.id}`}
+              type="button"
+              className={`town-sign-hud${dest.disabled ? ' town-sign-hud--disabled' : ''}`}
+              onClick={() => {
+                if (!dest.disabled) walkTo(dest);
+              }}
+              disabled={dest.disabled}
+              style={{ left: screenX, top: screenY }}
+              aria-label={dest.label}
+            >
+              {dest.label}
+            </button>
+          );
+        })}
+
+        {delta && (
+          <motion.div
+            key="welcome-back"
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.25 }}
+            className="town-bulletin-hud"
+          >
+            {delta.totalNewTrades} new trade
+            {delta.totalNewTrades === 1 ? '' : 's'} since last visit
+          </motion.div>
+        )}
+
+        {/* Ambient wind leaves. Skipped at moonlit — a quiet night
+            scene reads better without motion. */}
+        {autoMode !== 'moonlit' &&
+          LEAVES.map((leaf) => (
+            <span
+              key={leaf.key}
+              aria-hidden
+              className={`town-leaf town-leaf--${leaf.variant} ambient-motion`}
+              style={{
+                top: `${leaf.topPct}%`,
+                animationDelay: `${leaf.delayS}s`,
+                animationDuration: `${leaf.durationS}s`,
+              }}
+            />
+          ))}
       </div>
 
       <WelcomeModal show={showWelcome} onDismiss={dismissWelcome} />
