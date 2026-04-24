@@ -43,6 +43,24 @@ import type { AgentId } from '@/lib/types';
 const WORLD_W = 960;
 const WORLD_H = 540;
 
+// Layer band z-index model. Bands are spaced by >WORLD_HEIGHT (540) so
+// Math.round(y) depth sort within a band can never leak above the next
+// band. Example: grounding pad at y=477 → 1000+477 = 1477; scene house
+// at y=350 → 2000+350 = 2350. Pad always under scene regardless of y.
+const Z = {
+  plaza: 0,
+  groundingPad: 1000,
+  scene: 2000,
+  signpost: 4000,
+  effects: 5000,
+} as const;
+void Z; // used in future tasks
+
+// Default rendered width for the signpost sprite (in world pixels).
+// Can be overridden per-destination via signpost.width.
+const DEFAULT_SIGNPOST_WIDTH = 64;
+void DEFAULT_SIGNPOST_WIDTH; // used in future tasks
+
 // Plaza anchor points. Tuned against town-square.png where the four
 // diagonal paths terminate; nudged per R4 feedback so houses sit on
 // the dirt pads instead of on grass.
@@ -57,12 +75,45 @@ interface Destination {
   y: number;
   spriteWidth?: number;
   spriteSrc?: string;
+
+  /** Full display / aria name. */
   label: string;
+  /** Short text painted on the signpost plaque. Defaults to label. */
+  signText?: string;
+  /** Full accessibility label (more descriptive than visible label). */
+  ariaLabel?: string;
+
   route?: string;
   disabled?: boolean;
-  /** Sign y-offset below foot anchor. Gym sign sits above the lamp,
-   *  so its signY is computed separately in the HUD render. */
-  signOffsetY?: number;
+
+  /** Signpost placement in world coords. */
+  signpost?: {
+    x: number;
+    y: number;
+    anchorX?: number; // %, default 50
+    anchorY?: number; // %, default 100
+    width?: number;   // world px, default DEFAULT_SIGNPOST_WIDTH (64)
+  };
+
+  /** Shared grounding pad under the house base. */
+  groundingPad?: {
+    x: number;
+    y: number;
+    width: number;
+    anchorX?: number;
+    anchorY?: number;
+  };
+
+  /** Diegetic prop breaking the house base seam. */
+  prop?: {
+    src: string;
+    x: number;
+    y: number;
+    width: number;
+    anchorX?: number;
+    anchorY?: number;
+    zOffset?: number;
+  };
 }
 
 const DESTINATIONS: Destination[] = [
@@ -71,7 +122,10 @@ const DESTINATIONS: Destination[] = [
     x: 480,
     y: 210,
     label: 'Trading Gym',
+    signText: 'Trading\nGym',
+    ariaLabel: 'Enter the Trading Gym communal roster',
     route: '/gym',
+    signpost: { x: 605, y: 235 },
   },
   {
     id: 'apex',
@@ -80,8 +134,12 @@ const DESTINATIONS: Destination[] = [
     spriteWidth: 180,
     spriteSrc: '/houses/apex.png',
     label: 'Apex',
+    signText: 'Apex',
+    ariaLabel: "Enter Apex's dojo",
     route: '/apex',
-    signOffsetY: 34,
+    signpost: { x: 265, y: 360 },
+    groundingPad: { x: 180, y: 352, width: 160 },
+    prop: { src: '/props/apex-stones.png', x: 210, y: 358, width: 56 },
   },
   {
     id: 'metheus',
@@ -90,8 +148,12 @@ const DESTINATIONS: Destination[] = [
     spriteWidth: 180,
     spriteSrc: '/houses/metheus.png',
     label: 'Metheus',
+    signText: 'Metheus',
+    ariaLabel: "Enter Metheus's study",
     route: '/metheus',
-    signOffsetY: 34,
+    signpost: { x: 695, y: 360 },
+    groundingPad: { x: 780, y: 352, width: 160 },
+    prop: { src: '/props/metheus-mailbox.png', x: 755, y: 358, width: 48 },
   },
   {
     id: 'gale',
@@ -100,8 +162,12 @@ const DESTINATIONS: Destination[] = [
     spriteWidth: 155,
     spriteSrc: '/houses/gale.png',
     label: 'Gale',
+    signText: 'Gale',
+    ariaLabel: "Enter Gale's loft",
     route: '/gale',
-    signOffsetY: 30,
+    signpost: { x: 310, y: 485 },
+    groundingPad: { x: 225, y: 477, width: 140 },
+    prop: { src: '/props/gale-fence.png', x: 260, y: 482, width: 56 },
   },
   {
     id: 'comingSoon',
@@ -110,8 +176,12 @@ const DESTINATIONS: Destination[] = [
     spriteWidth: 160,
     spriteSrc: '/houses/coming-soon-house.png',
     label: 'Coming soon',
+    signText: 'Coming\nSoon',
+    ariaLabel: 'Future agent home coming soon',
     disabled: true,
-    signOffsetY: 30,
+    signpost: { x: 650, y: 485 },
+    groundingPad: { x: 735, y: 477, width: 140 },
+    prop: { src: '/props/coming-soon-debris.png', x: 710, y: 482, width: 48 },
   },
 ];
 
@@ -393,7 +463,7 @@ export function TownSquarePage() {
           const screenX = projectX(dest.x);
           const screenY = isGym
             ? projectY(dest.y - 60) // lift the Gym sign above the lamp
-            : projectY(dest.y + (dest.signOffsetY ?? 30));
+            : projectY(dest.y + 30);
           return (
             <button
               key={`hud-sign-${dest.id}`}
