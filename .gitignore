@@ -49,3 +49,6 @@ supabase/.temp/
 
 # Brainstorming session artifacts
 .superpowers/
+
+# Agent handoff scratch (codex-implement, etc.)
+.ai/
