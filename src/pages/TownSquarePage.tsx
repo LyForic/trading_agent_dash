@@ -227,6 +227,17 @@ export function TownSquarePage() {
     }
   });
 
+  const [showPanHint, setShowPanHint] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    // Desktop: no hint.
+    if (window.matchMedia('(min-width: 768px)').matches) return false;
+    try {
+      return localStorage.getItem('panHintShown') !== 'true';
+    } catch {
+      return false;
+    }
+  });
+
   // Drop-in animation state. Avatar is hidden until welcome is
   // dismissed, then the CSS drop-in animation plays once.
   const [avatarState, setAvatarState] = useState<'hidden' | 'dropping' | 'idle'>(
@@ -241,6 +252,26 @@ export function TownSquarePage() {
     const t = window.setTimeout(() => setAvatarState('idle'), AVATAR_DROP_DURATION_MS);
     return () => window.clearTimeout(t);
   }, [avatarState]);
+
+  useEffect(() => {
+    if (showWelcome || !showPanHint) return;
+    const t = window.setTimeout(() => {
+      setShowPanHint(false);
+      // Only mark permanently shown if the user was actually visible-to-page
+      // when the timer fired. If they were tab-switched away, let them see it
+      // next visit. Graceful: document may not exist in SSR.
+      const isVisible =
+        typeof document !== 'undefined' && document.visibilityState === 'visible';
+      if (isVisible) {
+        try {
+          localStorage.setItem('panHintShown', 'true');
+        } catch {
+          // ignore storage failures
+        }
+      }
+    }, 4000);
+    return () => window.clearTimeout(t);
+  }, [showWelcome, showPanHint]);
 
   const dismissWelcome = useCallback(() => {
     try {
@@ -553,6 +584,19 @@ export function TownSquarePage() {
               }}
             />
           ))}
+
+        {showPanHint && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.35 }}
+            className="town-pan-hint"
+            aria-hidden="true"
+          >
+            ← Drag to explore →
+          </motion.div>
+        )}
       </div>
 
       <WelcomeModal show={showWelcome} onDismiss={dismissWelcome} />
