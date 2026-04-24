@@ -819,7 +819,8 @@ body[data-mode="moonlit"] .town-signpost::before {
 .town-signpost-label {
   position: absolute;
   top: var(--signpost-label-top, 28%);
-  left: 50%;
+  left: var(--signpost-label-left, 50%);
+  width: var(--signpost-label-width, auto);
   font-family: var(--font-display);
   font-size: 16px;
   font-weight: 700;
@@ -831,6 +832,19 @@ body[data-mode="moonlit"] .town-signpost::before {
   pointer-events: none;
   transform: translate(-50%, -50%) scale(0.5);
   transform-origin: center center;
+}
+
+/* Metheus plaque has an ornate center medallion that competes with label
+   text. Apply a small semi-transparent dark pill backdrop so "Metheus"
+   pops against the gold. Scoped via the --backdrop class modifier on
+   the outer button; selector targets the inner label. */
+.town-signpost--backdrop .town-signpost-label {
+  background: rgba(20, 15, 8, 0.6);
+  padding: 1px 4px;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35);
+  color: #f5e9d0;
+  text-shadow: 0 1px 0 #1d1308;
 }
 
 /* Dusk: warm parchment text with a subtle dark outline for legibility

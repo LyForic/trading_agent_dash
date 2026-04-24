@@ -93,6 +93,9 @@ interface Destination {
     width?: number;   // world px, default DEFAULT_SIGNPOST_WIDTH (64)
     src?: string;     // default '/signposts/signpost.png'
     labelTop?: string; // default '28%' — CSS var for label vertical position within plaque
+    labelLeft?: string; // default '50%' — CSS var for label horizontal position
+    labelWidth?: string; // default 'auto' — constrain label text to a width (e.g. '36px')
+    labelBackdrop?: boolean; // default false — if true, adds a dark semi-transparent pill backdrop behind the text
   };
 
   /** Shared grounding pad under the house base. */
@@ -127,10 +130,11 @@ const DESTINATIONS: Destination[] = [
     route: '/gym',
     signpost: {
       x: 480,
-      y: 155,
-      src: '/signposts/gym-plaque.png',
+      y: 175,
+      src: '/signage/gym-beam-sign.png',
       width: 128,
       labelTop: '50%',
+      labelLeft: '50%',
     },
   },
   {
@@ -143,7 +147,15 @@ const DESTINATIONS: Destination[] = [
     signText: 'Apex',
     ariaLabel: "Enter Apex's dojo",
     route: '/apex',
-    signpost: { x: 265, y: 360 },
+    signpost: {
+      x: 240,
+      y: 345,
+      src: '/signage/apex-banner.png',
+      width: 56,
+      labelTop: '70%',
+      labelLeft: '50%',
+      labelWidth: '40px',
+    },
     groundingPad: { x: 180, y: 352, width: 160 },
     prop: { src: '/props/apex-stones.png', x: 210, y: 358, width: 56 },
   },
@@ -157,7 +169,15 @@ const DESTINATIONS: Destination[] = [
     signText: 'Metheus',
     ariaLabel: "Enter Metheus's study",
     route: '/metheus',
-    signpost: { x: 695, y: 360 },
+    signpost: {
+      x: 695,
+      y: 355,
+      src: '/signage/metheus-brass-plaque.png',
+      width: 52,
+      labelTop: '50%',
+      labelLeft: '50%',
+      labelBackdrop: true,
+    },
     groundingPad: { x: 780, y: 352, width: 160 },
     prop: { src: '/props/metheus-mailbox.png', x: 755, y: 358, width: 48 },
   },
@@ -171,7 +191,15 @@ const DESTINATIONS: Destination[] = [
     signText: 'Gale',
     ariaLabel: "Enter Gale's loft",
     route: '/gale',
-    signpost: { x: 310, y: 485 },
+    signpost: {
+      x: 310,
+      y: 480,
+      src: '/signage/gale-mailbox.png',
+      width: 56,
+      labelTop: '45%',
+      labelLeft: '45%',
+      labelWidth: '28px',
+    },
     groundingPad: { x: 225, y: 477, width: 140 },
     prop: { src: '/props/gale-fence.png', x: 260, y: 482, width: 56 },
   },
@@ -185,7 +213,15 @@ const DESTINATIONS: Destination[] = [
     signText: 'Coming\nSoon',
     ariaLabel: 'Future agent home coming soon',
     disabled: true,
-    signpost: { x: 650, y: 485 },
+    signpost: {
+      x: 650,
+      y: 480,
+      src: '/signage/coming-soon-board.png',
+      width: 56,
+      labelTop: '35%',
+      labelLeft: '50%',
+      labelWidth: '44px',
+    },
     groundingPad: { x: 735, y: 477, width: 140 },
     prop: { src: '/props/coming-soon-debris.png', x: 710, y: 482, width: 48 },
   },
@@ -508,7 +544,7 @@ export function TownSquarePage() {
                 <button
                   key={`signpost-${dest.id}`}
                   type="button"
-                  className={`town-signpost${dest.disabled ? ' town-signpost--disabled' : ''}`}
+                  className={`town-signpost${dest.disabled ? ' town-signpost--disabled' : ''}${sp.labelBackdrop ? ' town-signpost--backdrop' : ''}`}
                   onClick={() => {
                     if (!dest.disabled) walkTo(dest);
                   }}
@@ -521,6 +557,8 @@ export function TownSquarePage() {
                     transform: `translate(-${sp.anchorX ?? 50}%, -${sp.anchorY ?? 100}%)`,
                     zIndex: Z.signpost + Math.round(sp.y),
                     ['--signpost-label-top' as string]: sp.labelTop ?? '28%',
+                    ['--signpost-label-left' as string]: sp.labelLeft ?? '50%',
+                    ['--signpost-label-width' as string]: sp.labelWidth ?? 'auto',
                   } as React.CSSProperties}
                 >
                   <span className="town-signpost-inner">
