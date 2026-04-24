@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { useAgentData } from '@/lib/useAgentData';
 import { useVisitDelta } from '@/lib/useVisitDelta';
 import { useTimeOfDay } from '@/hooks/useTimeOfDay';
@@ -594,18 +594,20 @@ export function TownSquarePage() {
             />
           ))}
 
-        {showPanHint && !showWelcome && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.35 }}
-            className="town-pan-hint"
-            aria-hidden="true"
-          >
-            ← Drag to explore →
-          </motion.div>
-        )}
+        <AnimatePresence>
+          {showPanHint && !showWelcome && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 8 }}
+              transition={{ duration: 0.35 }}
+              className="town-pan-hint"
+              aria-hidden="true"
+            >
+              ← Drag to explore →
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <WelcomeModal show={showWelcome} onDismiss={dismissWelcome} />
