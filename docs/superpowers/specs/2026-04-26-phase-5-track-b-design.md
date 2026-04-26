@@ -73,15 +73,16 @@ Three layers, each with a clear boundary.
 
 ## Data layer
 
-### Supabase migration
+### Supabase migration (split for safe rollout)
 
-`supabase/migrations/20260426000000_agent_trades_public.sql` (timestamp filled at create time):
+The migration is **split into two files** with the existing leaderboard Edge Function update sandwiched between them. This eliminates the broken-Edge-Function window: between revoking base-table SELECT and re-deploying the Function repointed at the view, the Function would 401 silently. Two migrations bracket the deploy, so the system never has a broken Function pointing at a revoked table.
+
+Order of operations: deploy `1a` → deploy Edge Function update → deploy `1b`.
+
+**Migration 1a** — `supabase/migrations/20260426000000_track_b_views.sql`:
 
 ```sql
--- 1. Revoke base-table anon access. The public view becomes the only anon-readable path.
-revoke select on agent_trades from anon;
-
--- 2. 30-min-delayed projection of agent_trades for public/anon consumption.
+-- 30-min-delayed projection of agent_trades for public/anon consumption.
 create view agent_trades_public as
 select id, agent_id, contract_ticker, side, entry_price, size,
        entered_at, settled_at, settle_price, pnl, move_used, created_at
@@ -91,7 +92,7 @@ where entered_at <= now() - interval '30 minutes'
 
 grant select on agent_trades_public to anon;
 
--- 3. Per-agent lifetime aggregates. Rolls up server-side so the client doesn't
+-- Per-agent lifetime aggregates. Rolls up server-side so the client doesn't
 -- need to fetch every row to compute totals (PostgREST count:'exact' returns
 -- COUNT only — not SUM/filtered counts). Built ON the public view so the
 -- 30-min delay floor applies to the rollup too.
@@ -109,6 +110,21 @@ group by agent_id;
 
 grant select on agent_lifetime_stats to anon;
 ```
+
+After 1a deploys, both views exist and are anon-readable, but the base table is still also anon-readable (the existing `lock_down_writes.sql` only revoked write privileges, not read). The leaderboard Edge Function still works (still queries base table successfully). System is in a valid intermediate state.
+
+**Edge Function update** — repoint `supabase/functions/leaderboard/index.ts` at `agent_trades_public` (single-line change at lines 174 and 180); re-deploy via `supabase functions deploy leaderboard`. The Function now reads through the view; rolling back is just re-pointing.
+
+**Migration 1b** — `supabase/migrations/20260426000001_revoke_base_anon_select.sql`:
+
+```sql
+-- After 1a (views + grants) and the Edge Function update, this revoke turns
+-- the views into the only anon-readable path. Verify with the curl tests
+-- below before considering the boundary closed.
+revoke select on agent_trades from anon;
+```
+
+Rollback: if 1b causes issues, `grant select on agent_trades to anon` restores the prior posture. The views and Function update remain in place — they're additive.
 
 **Security note:** This migration's correctness depends on (a) revoking base-table anon SELECT and (b) building `agent_lifetime_stats` ON `agent_trades_public` (not on base) so the delay floor applies. Verify post-deploy with these curl tests:
 
@@ -483,9 +499,9 @@ Tooltip (delay copy) fires on hover/focus regardless of label presence. Layout s
 ### Mock data
 
 `src/lib/mockData.ts` updates:
-- Add `mockTradeLog: Record<AgentId, TradeLogEntry[]>` so CI/dev without Supabase still renders log content (24h + 7d + lifetime distributions).
-- Add `mockCardViewModels: Record<AgentId, AgentCardViewModel>` for the new return shape.
-- Add `mockLifetimeStats: Record<AgentId, AgentLifetimeStats>` for the aggregate-view fallback path.
+- Add `mockTradeLog: Record<AgentId, TradeLogEntry[]>` so CI/dev without Supabase exercises 24h / 7d / Lifetime UI paths distinctly. **Distribution per agent: at least 3 rows in the last 24h, ~12 rows in the last 7d, ~50 rows lifetime.** Without this, the empty-state and "Latest 25 of N" UI paths can't be exercised in `isSupabaseConfigured = false` mode. Use distinct timestamps spread across the windows so window filters produce different row counts.
+- Add `mockCardViewModels: Record<AgentId, AgentCardViewModel>` for the new return shape, derived from `mockTradeLog` per the default 24h window.
+- Add `mockLifetimeStats: Record<AgentId, AgentLifetimeStats>` for the aggregate-view fallback path. Counts must match `mockTradeLog` lifetime totals for consistency under `isSupabaseConfigured = false`.
 - Adjust `mockLeaderboard` to demonstrate open-position rendering on Metheus mock (`open_position` populated, `settles_at: null`, `entry_price_cents: 67`).
 
 ## Existing leaderboard Edge Function update
@@ -537,8 +553,9 @@ Existing 24/24 tests must stay green.
 
 ## Implementation sequence
 
-1. **Define data contract first.** Migration for `agent_trades_public` view + `agent_lifetime_stats` view + base-table REVOKE + types in `types.ts` (TradeLogEntry, AgentLifetimeStats, OpenPosition nullables) + `PerformanceWindow` type. No UI changes yet. Verify revoke + view exposure with the curl tests post-deploy (with apikey + auth headers).
-1.5. **Update existing `leaderboard` Edge Function** to query `agent_trades_public` instead of base `agent_trades`. Re-deploy. Verify with `curl /functions/v1/leaderboard`.
+1a. **Deploy migration 1a (views + grants).** Creates `agent_trades_public` and `agent_lifetime_stats`, grants anon SELECT on both. Add types to `types.ts` (TradeLogEntry, AgentLifetimeStats, OpenPosition nullables) + `PerformanceWindow` type. Verify both views are anon-readable via curl (with apikey + auth headers). Base-table SELECT still allowed at this point — system is in a valid intermediate state.
+1b. **Update existing `leaderboard` Edge Function** to query `agent_trades_public` instead of base `agent_trades` (lines 174, 180). Re-deploy via `supabase functions deploy leaderboard`. Verify with `curl /functions/v1/leaderboard` — must return 200 with valid `LeaderboardResponse`.
+1c. **Deploy migration 1b (revoke base SELECT).** Now turns the views into the only anon-readable path. Verify base-table SELECT is forbidden via curl (with apikey + auth headers — must return 401/403, NOT missing-key 401). Verify Edge Function STILL works (it now reads through the view).
 2. **A11y co-fix (e3).** Hoist InBattlePill, drop guard, restructure layout, move `aria-expanded` to summary button, add `aria-controls`, add `aria-describedby` to pill tooltip, add `aria-disabled` and `agentId` prop to InBattlePill. Refactor tooltip to always-mounted (with `aria-hidden` visibility). Ship before #6 enables real opens.
 3. **Per-agent window state.** `useAgentWindow` hook + localStorage + lift to `GymPage`. No UI surface yet.
 4. **Rework `useAgentData`.** Accept `windowsByAgent` arg. Run the queries described in the Data Layer section (`agent_lifetime_stats` for global lifetime, separate open-position query, per-window queries with `settled_at >=` filter). Return `{ data, cardViewModels, source, error, loading }`. Wire mock data path.
@@ -559,6 +576,7 @@ Each step has its own commit on `phase-5-track-b`. Final PR squash-merges as a s
 - **Battle Arena handler (`InBattlePill.onTap`).** Pill is `aria-disabled` in Track B; handler is V1.1 scope. When wired, drop `aria-disabled` and connect to whatever the Battle Arena bottom-sheet route becomes.
 - **Brier 7d migration.** Brier stays unchanged in this track; predates Track B.
 - **RPC for parameterized window aggregation.** Two views (`agent_trades_public` + `agent_lifetime_stats`) cover V1 needs. RPC reserved for if/when 24h/7d row counts cross 10k per agent and client-side aggregation becomes too heavy.
+- **Materialized `agent_lifetime_stats`.** V1 row counts (Apex 753, Gale 115, Metheus 132) make the on-the-fly aggregate view cheap. If `agent_trades` grows past ~50k rows, convert `agent_lifetime_stats` to a `materialized view` with periodic `refresh materialized view agent_lifetime_stats` (cron'd at 1-min interval matching the delay floor). Defer until a slow-query symptom surfaces — premature materialization risks staleness bugs.
 
 ## Open questions
 
@@ -568,4 +586,14 @@ If implementation surfaces something undefined here (view migration anomalies, m
 
 ---
 
-**Spec status:** ready for user review (Codex pass 1, 2, and 3 all addressed), then implementation plan.
+**Spec status:** approved by Brandon 2026-04-26 after Codex review rounds 1–3 and Brandon's read. Ready for implementation plan via the `writing-plans` skill.
+
+Brandon's review additions captured in this revision:
+- Migration split into 1a (views + grants) → Edge Function update → 1b (revoke base SELECT) for safe rollout, eliminating the broken-Edge-Function window.
+- `mockTradeLog` distribution targets (3 / 12 / 50 rows per agent across 24h / 7d / Lifetime) so `isSupabaseConfigured=false` mode exercises the empty-state and "Latest 25 of N" paths.
+- `agent_lifetime_stats` future-scaling note (materialized view + cron refresh if `agent_trades` crosses ~50k rows).
+
+Three implementation notes Brandon flagged for the plan as **explicit task acceptance criteria** (not in this spec — they belong in the plan):
+- `useAgentData` per-agent fetches must memoize on `[agentId, windowsByAgent[agentId]]`, NOT on `windowsByAgent` object identity, so a window flip on Apex doesn't refetch Gale and Metheus.
+- Client must handle missing `agent_lifetime_stats` row (a brand-new agent with zero rows in `agent_trades_public` produces no row from `group by agent_id`). Fallback shape: `{ settled: 0, wins: 0, losses: 0, breakeven: 0, total_pnl: 0, open_count: 0 }`.
+- `InBattlePill.onTap` prop needs JSDoc explicitly noting it's reserved for V1.1 Battle Arena and that `aria-disabled` makes the click a no-op even when `onTap` is supplied. Drop `aria-disabled` when wiring.
