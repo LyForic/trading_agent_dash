@@ -51,7 +51,7 @@ export function GymPage() {
   }
   const effectiveMode = override ?? autoMode;
 
-  const { data, source, error: dataError } = useAgentData();
+  const { data, source, error: dataError } = useAgentData({ apex: '24h', gale: '24h', metheus: '24h' });
   const { delta, dismiss } = useVisitDelta(data, source);
 
   useEffect(() => {
