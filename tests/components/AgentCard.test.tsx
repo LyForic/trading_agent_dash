@@ -40,36 +40,41 @@ describe('AgentCard', () => {
   const gale = mockLeaderboard.agents.find((a) => a.id === 'gale')!;
   const metheus = mockLeaderboard.agents.find((a) => a.id === 'metheus')!;
 
-  it('renders P&L in loss color when negative', () => {
-    // Collapsed-row P&L is windowed (cardViewModel.total_pnl), so pass an
-    // explicit VM with a negative value rather than relying on mock 24h math.
+  it('renders P&L + WR from cardViewModel (windowed) — loss color when negative', () => {
+    // Use values DELIBERATELY different from mockLeaderboard's lifetime values
+    // so a regression back to `agent.total_pnl` would fail this test.
+    // Gale mockLeaderboard.total_pnl is -$22.89; we use -$77.77 here.
     render(
       <Harness
         agent={gale}
         cardViewModel={{
-          total_pnl: -22.89,
-          record: { W: 0, L: 1, BE: 0, settled: 1 },
+          total_pnl: -77.77,
+          record: { W: 1, L: 4, BE: 0, settled: 5 },
           tradeLog: [],
-          windowSettledCount: 1,
+          windowSettledCount: 5,
         }}
       />,
     );
-    expect(screen.getByText('-$22.89')).toBeInTheDocument();
+    expect(screen.getByText('-$77.77')).toBeInTheDocument();
+    expect(screen.getByText('20.0% WR')).toBeInTheDocument();
   });
 
-  it('renders P&L in gain color when positive', () => {
+  it('renders P&L + WR from cardViewModel (windowed) — gain color when positive', () => {
+    // Apex mockLeaderboard.total_pnl is +$18.42; we use +$99.99 here so the
+    // assertion only passes when collapsed reads cardViewModel, not agent.
     render(
       <Harness
         agent={apex}
         cardViewModel={{
-          total_pnl: 18.42,
-          record: { W: 1, L: 0, BE: 0, settled: 1 },
+          total_pnl: 99.99,
+          record: { W: 7, L: 1, BE: 0, settled: 8 },
           tradeLog: [],
-          windowSettledCount: 1,
+          windowSettledCount: 8,
         }}
       />,
     );
-    expect(screen.getByText('+$18.42')).toBeInTheDocument();
+    expect(screen.getByText('+$99.99')).toBeInTheDocument();
+    expect(screen.getByText('87.5% WR')).toBeInTheDocument();
   });
 
   it('expands on tap to reveal moves and trade log', async () => {
