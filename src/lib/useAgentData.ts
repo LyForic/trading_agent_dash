@@ -148,21 +148,29 @@ const EMPTY_VM: AgentCardViewModel = {
 // WR / In Battle pill — none of which match live state). Empty placeholder
 // renders blank until live data resolves; mock path (Supabase unconfigured)
 // keeps using mockLeaderboard + mockCardViewModels.
-const EMPTY_LEADERBOARD: LeaderboardResponse = { updated_at: '', agents: [] };
 const EMPTY_CARD_VIEW_MODELS: Record<AgentId, AgentCardViewModel> = {
   apex: EMPTY_VM,
   gale: EMPTY_VM,
   metheus: EMPTY_VM,
 };
 
+function makeEmptyLeaderboard(): LeaderboardResponse {
+  // Use current timestamp so the "Updated Xm ago" header renders as "0m ago"
+  // during the brief initial-load window, NOT "NaNm ago" (which is what an
+  // empty-string updated_at parses to via new Date('')).
+  return { updated_at: new Date().toISOString(), agents: [] };
+}
+
 export function useAgentData(
   windowsByAgent: Record<AgentId, PerformanceWindow>,
 ): UseAgentDataResult {
+  // Lazy useState initializers so makeEmptyLeaderboard() runs once at mount,
+  // not on every render.
   const [data, setData] = useState<LeaderboardResponse>(
-    isSupabaseConfigured ? EMPTY_LEADERBOARD : mockLeaderboard,
+    () => (isSupabaseConfigured ? makeEmptyLeaderboard() : mockLeaderboard),
   );
   const [cardViewModels, setCardViewModels] = useState<Record<AgentId, AgentCardViewModel>>(
-    isSupabaseConfigured ? EMPTY_CARD_VIEW_MODELS : mockCardViewModels,
+    () => (isSupabaseConfigured ? EMPTY_CARD_VIEW_MODELS : mockCardViewModels),
   );
   const [source, setSource] = useState<Source>('mock');
   const [error, setError] = useState<string | null>(null);
