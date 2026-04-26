@@ -1,8 +1,18 @@
-import type { Agent } from '@/lib/types';
+import type { Agent, PerformanceWindow } from '@/lib/types';
 import { MovePill } from './MovePill';
 import { formatPnl } from '@/lib/formatting';
 import { useSharedGaleWeather } from '@/lib/galeWeatherContext';
 import type { WeatherCondition } from '@/lib/useGaleWeather';
+
+interface Props {
+  agent: Agent;
+  // TODO(track-b task 10): consume currentWindow + setWindow when the
+  // TimeFilterPill + unified TradeLog land. Declared here now so the parent
+  // AgentCard signature compiles end-to-end while Task 6 ships the a11y fix
+  // in isolation.
+  currentWindow: PerformanceWindow;
+  setWindow: (w: PerformanceWindow) => void;
+}
 
 /** Emoji per OpenWeather condition bucket — keeps the badge compact and
  *  gives users a glanceable cue that "this room has live weather." */
@@ -27,7 +37,7 @@ const WEATHER_ICON: Record<WeatherCondition, string> = {
  *      V1.1 will add a /trade/:id permalink + replay scrubber.
  *   7. "View trade log →" CTA
  */
-export function AgentCardExpandedBody({ agent }: { agent: Agent }) {
+export function AgentCardExpandedBody({ agent }: Props) {
   const receipt = agent.latest_receipt;
   const settledLabel = receipt
     ? new Date(receipt.settled_at).toLocaleString([], {

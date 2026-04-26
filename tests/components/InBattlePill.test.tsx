@@ -6,24 +6,47 @@ import { InBattlePill } from '@/components/content/InBattlePill';
 describe('InBattlePill', () => {
   const futureTime = new Date('2026-04-22T20:00:00Z').toISOString();
 
-  it('shows "In Battle" label with settles-at time', () => {
-    render(<InBattlePill settlesAt={futureTime} />);
+  it('shows "In Battle" label with settles-at time when provided', () => {
+    render(<InBattlePill agentId="metheus" settlesAt={futureTime} />);
     expect(screen.getByText(/In Battle/)).toBeInTheDocument();
+    expect(screen.getByRole('button')).toHaveAccessibleName(/In battle, settles/);
+  });
+
+  it('shows "In Battle" without countdown when settlesAt is null', () => {
+    render(<InBattlePill agentId="apex" settlesAt={null} />);
+    const button = screen.getByRole('button');
+    expect(button).toHaveAccessibleName('In battle');
+    expect(button.textContent).not.toMatch(/settles/);
   });
 
   it('reveals the 30-min delay tooltip on hover', async () => {
     const user = userEvent.setup();
-    render(<InBattlePill settlesAt={futureTime} />);
-    const pill = screen.getByRole('button', { name: /In Battle/ });
+    render(<InBattlePill agentId="metheus" settlesAt={futureTime} />);
+    const pill = screen.getByRole('button', { name: /In battle/ });
     await user.hover(pill);
-    expect(await screen.findByRole('tooltip')).toHaveTextContent(/30-minute delay/i);
+    expect(screen.getByRole('tooltip')).toHaveTextContent(/30-minute delay/i);
   });
 
-  it('fires onTap when the pill is clicked', async () => {
+  it('is aria-disabled in Track B (Battle Arena handler is V1.1)', () => {
+    render(<InBattlePill agentId="apex" settlesAt={null} />);
+    expect(screen.getByRole('button')).toHaveAttribute('aria-disabled', 'true');
+  });
+
+  it('does not invoke onTap when clicked (aria-disabled no-op)', async () => {
     const user = userEvent.setup();
     const onTap = vi.fn();
-    render(<InBattlePill settlesAt={futureTime} onTap={onTap} />);
-    await user.click(screen.getByRole('button', { name: /In Battle/ }));
-    expect(onTap).toHaveBeenCalledOnce();
+    render(<InBattlePill agentId="apex" settlesAt={null} onTap={onTap} />);
+    await user.click(screen.getByRole('button'));
+    expect(onTap).not.toHaveBeenCalled();
+  });
+
+  it('uses agentId-driven accent color (not hardcoded Metheus)', () => {
+    const { rerender } = render(<InBattlePill agentId="apex" settlesAt={null} />);
+    const apexPill = screen.getByRole('button');
+    expect(apexPill.getAttribute('style')).toContain('var(--color-apex)');
+
+    rerender(<InBattlePill agentId="gale" settlesAt={null} />);
+    const galePill = screen.getByRole('button');
+    expect(galePill.getAttribute('style')).toContain('var(--color-gale)');
   });
 });

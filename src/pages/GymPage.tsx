@@ -225,6 +225,8 @@ export function GymPage() {
                       agent={agent}
                       expanded={focused}
                       onToggle={() => handleToggle(agent.id)}
+                      currentWindow="24h"
+                      setWindow={() => {}}
                     />
                   </motion.div>
                 );
