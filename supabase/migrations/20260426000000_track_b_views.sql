@@ -3,6 +3,8 @@
 -- leaderboard Edge Function is repointed at agent_trades_public, to avoid a
 -- broken-Function window. Order: deploy 1a → deploy Edge Function update → deploy 1b.
 
+begin;
+
 -- 30-min-delayed projection of agent_trades for public/anon consumption.
 create view agent_trades_public as
 select id, agent_id, contract_ticker, side, entry_price, size,
@@ -29,3 +31,5 @@ from agent_trades_public
 group by agent_id;
 
 grant select on agent_lifetime_stats to anon;
+
+commit;
