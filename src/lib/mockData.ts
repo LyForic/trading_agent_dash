@@ -189,6 +189,10 @@ export const mockCardViewModels: Record<AgentId, AgentCardViewModel> = {
 
 function buildLifetimeStats(agentId: AgentId): AgentLifetimeStats {
   const { total_pnl, record } = aggregate(mockTradeLog[agentId], null);
+  // Derive open_count from mockLeaderboard so a future shift in mock open
+  // positions (e.g., adding/removing one for Gale) propagates automatically
+  // without hardcoded edits here.
+  const hasOpen = mockLeaderboard.agents.find((a) => a.id === agentId)?.open_position != null;
   return {
     agent_id: agentId,
     settled: record.settled,
@@ -196,7 +200,7 @@ function buildLifetimeStats(agentId: AgentId): AgentLifetimeStats {
     losses: record.L,
     breakeven: record.BE,
     total_pnl,
-    open_count: agentId === 'metheus' ? 1 : 0,
+    open_count: hasOpen ? 1 : 0,
   };
 }
 
