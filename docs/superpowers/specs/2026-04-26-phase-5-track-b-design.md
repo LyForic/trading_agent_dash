@@ -220,7 +220,7 @@ export interface UseAgentDataResult {
 
 ### Rationale: views (vs RPC)
 
-Two views (`agent_trades_public` for projection + `agent_lifetime_stats` for rollup) cover all V1 needs without RPC complexity. Views are stable, cacheable, RLS-aware, and don't require Edge Function deploy. RPC reserved for if/when we need parameterized rollups (e.g., a `get_window_stats(agent_id, lower_bound)` RPC if 24h/7d row counts ever cross 10k per agent).
+Two views (`agent_trades_public` for projection + `agent_lifetime_stats` for rollup) cover all V1 needs without RPC complexity. Views are stable, cacheable, and don't require Edge Function deploy. (Note: regular Postgres views run with SECURITY DEFINER by default and do NOT inherit RLS from the base table — that's intentional here, since we revoke base-table anon SELECT and grant anon SELECT directly on the views.) RPC reserved for if/when we need parameterized rollups (e.g., a `get_window_stats(agent_id, lower_bound)` RPC if 24h/7d row counts ever cross 10k per agent).
 
 ## Per-agent window state + time-filter pill
 
@@ -568,4 +568,4 @@ If implementation surfaces something undefined here (view migration anomalies, m
 
 ---
 
-**Spec status:** ready for third-pass Codex review, then user review, then implementation plan.
+**Spec status:** ready for user review (Codex pass 1, 2, and 3 all addressed), then implementation plan.
