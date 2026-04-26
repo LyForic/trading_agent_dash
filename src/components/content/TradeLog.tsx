@@ -84,7 +84,10 @@ function LedgerRow({ row }: { row: TradeLogEntry }) {
 }
 
 export function TradeLog({ rows, windowSettledCount, window, hasOpenPosition }: Props) {
-  if (windowSettledCount === 0) {
+  // Defensive: also fall through to empty state if rows is empty even when
+  // windowSettledCount > 0 (cross-query skew, RLS edge case, transient sync).
+  // Avoids `<FirstRow row={undefined}>` deref on `row.pnl` / `row.id`.
+  if (windowSettledCount === 0 || rows.length === 0) {
     const noun = hasOpenPosition ? 'No settled trades' : 'No settled trades';
     const next = NEXT_WINDOW[window];
     const trySuggestion = next ? ` Try ${next}.` : '';
