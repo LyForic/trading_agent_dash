@@ -1,4 +1,5 @@
 import type { Agent, PerformanceWindow } from '@/lib/types';
+import type { AgentCardViewModel } from '@/lib/useAgentData';
 import { AgentCardCollapsedRowInner } from './AgentCardCollapsedRowInner';
 import { AgentCardExpandedBody } from './AgentCardExpandedBody';
 import { InBattlePill } from './InBattlePill';
@@ -10,6 +11,8 @@ interface Props {
   /** Per-agent time window controlling stats + trade log. Threaded down to the expanded body. */
   currentWindow: PerformanceWindow;
   setWindow: (w: PerformanceWindow) => void;
+  /** Per-agent view model (stats + trade log) keyed off currentWindow. */
+  cardViewModel: AgentCardViewModel;
   /** Reserved for V1.1 Battle Arena handler. Currently unused (pill is aria-disabled). */
   onBattleTap?: () => void;
 }
@@ -27,6 +30,7 @@ export function AgentCard({
   onToggle,
   currentWindow,
   setWindow,
+  cardViewModel,
   onBattleTap,
 }: Props) {
   const canExpand = agent.state !== 'arriving_soon';
@@ -75,6 +79,7 @@ export function AgentCard({
             agent={agent}
             currentWindow={currentWindow}
             setWindow={setWindow}
+            cardViewModel={cardViewModel}
           />
         </div>
       )}

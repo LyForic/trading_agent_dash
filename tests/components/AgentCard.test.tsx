@@ -3,8 +3,16 @@ import { useState } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AgentCard } from '@/components/content/AgentCard';
-import { mockLeaderboard } from '@/lib/mockData';
+import { mockCardViewModels, mockLeaderboard } from '@/lib/mockData';
 import type { Agent } from '@/lib/types';
+import type { AgentCardViewModel } from '@/lib/useAgentData';
+
+const stubViewModel: AgentCardViewModel = {
+  total_pnl: 0,
+  record: { W: 0, L: 0, BE: 0, settled: 0 },
+  tradeLog: [],
+  windowSettledCount: 0,
+};
 
 /** Controlled-expansion harness mirroring the lift-to-App pattern. */
 function Harness({ agent }: { agent: Agent }) {
@@ -16,6 +24,7 @@ function Harness({ agent }: { agent: Agent }) {
       onToggle={() => setExpanded((v) => !v)}
       currentWindow="24h"
       setWindow={() => undefined}
+      cardViewModel={mockCardViewModels[agent.id]}
     />
   );
 }
@@ -35,13 +44,15 @@ describe('AgentCard', () => {
     expect(screen.getByText('+$18.42')).toBeInTheDocument();
   });
 
-  it('expands on tap to reveal moves and receipt detail', async () => {
+  it('expands on tap to reveal moves and trade log', async () => {
     const user = userEvent.setup();
     render(<Harness agent={gale} />);
     expect(screen.queryByText('Normal CDF')).not.toBeInTheDocument();
     await user.click(screen.getByRole('button', { name: /Expand Gale/ }));
     expect(await screen.findByText('Normal CDF')).toBeInTheDocument();
-    expect(screen.getByText(/GAL-20260421-014/)).toBeInTheDocument();
+    // Unified TradeLog header is visible on expand (replaces the prior
+    // single Latest Receipt panel — see Track B Task 10).
+    expect(screen.getByText(/Trades · 24h/)).toBeInTheDocument();
   });
 
   it('shows "Low sample" badge when brier n < 20', async () => {
@@ -104,6 +115,7 @@ describe('AgentCard a11y restructure', () => {
         onToggle={noop}
         currentWindow="24h"
         setWindow={noop}
+        cardViewModel={stubViewModel}
       />,
     );
     const buttons = container.querySelectorAll('button');
@@ -122,6 +134,7 @@ describe('AgentCard a11y restructure', () => {
         onToggle={noop}
         currentWindow="24h"
         setWindow={noop}
+        cardViewModel={stubViewModel}
       />,
     );
     const summaryButton = screen.getByRole('button', { name: /Expand Apex's card/ });
@@ -146,6 +159,7 @@ describe('AgentCard a11y restructure', () => {
         onToggle={noop}
         currentWindow="24h"
         setWindow={noop}
+        cardViewModel={stubViewModel}
       />,
     );
     const buttons = container.querySelectorAll('button');

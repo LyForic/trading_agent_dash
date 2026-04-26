@@ -67,7 +67,7 @@ export function GymPage() {
     return setMetheusWindow;
   };
 
-  const { data, source, error: dataError } = useAgentData(windowsByAgent);
+  const { data, cardViewModels, source, error: dataError } = useAgentData(windowsByAgent);
   const { delta, dismiss } = useVisitDelta(data, source);
 
   useEffect(() => {
@@ -243,6 +243,7 @@ export function GymPage() {
                       onToggle={() => handleToggle(agent.id)}
                       currentWindow={windowsByAgent[agent.id]}
                       setWindow={setWindowForAgent(agent.id)}
+                      cardViewModel={cardViewModels[agent.id]}
                     />
                   </motion.div>
                 );
