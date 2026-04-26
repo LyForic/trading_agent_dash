@@ -63,7 +63,7 @@ export function AgentCard({
               : `${agent.name}: arriving soon`
           }
         >
-          <AgentCardCollapsedRowInner agent={agent} />
+          <AgentCardCollapsedRowInner agent={agent} cardViewModel={cardViewModel} />
         </button>
         {agent.open_position && (
           <InBattlePill

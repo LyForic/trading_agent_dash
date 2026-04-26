@@ -15,7 +15,13 @@ const stubViewModel: AgentCardViewModel = {
 };
 
 /** Controlled-expansion harness mirroring the lift-to-App pattern. */
-function Harness({ agent }: { agent: Agent }) {
+function Harness({
+  agent,
+  cardViewModel,
+}: {
+  agent: Agent;
+  cardViewModel?: AgentCardViewModel;
+}) {
   const [expanded, setExpanded] = useState(false);
   return (
     <AgentCard
@@ -24,7 +30,7 @@ function Harness({ agent }: { agent: Agent }) {
       onToggle={() => setExpanded((v) => !v)}
       currentWindow="24h"
       setWindow={() => undefined}
-      cardViewModel={mockCardViewModels[agent.id]}
+      cardViewModel={cardViewModel ?? mockCardViewModels[agent.id]}
     />
   );
 }
@@ -35,12 +41,34 @@ describe('AgentCard', () => {
   const metheus = mockLeaderboard.agents.find((a) => a.id === 'metheus')!;
 
   it('renders P&L in loss color when negative', () => {
-    render(<Harness agent={gale} />);
+    // Collapsed-row P&L is windowed (cardViewModel.total_pnl), so pass an
+    // explicit VM with a negative value rather than relying on mock 24h math.
+    render(
+      <Harness
+        agent={gale}
+        cardViewModel={{
+          total_pnl: -22.89,
+          record: { W: 0, L: 1, BE: 0, settled: 1 },
+          tradeLog: [],
+          windowSettledCount: 1,
+        }}
+      />,
+    );
     expect(screen.getByText('-$22.89')).toBeInTheDocument();
   });
 
   it('renders P&L in gain color when positive', () => {
-    render(<Harness agent={apex} />);
+    render(
+      <Harness
+        agent={apex}
+        cardViewModel={{
+          total_pnl: 18.42,
+          record: { W: 1, L: 0, BE: 0, settled: 1 },
+          tradeLog: [],
+          windowSettledCount: 1,
+        }}
+      />,
+    );
     expect(screen.getByText('+$18.42')).toBeInTheDocument();
   });
 
