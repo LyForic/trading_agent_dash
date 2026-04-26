@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { supabase, isSupabaseConfigured } from './supabase';
 import { AGENT_META, AGENT_IDS } from './agentMeta';
-import { mockLeaderboard /* , mockTradeLog, mockCardViewModels */ } from './mockData';
+import { mockLeaderboard, mockCardViewModels } from './mockData';
 import type {
   Agent,
   AgentId,
@@ -141,19 +141,12 @@ const EMPTY_VM: AgentCardViewModel = {
   windowSettledCount: 0,
 };
 
-// TODO(track-b task 8): replace STUB_CARD_VIEW_MODELS with real mockCardViewModels
-const STUB_CARD_VIEW_MODELS: Record<AgentId, AgentCardViewModel> = {
-  apex: EMPTY_VM,
-  gale: EMPTY_VM,
-  metheus: EMPTY_VM,
-};
-
 export function useAgentData(
   windowsByAgent: Record<AgentId, PerformanceWindow>,
 ): UseAgentDataResult {
   const [data, setData] = useState<LeaderboardResponse>(mockLeaderboard);
   const [cardViewModels, setCardViewModels] = useState<Record<AgentId, AgentCardViewModel>>(
-    STUB_CARD_VIEW_MODELS,
+    mockCardViewModels,
   );
   const [source, setSource] = useState<Source>('mock');
   const [error, setError] = useState<string | null>(null);

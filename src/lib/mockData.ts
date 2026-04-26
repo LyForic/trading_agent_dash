@@ -1,4 +1,10 @@
-import type { LeaderboardResponse } from './types';
+import type {
+  AgentId,
+  AgentLifetimeStats,
+  LeaderboardResponse,
+  TradeLogEntry,
+} from './types';
+import type { AgentCardViewModel } from './useAgentData';
 
 const now = Date.now();
 
@@ -81,9 +87,121 @@ export const mockLeaderboard: LeaderboardResponse = {
       brier_7d: { value: 0, n: 0 },
       cities_or_tags: [],
       moves: [],
-      open_position: null,
+      open_position: {
+        contract_ticker: 'KXTECHEARN-26Q2',
+        entry_price_cents: 67,
+        side: 'yes',
+        size: 25,
+        entered_at_delayed: new Date(now - 45 * 60 * 1000).toISOString(),
+        settles_at: null,
+      },
       latest_receipt: null,
       state: 'arriving_soon',
     },
   ],
+};
+
+const TICKERS = ['KXFEDDECISION-26MAY', 'KXNYCMAYOR-26NOV', 'KXTECHEARN-26Q2'];
+
+function makeRow(
+  id: string,
+  agentId: AgentId,
+  hoursAgo: number,
+  pnl: number,
+  side: 'yes' | 'no' = 'yes',
+): TradeLogEntry {
+  const settledAt = new Date(Date.now() - hoursAgo * 3600 * 1000);
+  const enteredAt = new Date(settledAt.getTime() - 30 * 60 * 1000); // 30-min holding default
+  const ticker = TICKERS[Math.floor(Math.abs(pnl)) % TICKERS.length];
+  return {
+    id: `${agentId}-${id.padStart(8, '0')}`,
+    contract_ticker: ticker,
+    side,
+    entry_price_cents: 67,
+    size: 25,
+    entered_at: enteredAt.toISOString(),
+    settled_at: settledAt.toISOString(),
+    settle_price_cents: pnl >= 0 ? 71 : 64,
+    pnl,
+    move_used: null,
+  };
+}
+
+function generateLog(agentId: AgentId): TradeLogEntry[] {
+  const rows: TradeLogEntry[] = [];
+  // 24h: 3+ rows distributed within 24h
+  for (let i = 0; i < 4; i++) {
+    rows.push(makeRow(`24h${i}`, agentId, 1 + i * 5, (i % 2 === 0 ? 1 : -1) * (1 + i * 0.5)));
+  }
+  // 24h-7d window: ~9 more so 7d total = ~13
+  for (let i = 0; i < 9; i++) {
+    rows.push(makeRow(`7d${i}`, agentId, 25 + i * 12, (i % 3 === 0 ? -1 : 1) * (2 + i * 0.3)));
+  }
+  // 7d-lifetime: ~37 more so lifetime total = ~50
+  for (let i = 0; i < 37; i++) {
+    rows.push(makeRow(`life${i}`, agentId, 7 * 24 + 6 + i * 24, (i % 4 === 0 ? -1 : 1) * (1 + (i % 5))));
+  }
+  // Sort newest-first
+  rows.sort((a, b) => new Date(b.settled_at).getTime() - new Date(a.settled_at).getTime());
+  return rows;
+}
+
+export const mockTradeLog: Record<AgentId, TradeLogEntry[]> = {
+  apex: generateLog('apex'),
+  gale: generateLog('gale'),
+  metheus: generateLog('metheus'),
+};
+
+function aggregate(rows: TradeLogEntry[], hoursWindow: number | null) {
+  const cutoff = hoursWindow !== null ? Date.now() - hoursWindow * 3600 * 1000 : null;
+  const inWindow = cutoff === null
+    ? rows
+    : rows.filter((r) => new Date(r.settled_at).getTime() >= cutoff);
+  let total_pnl = 0;
+  let W = 0;
+  let L = 0;
+  let BE = 0;
+  for (const r of inWindow) {
+    total_pnl += r.pnl;
+    if (r.pnl > 0) W += 1;
+    else if (r.pnl < 0) L += 1;
+    else BE += 1;
+  }
+  return { total_pnl, record: { W, L, BE, settled: inWindow.length }, inWindow };
+}
+
+function buildVm(agentId: AgentId): AgentCardViewModel {
+  // 24h is the default window for the card view model
+  const { total_pnl, record, inWindow } = aggregate(mockTradeLog[agentId], 24);
+  return {
+    total_pnl,
+    record,
+    tradeLog: inWindow.slice(0, 25),
+    windowSettledCount: inWindow.length,
+  };
+}
+
+export const mockCardViewModels: Record<AgentId, AgentCardViewModel> = {
+  apex: buildVm('apex'),
+  gale: buildVm('gale'),
+  metheus: buildVm('metheus'),
+};
+
+function buildLifetimeStats(agentId: AgentId): AgentLifetimeStats {
+  const { total_pnl, record } = aggregate(mockTradeLog[agentId], null);
+  return {
+    agent_id: agentId,
+    settled: record.settled,
+    wins: record.W,
+    losses: record.L,
+    breakeven: record.BE,
+    total_pnl,
+    open_count: agentId === 'metheus' ? 1 : 0,
+  };
+}
+
+export const mockLifetimeStats: Record<AgentId, AgentLifetimeStats> = {
+  apex: buildLifetimeStats('apex'),
+  gale: buildLifetimeStats('gale'),
+  metheus: buildLifetimeStats('metheus'),
 };

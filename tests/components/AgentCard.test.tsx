@@ -54,7 +54,7 @@ describe('AgentCard', () => {
   it('does not expand arriving-soon agents', async () => {
     const user = userEvent.setup();
     render(<Harness agent={metheus} />);
-    const node = screen.getByRole('button');
+    const node = screen.getByRole('button', { name: /Metheus: arriving soon/ });
     await user.click(node);
     expect(screen.queryByText('Normal CDF')).not.toBeInTheDocument();
     expect(screen.queryByText(/MET-/)).not.toBeInTheDocument();
