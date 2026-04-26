@@ -182,7 +182,7 @@ const LEAVES = Array.from({ length: 8 }, (_, i) => ({
 export function TownSquarePage() {
   const navigate = useNavigate();
   const autoMode = useTimeOfDay();
-  const { data, source } = useAgentData();
+  const { data, source } = useAgentData({ apex: '24h', gale: '24h', metheus: '24h' });
   const { delta } = useVisitDelta(data, source);
 
   const viewportRef = useRef<HTMLDivElement>(null);

@@ -177,7 +177,8 @@ Deno.serve(async (req) => {
     const agents = await Promise.all(
       AGENT_IDS.map(async (id) => {
         const { data, error } = await sb
-          .from('agent_trades')
+          // anon-readable view (30-min delay floor); base agent_trades is revoked from anon
+          .from('agent_trades_public')
           .select(
             'id,agent_id,contract_ticker,side,entry_price,size,entered_at,settled_at,settle_price,pnl,move_used,created_at',
           )

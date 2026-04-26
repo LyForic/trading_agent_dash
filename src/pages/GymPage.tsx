@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { WorldLayer } from '@/components/world/WorldLayer';
@@ -8,9 +8,10 @@ import { TrustStrip } from '@/components/content/TrustStrip';
 import { FooterTicker } from '@/components/content/FooterTicker';
 import { VisitDeltaStrip } from '@/components/content/VisitDeltaStrip';
 import { useAgentData } from '@/lib/useAgentData';
+import { useAgentWindow } from '@/lib/useAgentWindow';
 import { useVisitDelta } from '@/lib/useVisitDelta';
 import { AGENT_IDS } from '@/lib/agentMeta';
-import type { AgentId } from '@/lib/types';
+import type { AgentId, PerformanceWindow } from '@/lib/types';
 import type { WorldMode } from '@/lib/timeOfDay';
 
 /**
@@ -51,7 +52,22 @@ export function GymPage() {
   }
   const effectiveMode = override ?? autoMode;
 
-  const { data, source, error: dataError } = useAgentData();
+  const [apexWindow, setApexWindow] = useAgentWindow('apex');
+  const [galeWindow, setGaleWindow] = useAgentWindow('gale');
+  const [metheusWindow, setMetheusWindow] = useAgentWindow('metheus');
+
+  const windowsByAgent = useMemo<Record<AgentId, PerformanceWindow>>(
+    () => ({ apex: apexWindow, gale: galeWindow, metheus: metheusWindow }),
+    [apexWindow, galeWindow, metheusWindow],
+  );
+
+  const setWindowForAgent = (id: AgentId): ((w: PerformanceWindow) => void) => {
+    if (id === 'apex') return setApexWindow;
+    if (id === 'gale') return setGaleWindow;
+    return setMetheusWindow;
+  };
+
+  const { data, cardViewModels, source, error: dataError } = useAgentData(windowsByAgent);
   const { delta, dismiss } = useVisitDelta(data, source);
 
   useEffect(() => {
@@ -225,6 +241,9 @@ export function GymPage() {
                       agent={agent}
                       expanded={focused}
                       onToggle={() => handleToggle(agent.id)}
+                      currentWindow={windowsByAgent[agent.id]}
+                      setWindow={setWindowForAgent(agent.id)}
+                      cardViewModel={cardViewModels[agent.id]}
                     />
                   </motion.div>
                 );

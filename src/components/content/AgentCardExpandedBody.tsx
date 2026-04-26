@@ -1,8 +1,17 @@
-import type { Agent } from '@/lib/types';
+import type { Agent, PerformanceWindow } from '@/lib/types';
+import type { AgentCardViewModel } from '@/lib/useAgentData';
 import { MovePill } from './MovePill';
-import { formatPnl } from '@/lib/formatting';
+import { TradeLog } from './TradeLog';
+import { TimeFilterPill } from './TimeFilterPill';
 import { useSharedGaleWeather } from '@/lib/galeWeatherContext';
 import type { WeatherCondition } from '@/lib/useGaleWeather';
+
+interface Props {
+  agent: Agent;
+  currentWindow: PerformanceWindow;
+  setWindow: (w: PerformanceWindow) => void;
+  cardViewModel: AgentCardViewModel;
+}
 
 /** Emoji per OpenWeather condition bucket — keeps the badge compact and
  *  gives users a glanceable cue that "this room has live weather." */
@@ -17,26 +26,17 @@ const WEATHER_ICON: Record<WeatherCondition, string> = {
 
 /**
  * Full detail body shown when an AgentCard is expanded. Layered blocks:
- *   1. Market + status
- *   2. Record (W/L/BE · N settled)
- *   3. Brier score + Low-sample badge when n < 20
- *   4. Cities / tags row
- *   5. Moves row (locked + unlocked pills)
- *   6. Embedded latest receipt — per spec §2 / plan patch, inline on V1
- *      so the "trust loop" proof object is visible without a dead route.
- *      V1.1 will add a /trade/:id permalink + replay scrubber.
- *   7. "View trade log →" CTA
+ *   1. TimeFilterPill (24h / 7d / Lifetime)
+ *   2. Market + status grid
+ *   3. Record (W/L/BE · N settled) — sourced from per-window cardViewModel
+ *   4. Brier score + Low-sample badge when n < 20
+ *   5. Cities / tags row
+ *   6. Moves row (locked + unlocked pills)
+ *   7. Unified TradeLog — replaces the prior single "Latest receipt" panel,
+ *      shows up to 25 settled trades for the active window with a
+ *      "Latest 25 of N" footer when the window has more.
  */
-export function AgentCardExpandedBody({ agent }: { agent: Agent }) {
-  const receipt = agent.latest_receipt;
-  const settledLabel = receipt
-    ? new Date(receipt.settled_at).toLocaleString([], {
-        month: 'short',
-        day: 'numeric',
-        hour: 'numeric',
-        minute: '2-digit',
-      })
-    : null;
+export function AgentCardExpandedBody({ agent, currentWindow, setWindow, cardViewModel }: Props) {
   const { current: weather, source: weatherSource } = useSharedGaleWeather();
   // Only mount the weather badge for Gale — she owns the weather market.
   // If the hook hasn't returned a snapshot yet (first 100ms) we fall back
@@ -48,6 +48,13 @@ export function AgentCardExpandedBody({ agent }: { agent: Agent }) {
       className="mt-3 pt-3 border-t space-y-3 text-sm"
       style={{ borderColor: 'var(--color-border-default)' }}
     >
+      <TimeFilterPill
+        agentId={agent.id}
+        agentName={agent.name}
+        currentWindow={currentWindow}
+        setWindow={setWindow}
+      />
+
       <div className="grid grid-cols-2 gap-3">
         <div>
           <div
@@ -78,7 +85,7 @@ export function AgentCardExpandedBody({ agent }: { agent: Agent }) {
         </div>
       </div>
 
-      {agent.record.settled > 0 && (
+      {cardViewModel.record.settled > 0 && (
         <div>
           <div
             className="text-[10px] uppercase tracking-wide"
@@ -87,8 +94,8 @@ export function AgentCardExpandedBody({ agent }: { agent: Agent }) {
             Record
           </div>
           <div className="tabular-nums">
-            {agent.record.W}W / {agent.record.L}L / {agent.record.BE}BE ·{' '}
-            {agent.record.settled} settled
+            {cardViewModel.record.W}W / {cardViewModel.record.L}L / {cardViewModel.record.BE}BE ·{' '}
+            {cardViewModel.record.settled} settled
           </div>
         </div>
       )}
@@ -186,70 +193,12 @@ export function AgentCardExpandedBody({ agent }: { agent: Agent }) {
         </div>
       )}
 
-      {receipt && (
-        <div
-          className="p-3 rounded-lg border"
-          style={{
-            backgroundColor: 'var(--color-paper-raised)',
-            borderColor: 'var(--color-border-default)',
-          }}
-        >
-          <div className="flex items-center justify-between mb-2">
-            <span
-              className="text-[10px] uppercase tracking-wide"
-              style={{ color: 'var(--color-ink-muted)' }}
-            >
-              Latest receipt
-            </span>
-            <span
-              className="font-mono text-[10px]"
-              style={{ color: 'var(--color-ink-muted)' }}
-            >
-              {receipt.id}
-            </span>
-          </div>
-          <div className="grid grid-cols-2 gap-2 text-xs tabular-nums">
-            <div>
-              <dt className="text-[10px]" style={{ color: 'var(--color-ink-muted)' }}>
-                Contract
-              </dt>
-              <dd className="truncate">{receipt.contract_ticker}</dd>
-            </div>
-            <div>
-              <dt className="text-[10px]" style={{ color: 'var(--color-ink-muted)' }}>
-                Side · Entry
-              </dt>
-              <dd>
-                {receipt.side.toUpperCase()} @ {receipt.entry_price_cents}¢
-              </dd>
-            </div>
-            <div>
-              <dt className="text-[10px]" style={{ color: 'var(--color-ink-muted)' }}>
-                Settlement
-              </dt>
-              <dd>{receipt.settle_price_cents}¢</dd>
-            </div>
-            <div>
-              <dt className="text-[10px]" style={{ color: 'var(--color-ink-muted)' }}>
-                P&amp;L
-              </dt>
-              <dd
-                style={{
-                  color: receipt.pnl >= 0 ? 'var(--color-gain)' : 'var(--color-loss)',
-                }}
-              >
-                {formatPnl(receipt.pnl)}
-              </dd>
-            </div>
-          </div>
-          <p
-            className="text-[9px] mt-2 leading-tight"
-            style={{ color: 'var(--color-ink-muted)' }}
-          >
-            Settled {settledLabel} · shown after 30-minute delay
-          </p>
-        </div>
-      )}
+      <TradeLog
+        rows={cardViewModel.tradeLog}
+        windowSettledCount={cardViewModel.windowSettledCount}
+        window={currentWindow}
+        hasOpenPosition={agent.open_position !== null}
+      />
     </div>
   );
 }
