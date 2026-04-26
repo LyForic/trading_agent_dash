@@ -1,5 +1,7 @@
 export type AgentId = 'apex' | 'gale' | 'metheus';
 
+export type PerformanceWindow = '24h' | '7d' | 'lifetime';
+
 export interface Move {
   name: string;
   locked: boolean;
@@ -19,11 +21,11 @@ export interface BrierScore {
 
 export interface OpenPosition {
   contract_ticker: string;
-  entry_price_cents: number;
+  entry_price_cents: number | null;  // nullable for type completeness; data layer suppresses null rows
   side: 'yes' | 'no';
   size: number;
   entered_at_delayed: string; // ISO timestamp, must be >= 30 min ago per delay policy
-  settles_at: string;
+  settles_at: string | null;          // nullable: "In Battle" without countdown when unknown
 }
 
 export interface Receipt {
@@ -35,6 +37,29 @@ export interface Receipt {
   size: number;
   pnl: number;
   settled_at: string;
+}
+
+export interface TradeLogEntry {
+  id: string;
+  contract_ticker: string;
+  side: 'yes' | 'no';
+  entry_price_cents: number;     // present (non-null) — open rows excluded from log
+  size: number;
+  entered_at: string;
+  settled_at: string;            // present (non-null)
+  settle_price_cents: number;
+  pnl: number;
+  move_used: string | null;
+}
+
+export interface AgentLifetimeStats {
+  agent_id: AgentId;
+  settled: number;
+  wins: number;
+  losses: number;
+  breakeven: number;
+  total_pnl: number;
+  open_count: number;
 }
 
 export interface Agent {
