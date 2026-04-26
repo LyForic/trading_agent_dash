@@ -141,12 +141,28 @@ const EMPTY_VM: AgentCardViewModel = {
   windowSettledCount: 0,
 };
 
+// Empty placeholder for the live-config initial state. Avoids the brief
+// mock-data flash on first render when Supabase IS configured: useEffect
+// fetches async (~100-300ms), and prior to that the displayed values would
+// otherwise be mockLeaderboard's lifetime values (e.g., Apex $18.42 / 52.5%
+// WR / In Battle pill — none of which match live state). Empty placeholder
+// renders blank until live data resolves; mock path (Supabase unconfigured)
+// keeps using mockLeaderboard + mockCardViewModels.
+const EMPTY_LEADERBOARD: LeaderboardResponse = { updated_at: '', agents: [] };
+const EMPTY_CARD_VIEW_MODELS: Record<AgentId, AgentCardViewModel> = {
+  apex: EMPTY_VM,
+  gale: EMPTY_VM,
+  metheus: EMPTY_VM,
+};
+
 export function useAgentData(
   windowsByAgent: Record<AgentId, PerformanceWindow>,
 ): UseAgentDataResult {
-  const [data, setData] = useState<LeaderboardResponse>(mockLeaderboard);
+  const [data, setData] = useState<LeaderboardResponse>(
+    isSupabaseConfigured ? EMPTY_LEADERBOARD : mockLeaderboard,
+  );
   const [cardViewModels, setCardViewModels] = useState<Record<AgentId, AgentCardViewModel>>(
-    mockCardViewModels,
+    isSupabaseConfigured ? EMPTY_CARD_VIEW_MODELS : mockCardViewModels,
   );
   const [source, setSource] = useState<Source>('mock');
   const [error, setError] = useState<string | null>(null);
