@@ -58,6 +58,8 @@ const Z = {
 // diagonal paths terminate; nudged per R4 feedback so houses sit on
 // the dirt pads instead of on grass.
 const LAMP_POST = { x: 480, y: 290 };
+const CHIMNEY_SMOKE = { x: 756, y: 190, width: 38 };
+const CHIMNEY_SMOKE_DELAYS = [0, 1.7, 3.4] as const;
 const AVATAR_SPAWN = { x: 480, y: 375 };
 const AVATAR_SIZE = 72;
 const AVATAR_DROP_DURATION_MS = 520;
@@ -365,6 +367,28 @@ export function TownSquarePage() {
               aria-hidden
               style={{ left: LAMP_POST.x, top: LAMP_POST.y }}
             />
+            <div
+              className="town-chimney-smoke"
+              aria-hidden
+              style={{
+                left: CHIMNEY_SMOKE.x,
+                top: CHIMNEY_SMOKE.y,
+                width: CHIMNEY_SMOKE.width,
+                height: CHIMNEY_SMOKE.width,
+                zIndex: Z.scene + Math.round(CHIMNEY_SMOKE.y),
+              }}
+            >
+              {CHIMNEY_SMOKE_DELAYS.map((delay) => (
+                <img
+                  key={delay}
+                  src="/props/chimney-smoke.png"
+                  alt=""
+                  className="town-chimney-smoke-puff ambient-motion"
+                  draggable={false}
+                  style={{ animationDelay: `${delay}s` }}
+                />
+              ))}
+            </div>
 
             {DESTINATIONS.map((dest) => {
               if (dest.id === 'gym') {
