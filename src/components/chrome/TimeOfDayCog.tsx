@@ -7,7 +7,7 @@ import type { TimeOfDayPreference } from '@/lib/timeOfDay';
 interface OptionDef {
   value: TimeOfDayPreference;
   label: string;
-  icon: React.ReactElement;
+  Icon: React.ComponentType;
 }
 
 const GearIcon = () => (
@@ -63,10 +63,10 @@ const MoonIcon = () => (
 );
 
 const OPTIONS: ReadonlyArray<OptionDef> = [
-  { value: 'auto',    label: 'Auto',    icon: <WandIcon /> },
-  { value: 'daytime', label: 'Daytime', icon: <SunIcon /> },
-  { value: 'dusk',    label: 'Dusk',    icon: <SunsetIcon /> },
-  { value: 'moonlit', label: 'Moonlit', icon: <MoonIcon /> },
+  { value: 'auto',    label: 'Auto',    Icon: WandIcon },
+  { value: 'daytime', label: 'Daytime', Icon: SunIcon },
+  { value: 'dusk',    label: 'Dusk',    Icon: SunsetIcon },
+  { value: 'moonlit', label: 'Moonlit', Icon: MoonIcon },
 ];
 
 /**
@@ -242,7 +242,7 @@ export function TimeOfDayCog() {
                       textAlign: 'left',
                     }}
                   >
-                    {opt.icon}
+                    <opt.Icon />
                     <span style={{ flex: 1 }}>{opt.label}</span>
                     {showAutoHint && (
                       <span style={{ fontSize: 11, opacity: 0.55 }}>{effectiveMode}</span>
