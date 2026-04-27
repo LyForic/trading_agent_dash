@@ -475,6 +475,18 @@ body[data-room="gale"] .weather-window {
   }
 }
 
+/* Time-of-day cog visibility. Default: dark ink stroke (matches daytime
+   and dusk, where dark-on-light reads cleanly with the drop-shadow).
+   Moonlit override: flip to cream paper color so the gear lifts off the
+   dark navy world layer — drop-shadow alone can't bridge a dark stroke
+   on a dark background. */
+.time-of-day-cog-btn {
+  color: var(--color-ink);
+}
+body[data-mode="moonlit"] .time-of-day-cog-btn {
+  color: rgba(245, 230, 196, 0.85);
+}
+
 .focus-drag-handle {
   display: block;
   width: 56px;

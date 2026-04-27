@@ -174,7 +174,6 @@ export function TimeOfDayCog() {
           border: 'none',
           padding: 10,
           cursor: 'pointer',
-          color: 'var(--color-ink)',
           opacity: open ? 1 : 0.85,
           filter: 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.35)) drop-shadow(0 0 1px rgba(255, 255, 255, 0.25))',
           transition: 'opacity 120ms ease-out, filter 120ms ease-out',
