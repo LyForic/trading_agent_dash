@@ -1,4 +1,5 @@
 import { useLayoutEffect, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { getDevModeOverride, useTimeOfDay } from '@/hooks/useTimeOfDay';
 import type { TimeOfDayPreference, WorldMode } from '@/lib/timeOfDay';
 
@@ -49,7 +50,8 @@ function readStoredPreference(): TimeOfDayPreference {
 export function useTimeOfDayPreference(): Result {
   const [mode, setModeState] = useState<TimeOfDayPreference>(readStoredPreference);
   const autoMode = useTimeOfDay();
-  const devOverride = getDevModeOverride();
+  const location = useLocation();
+  const devOverride = getDevModeOverride(location.search);
 
   const effectiveMode: WorldMode =
     devOverride ?? (mode === 'auto' ? autoMode : mode);

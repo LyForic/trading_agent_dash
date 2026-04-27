@@ -25,11 +25,12 @@ describe('TimeOfDayCog', () => {
     document.body.removeAttribute('data-mode');
   });
 
-  it('renders cog button with aria-label, aria-expanded=false, aria-haspopup=menu', () => {
+  it('renders cog button with aria-label, aria-expanded=false, aria-haspopup=menu, aria-controls', () => {
     renderCog();
     const btn = screen.getByRole('button', { name: 'Time of day settings' });
     expect(btn).toHaveAttribute('aria-expanded', 'false');
     expect(btn).toHaveAttribute('aria-haspopup', 'menu');
+    expect(btn).toHaveAttribute('aria-controls', 'time-of-day-popover');
   });
 
   it('does not render the popover initially', () => {
@@ -44,6 +45,16 @@ describe('TimeOfDayCog', () => {
     expect(await screen.findByRole('menu')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Time of day settings' }))
       .toHaveAttribute('aria-expanded', 'true');
+  });
+
+  it('menu uses aria-labelledby pointing to the header', async () => {
+    const user = userEvent.setup();
+    renderCog();
+    await user.click(screen.getByRole('button', { name: 'Time of day settings' }));
+    const menu = await screen.findByRole('menu');
+    expect(menu).toHaveAttribute('aria-labelledby', 'time-of-day-header');
+    expect(menu).toHaveAttribute('id', 'time-of-day-popover');
+    expect(document.getElementById('time-of-day-header')).toHaveTextContent(/Time of day/i);
   });
 
   it('closes popover on second cog click', async () => {

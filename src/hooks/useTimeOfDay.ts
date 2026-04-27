@@ -26,16 +26,13 @@ interface CacheEntry {
  * mode for up to one hour at the rollback boundary, once a year. Same
  * class of minor staleness as the pre-fix bug, but bounded.
  *
- * Dev-only: `?mode=daytime|dusk|moonlit` pins the mode for QA. Stripped
- * from production builds via the `import.meta.env.DEV` guard.
+ * Purely time-derived; does not read the URL. Dev `?mode=` override
+ * is owned by useTimeOfDayPreference via getDevModeOverride.
  */
 export function useTimeOfDay(): WorldMode {
   const [mode, setMode] = useState<WorldMode>(() => compute());
 
   useEffect(() => {
-    // Skip the hourly recompute when a dev override is active so the interval
-    // doesn't fight the pinned mode.
-    if (getDevModeOverride() !== null) return;
     const id = window.setInterval(() => {
       const next = compute();
       setMode((prev) => (prev === next ? prev : next));
@@ -46,11 +43,12 @@ export function useTimeOfDay(): WorldMode {
   return mode;
 }
 
-export function getDevModeOverride(): WorldMode | null {
+export function getDevModeOverride(
+  search: string = (typeof window !== 'undefined' ? window.location.search : ''),
+): WorldMode | null {
   if (!import.meta.env.DEV) return null;
-  if (typeof window === 'undefined') return null;
   try {
-    const param = new URLSearchParams(window.location.search).get('mode');
+    const param = new URLSearchParams(search).get('mode');
     if (param === 'daytime' || param === 'dusk' || param === 'moonlit') {
       return param;
     }
@@ -61,9 +59,6 @@ export function getDevModeOverride(): WorldMode | null {
 }
 
 function compute(): WorldMode {
-  const override = getDevModeOverride();
-  if (override !== null) return override;
-
   if (typeof window !== 'undefined') {
     try {
       const raw = window.localStorage.getItem(CACHE_KEY);

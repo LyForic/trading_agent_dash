@@ -167,6 +167,7 @@ export function TimeOfDayCog() {
         aria-label="Time of day settings"
         aria-expanded={open}
         aria-haspopup="menu"
+        aria-controls="time-of-day-popover"
         onClick={() => setOpenedAtPath((p) => (p === location.pathname ? null : location.pathname))}
         className="time-of-day-cog-btn"
         style={{
@@ -189,7 +190,8 @@ export function TimeOfDayCog() {
           <motion.div
             ref={popoverRef}
             role="menu"
-            aria-label="Time of day"
+            id="time-of-day-popover"
+            aria-labelledby="time-of-day-header"
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.96 }}
@@ -211,6 +213,7 @@ export function TimeOfDayCog() {
             }}
           >
             <div
+              id="time-of-day-header"
               style={{
                 padding: '8px 12px 4px 12px',
                 fontSize: 11,
