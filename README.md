@@ -6,7 +6,15 @@ Cozy pixel-art trading gym. Real data. No demos.
 
 ## Status
 
-V1 in active build. Spec frozen 2026-04-21.
+V1 in active build. Spec frozen 2026-04-21. Phase 5 in progress.
+
+## Phase 5 features (as of 2026-04-26)
+
+- **Track B — per-agent P&L time-window filter** (24h / 7d / Lifetime): window selector pill on each agent card; Lifetime mode reads `agent_lifetime_stats` view, windowed modes read `agent_trades_public`.
+- **Track B — unified trade log**: replaces the prior single-receipt panel; shows settled trades and open positions in one scrollable component.
+- **Track B — In Battle pill**: rendered as a sibling of the summary button (a11y co-fix; no longer a child of an interactive element).
+- **Atmosphere — chimney smoke**: animated smoke particles above Metheus's house in the world layer.
+- **Global time-of-day toggle**: cog icon at top-right opens a popover to force Morning / Afternoon / Night or return to auto.
 
 ## Design source of truth
 
@@ -16,7 +24,7 @@ V1 in active build. Spec frozen 2026-04-21.
 
 ## Stack (V1)
 
-- Vite + React 18 + TypeScript
+- Vite + React 19 + TypeScript
 - Tailwind CSS v4
 - shadcn/ui (primitives)
 - Framer Motion (spring transitions only)
