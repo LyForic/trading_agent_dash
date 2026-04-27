@@ -1,5 +1,6 @@
-import { createContext, useContext, type ReactNode } from 'react';
-import { useGaleWeather, type WeatherSnapshot } from './useGaleWeather';
+import { type ReactNode } from 'react';
+import { useGaleWeather } from './useGaleWeather';
+import { GaleWeatherContext } from './galeWeatherContext-hooks';
 
 /**
  * Shared subscription to useGaleWeather. Called once in the provider,
@@ -7,23 +8,12 @@ import { useGaleWeather, type WeatherSnapshot } from './useGaleWeather';
  * expanded card reads it to render the "Watching <city> · <temp> · <icon>"
  * badge. Without this the city rotation would double-mount and get out
  * of sync between the two surfaces.
+ *
+ * Context object and useSharedGaleWeather hook live in
+ * galeWeatherContext-hooks.ts to satisfy fast-refresh (component files
+ * must not export non-components alongside components).
  */
-
-interface GaleWeatherState {
-  current: WeatherSnapshot | null;
-  source: 'live' | 'fallback' | 'loading';
-}
-
-const GaleWeatherContext = createContext<GaleWeatherState>({
-  current: null,
-  source: 'loading',
-});
-
 export function GaleWeatherProvider({ children }: { children: ReactNode }) {
   const value = useGaleWeather();
   return <GaleWeatherContext.Provider value={value}>{children}</GaleWeatherContext.Provider>;
-}
-
-export function useSharedGaleWeather(): GaleWeatherState {
-  return useContext(GaleWeatherContext);
 }

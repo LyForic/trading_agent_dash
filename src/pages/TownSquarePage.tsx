@@ -218,10 +218,6 @@ export function TownSquarePage() {
     () => (showWelcome ? 'hidden' : 'dropping'),
   );
   useEffect(() => {
-    if (showWelcome) return;
-    if (avatarState === 'hidden') setAvatarState('dropping');
-  }, [showWelcome, avatarState]);
-  useEffect(() => {
     if (avatarState !== 'dropping') return;
     const t = window.setTimeout(() => setAvatarState('idle'), AVATAR_DROP_DURATION_MS);
     return () => window.clearTimeout(t);
@@ -254,6 +250,9 @@ export function TownSquarePage() {
       // ignore
     }
     setShowWelcome(false);
+    // Trigger avatar drop-in: transition 'hidden' → 'dropping' here instead of
+    // an effect so we avoid a cascading setState in useEffect.
+    setAvatarState((s) => (s === 'hidden' ? 'dropping' : s));
   }, []);
 
   // Viewport size tracking.

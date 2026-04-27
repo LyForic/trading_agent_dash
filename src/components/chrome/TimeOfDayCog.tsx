@@ -83,10 +83,15 @@ const OPTIONS: ReadonlyArray<OptionDef> = [
  */
 export function TimeOfDayCog() {
   const { mode, effectiveMode, setMode } = useTimeOfDayPreference();
-  const [open, setOpen] = useState(false);
+  // Track the pathname at which the popover was opened. A route change
+  // auto-closes the popover by invalidating the stored path — derived in
+  // render without a setState-in-effect (React 19 strict-mode safe).
+  const [openedAtPath, setOpenedAtPath] = useState<string | null>(null);
+  const location = useLocation();
+  // Popover is open only when openedAtPath matches the current path.
+  const open = openedAtPath === location.pathname;
   const cogRef = useRef<HTMLButtonElement>(null);
   const popoverRef = useRef<HTMLDivElement>(null);
-  const location = useLocation();
 
   // Close on Escape; restore focus to cog. Use capture phase + stopImmediatePropagation
   // so this handler runs BEFORE other window-level Escape handlers (e.g., GymPage's
@@ -97,7 +102,7 @@ export function TimeOfDayCog() {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.stopImmediatePropagation();
-        setOpen(false);
+        setOpenedAtPath(null);
         cogRef.current?.focus();
       }
     };
@@ -112,16 +117,11 @@ export function TimeOfDayCog() {
       const target = e.target as Node;
       if (cogRef.current?.contains(target)) return;
       if (popoverRef.current?.contains(target)) return;
-      setOpen(false);
+      setOpenedAtPath(null);
     };
     document.addEventListener('mousedown', onClick);
     return () => document.removeEventListener('mousedown', onClick);
   }, [open]);
-
-  // Close on route change
-  useEffect(() => {
-    setOpen(false);
-  }, [location.pathname]);
 
   // Focus first menuitem on open. useEffect runs post-paint, by which
   // time AnimatePresence has mounted the popover, so the querySelector
@@ -134,7 +134,7 @@ export function TimeOfDayCog() {
 
   const handleSelect = (value: TimeOfDayPreference) => {
     setMode(value);
-    setOpen(false);
+    setOpenedAtPath(null);
     cogRef.current?.focus();
   };
 
@@ -167,7 +167,7 @@ export function TimeOfDayCog() {
         aria-label="Time of day settings"
         aria-expanded={open}
         aria-haspopup="menu"
-        onClick={() => setOpen((o) => !o)}
+        onClick={() => setOpenedAtPath((p) => (p === location.pathname ? null : location.pathname))}
         className="time-of-day-cog-btn"
         style={{
           background: 'transparent',

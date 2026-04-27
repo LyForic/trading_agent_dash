@@ -89,10 +89,6 @@ export function FooterTicker({ data }: { data: LeaderboardResponse }) {
     return () => window.clearInterval(id);
   }, [paused, items.length]);
 
-  useEffect(() => {
-    if (index >= items.length) setIndex(0);
-  }, [index, items.length]);
-
   if (items.length === 0) return null;
   const item = items[Math.min(index, items.length - 1)];
 

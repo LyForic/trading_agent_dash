@@ -183,6 +183,10 @@ export function useAgentData(
 
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase) {
+      // TODO(Task 2): move this into lazy useState initializer to eliminate the
+      // set-state-in-effect pattern. Deferred because Task 2 restructures error
+      // semantics (errorKind split) which cleanly removes this block.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setError('Supabase not configured — using mock data');
       setLoading(false);
       return;
@@ -237,7 +241,6 @@ export function useAgentData(
             const eligibleOpens = (openRows ?? []) as AgentTradeRow[];
             const latestOpen = eligibleOpens[0] ?? null;
             if (eligibleOpens.length > 1) {
-              // eslint-disable-next-line no-console
               console.warn(`[useAgentData] ${id}: ${eligibleOpens.length} eligible opens; using latest`);
             }
             const open_position: OpenPosition | null = latestOpen
@@ -292,6 +295,9 @@ export function useAgentData(
     };
     // Effect re-runs when ANY agent's window changes; the per-agent cache
     // ensures we only refetch the agent whose window actually flipped.
+    // windowsByAgent object ref changes every render (built in useMemo above);
+    // we intentionally subscribe to individual string values, not the object.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [windowsByAgent.apex, windowsByAgent.gale, windowsByAgent.metheus]);
 
   return { data, cardViewModels, source, error, loading };

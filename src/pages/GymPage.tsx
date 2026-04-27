@@ -75,6 +75,11 @@ export function GymPage() {
     };
   }, [expandedAgentId]);
 
+  const exitFocus = () => {
+    const from = (location.state as { from?: string } | null)?.from;
+    navigate(from ?? '/');
+  };
+
   // Esc exits focus — routed back to whoever linked us in.
   useEffect(() => {
     if (!expandedAgentId) return;
@@ -92,11 +97,6 @@ export function GymPage() {
     } else {
       navigate(`/${id}`, { state: { from: location.pathname } });
     }
-  };
-
-  const exitFocus = () => {
-    const from = (location.state as { from?: string } | null)?.from;
-    navigate(from ?? '/');
   };
 
   const backButtonLabel =
