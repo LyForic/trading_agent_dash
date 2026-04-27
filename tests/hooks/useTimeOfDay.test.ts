@@ -39,4 +39,18 @@ describe('useTimeOfDay', () => {
     renderHook(() => useTimeOfDay());
     expect(document.body.dataset.mode).toBe('dusk');
   });
+
+  it('invalidates cache when hour bucket crosses', () => {
+    vi.useFakeTimers();
+    // 4:30pm — daytime per hourToMode (boundaries: 6-17 daytime, 17-22 dusk)
+    vi.setSystemTime(new Date(2026, 3, 26, 16, 30));
+    const { result: first, unmount: unmount1 } = renderHook(() => useTimeOfDay());
+    expect(first.current).toBe('daytime');
+    unmount1();
+
+    // Advance to 5:30pm — same TTL window (under 60 min) but new hour bucket → dusk
+    vi.setSystemTime(new Date(2026, 3, 26, 17, 30));
+    const { result: second } = renderHook(() => useTimeOfDay());
+    expect(second.current).toBe('dusk');
+  });
 });

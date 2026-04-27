@@ -40,7 +40,7 @@ export function useTimeOfDay(): WorldMode {
   return mode;
 }
 
-function getDevModeOverride(): WorldMode | null {
+export function getDevModeOverride(): WorldMode | null {
   if (!import.meta.env.DEV) return null;
   if (typeof window === 'undefined') return null;
   try {
@@ -63,7 +63,12 @@ function compute(): WorldMode {
       const raw = window.localStorage.getItem(CACHE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as CacheEntry;
-        if (Date.now() - parsed.computedAt < CACHE_TTL_MS) {
+        const cachedHour = new Date(parsed.computedAt).getHours();
+        const currentHour = new Date().getHours();
+        if (
+          Date.now() - parsed.computedAt < CACHE_TTL_MS &&
+          cachedHour === currentHour
+        ) {
           return parsed.mode;
         }
       }
