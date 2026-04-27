@@ -58,7 +58,7 @@ export function GymPage() {
     return setMetheusWindow;
   };
 
-  const { data, cardViewModels, source } = useAgentData(windowsByAgent);
+  const { data, cardViewModels, source, error } = useAgentData(windowsByAgent);
   const { delta, dismiss } = useVisitDelta(data, source);
 
   useEffect(() => {
@@ -112,7 +112,7 @@ export function GymPage() {
         style={{ color: 'var(--world-ink)' }}
       >
         <div className="gym-chrome">
-          <TrustStrip data={data} />
+          <TrustStrip data={data} error={error} />
         </div>
 
         <main className="px-4 pt-6 pb-10 space-y-4">
