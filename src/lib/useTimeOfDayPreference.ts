@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import { getDevModeOverride, useTimeOfDay } from '@/hooks/useTimeOfDay';
 import type { TimeOfDayPreference, WorldMode } from '@/lib/timeOfDay';
 
@@ -39,9 +39,10 @@ function readStoredPreference(): TimeOfDayPreference {
  *
  * Resolution precedence: dev `?mode=` URL > stored preference > auto.
  *
- * The body[data-mode] side effect is intentionally absent in this
- * commit — added in a later atomic migration step alongside removing
- * the existing writers in useTimeOfDay, GymPage, and TownSquarePage.
+ * Writes `body[data-mode]` via useLayoutEffect so the CSS variables
+ * resolve before the browser paints. This is the sole writer of that
+ * attribute; the old writers in useTimeOfDay, GymPage, and
+ * TownSquarePage are removed in the same atomic commit.
  *
  * Top-right viewport reserved for TimeOfDayCog (see spec).
  */
@@ -63,6 +64,12 @@ export function useTimeOfDayPreference(): Result {
       }
     }
   };
+
+  useLayoutEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.body.dataset.mode = effectiveMode;
+    }
+  }, [effectiveMode]);
 
   return { mode, effectiveMode, setMode };
 }

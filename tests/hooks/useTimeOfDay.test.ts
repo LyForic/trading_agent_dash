@@ -33,13 +33,6 @@ describe('useTimeOfDay', () => {
     expect(result.current).toBe('moonlit');
   });
 
-  it('sets body[data-mode] as a side effect so CSS variable inheritance works', () => {
-    vi.useFakeTimers();
-    vi.setSystemTime(new Date(2026, 3, 21, 19, 0));
-    renderHook(() => useTimeOfDay());
-    expect(document.body.dataset.mode).toBe('dusk');
-  });
-
   it('invalidates cache when hour bucket crosses', () => {
     vi.useFakeTimers();
     // 4:50pm — daytime per hourToMode (boundaries: 6-17 daytime, 17-22 dusk)

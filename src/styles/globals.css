@@ -860,9 +860,12 @@ body[data-mode="moonlit"] .town-grounding-pad {
 
 /* Welcome-back notice, HUD version. Parchment card pinned in the top
    corner so it stays put as the user pans the plaza. */
+/* Repositioned from top: 16px → top: 64px to make room for the
+   TimeOfDayCog at top-right. Cog occupies the top-most slot; the
+   bulletin docks below. */
 .town-bulletin-hud {
   position: absolute;
-  top: max(16px, env(safe-area-inset-top, 16px));
+  top: max(64px, env(safe-area-inset-top, 64px));       /* was: 16px (now reserved for TimeOfDayCog) */
   right: max(16px, env(safe-area-inset-right, 16px));
   padding: 8px 14px;
   font-family: var(--font-display);
@@ -938,6 +941,14 @@ body[data-mode="moonlit"] .town-grounding-pad {
     transform: translate3d(110vw, 20px, 0) rotate(360deg);
     opacity: 0;
   }
+}
+
+/* Hide ambient leaves under any moonlit world (auto or forced). The
+   prior JS conditional `autoMode !== 'moonlit'` only honored
+   hour-derived auto mode; CSS-only suppression now correctly follows
+   the user-effective mode (preference > auto). */
+body[data-mode="moonlit"] .town-leaf {
+  display: none;
 }
 
 /* Avatar — Brandon's 4-direction idle sprite, rendered at 72 world-

@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAgentData } from '@/lib/useAgentData';
 import { useVisitDelta } from '@/lib/useVisitDelta';
-import { useTimeOfDay } from '@/hooks/useTimeOfDay';
 import { WelcomeModal } from '@/components/town/WelcomeModal';
 import type { AgentId } from '@/lib/types';
 
@@ -181,7 +180,6 @@ const LEAVES = Array.from({ length: 8 }, (_, i) => ({
 
 export function TownSquarePage() {
   const navigate = useNavigate();
-  const autoMode = useTimeOfDay();
   const { data, source } = useAgentData({ apex: '24h', gale: '24h', metheus: '24h' });
   const { delta } = useVisitDelta(data, source);
 
@@ -290,10 +288,6 @@ export function TownSquarePage() {
     el.scrollLeft = clamped;
   }, [scale, viewport.w, worldDisplay.w]);
 
-  // Body attributes.
-  useEffect(() => {
-    document.body.dataset.mode = autoMode;
-  }, [autoMode]);
   useEffect(() => {
     document.body.dataset.route = 'town-square';
     delete document.body.dataset.room;
@@ -504,21 +498,22 @@ export function TownSquarePage() {
           </motion.div>
         )}
 
-        {/* Ambient wind leaves. Skipped at moonlit — a quiet night
-            scene reads better without motion. */}
-        {autoMode !== 'moonlit' &&
-          LEAVES.map((leaf) => (
-            <span
-              key={leaf.key}
-              aria-hidden
-              className={`town-leaf town-leaf--${leaf.variant} ambient-motion`}
-              style={{
-                top: `${leaf.topPct}%`,
-                animationDelay: `${leaf.delayS}s`,
-                animationDuration: `${leaf.durationS}s`,
-              }}
-            />
-          ))}
+        {/* Ambient wind leaves. Hidden under moonlit via CSS
+            (body[data-mode="moonlit"] .town-leaf { display: none })
+            so the suppression follows user-effective mode (preference >
+            auto), not raw auto. */}
+        {LEAVES.map((leaf) => (
+          <span
+            key={leaf.key}
+            aria-hidden
+            className={`town-leaf town-leaf--${leaf.variant} ambient-motion`}
+            style={{
+              top: `${leaf.topPct}%`,
+              animationDelay: `${leaf.delayS}s`,
+              animationDuration: `${leaf.durationS}s`,
+            }}
+          />
+        ))}
 
         <AnimatePresence>
           {showPanHint && !showWelcome && (
