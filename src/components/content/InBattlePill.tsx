@@ -45,10 +45,11 @@ export function InBattlePill({ agentId, settlesAt, onTap }: Props) {
         onClick={() => { /* aria-disabled in Track B; no-op until V1.1 */ }}
         className="in-battle-pulse px-3 py-1 rounded-full text-xs font-medium border"
         style={{
+          '--in-battle-color': `var(--color-${agentId})`,
           backgroundColor: `color-mix(in srgb, var(--color-${agentId}) 18%, transparent)`,
           color: `var(--color-${agentId})`,
           borderColor: `color-mix(in srgb, var(--color-${agentId}) 40%, transparent)`,
-        }}
+        } as React.CSSProperties}
         aria-disabled="true"
         aria-label={ariaLabel}
         aria-describedby={tooltipId}
