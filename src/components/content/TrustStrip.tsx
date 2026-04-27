@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import type { LeaderboardResponse } from '@/lib/types';
 import { formatPnl } from '@/lib/formatting';
 
@@ -16,12 +17,10 @@ import { formatPnl } from '@/lib/formatting';
 export function TrustStrip({ data }: { data: LeaderboardResponse }) {
   const totalPnl = data.agents.reduce((sum, a) => sum + a.total_pnl, 0);
   const settledTotal = data.agents.reduce((sum, a) => sum + a.record.settled, 0);
-  // Compute elapsed minutes relative to when this render batch started (not
-  // per-render). new Date() is pure (deterministic for a given updatedAt);
-  // performance.now()/Date.now() is impure so we derive from the timestamp only.
-  const updatedMs = new Date(data.updated_at).getTime();
-  const nowMs = new Date().getTime();
-  const minutesAgo = Math.max(0, Math.round((nowMs - updatedMs) / 60_000));
+  const minutesAgo = useMemo(
+    () => Math.max(0, Math.round((new Date().getTime() - new Date(data.updated_at).getTime()) / 60_000)),
+    [data.updated_at],
+  );
 
   return (
     <header

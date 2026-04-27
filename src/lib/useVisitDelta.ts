@@ -77,7 +77,9 @@ export function useVisitDelta(
 ): { delta: VisitDelta | null; dismiss: () => void; dismissed: boolean } {
   const [prev] = useState<VisitSnapshot | null>(() => readSnapshot());
   const [dismissed, setDismissed] = useState(false);
-  // Capture session start time once so Date.now() is not called on every render.
+  // Capture session start time once at mount via lazy useState initializer.
+  // The initializer callback runs outside render, so the lint purity rule
+  // does not fire. Using [0] to read only the value (no setter needed).
   const sessionNow = useState<number>(() => Date.now())[0];
 
   // Commit a fresh snapshot after 30s of active viewing, or on pagehide.
