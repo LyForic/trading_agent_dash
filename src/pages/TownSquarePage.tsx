@@ -289,6 +289,32 @@ export function TownSquarePage() {
     el.scrollLeft = clamped;
   }, [scale, viewport.w, worldDisplay.w]);
 
+  // Mobile smoke reveal: once the avatar drop animation finishes, smoothly
+  // pan right so Metheus's chimney smoke is partially visible at the right
+  // edge of the viewport. Fires once per mount (avatarState transitions
+  // hidden→dropping→idle exactly once). On wide viewports (≥ 768 px) the
+  // world is wide enough to show both lamp and smoke without panning, so
+  // we skip this effect entirely.
+  //
+  // Geometry note: at 390×844 the scale is ~1.56 (height-driven), making
+  // the world display 1500 px wide on a 390 px viewport. Lamp (x=480) and
+  // smoke (x=756) are 431 display-px apart — wider than the viewport —
+  // so it is impossible to show both simultaneously. The reveal pan
+  // intentionally lets the avatar drift ~30 px offscreen-left; the user
+  // already saw it land and the pan signals there is more world to the right.
+  useEffect(() => {
+    if (avatarState !== 'idle') return;
+    if (viewport.w >= 768) return;
+    const el = viewportRef.current;
+    if (!el) return;
+    // Target: smoke left edge (CHIMNEY_SMOKE.x - width/2) lands 20 px
+    // inset from the viewport right edge, giving a clear visual peek.
+    const smokeLeftWorld = CHIMNEY_SMOKE.x - CHIMNEY_SMOKE.width / 2;
+    const targetScroll = smokeLeftWorld * scale - (viewport.w - 20);
+    const clamped = Math.max(0, Math.min(worldDisplay.w - viewport.w, targetScroll));
+    el.scrollTo({ left: clamped, behavior: 'smooth' });
+  }, [avatarState, scale, viewport.w, worldDisplay.w]);
+
   useEffect(() => {
     document.body.dataset.route = 'town-square';
     delete document.body.dataset.room;
