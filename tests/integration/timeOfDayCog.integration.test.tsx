@@ -37,6 +37,9 @@ describe('TimeOfDayCog body[data-mode] integration', () => {
     // timer advancement.
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(new Date(2026, 3, 26, 12, 0));
+    // userEvent.setup() must come AFTER the partial fake-timer setup so it
+    // captures the still-real setTimeout/rAF (only Date is faked). Reordering
+    // — or fully faking timers — would deadlock framer-motion's exit animation.
     const user = userEvent.setup();
     window.localStorage.setItem(STORAGE_KEY, 'moonlit');
     render(<MemoryRouter><TimeOfDayCog /></MemoryRouter>);

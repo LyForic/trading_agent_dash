@@ -5,7 +5,6 @@ import { useTimeOfDay } from '@/hooks/useTimeOfDay';
 describe('useTimeOfDay', () => {
   beforeEach(() => {
     window.localStorage.clear();
-    document.body.removeAttribute('data-mode');
   });
 
   afterEach(() => {

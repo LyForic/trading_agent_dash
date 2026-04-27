@@ -14,6 +14,7 @@ const STORAGE_KEY = 'gym:settings:time-mode';
 describe('useTimeOfDayPreference', () => {
   beforeEach(() => {
     window.localStorage.clear();
+    document.body.removeAttribute('data-mode');
     vi.mocked(useTimeOfDay).mockReturnValue('daytime');
     vi.mocked(getDevModeOverride).mockReturnValue(null);
   });
@@ -87,5 +88,11 @@ describe('useTimeOfDayPreference', () => {
     const { result } = renderHook(() => useTimeOfDayPreference());
     expect(() => act(() => result.current.setMode('dusk'))).not.toThrow();
     expect(result.current.mode).toBe('dusk');
+  });
+
+  it('writes body[data-mode] on mount via useLayoutEffect (effective mode)', () => {
+    vi.mocked(useTimeOfDay).mockReturnValue('dusk');
+    renderHook(() => useTimeOfDayPreference());
+    expect(document.body.dataset.mode).toBe('dusk');
   });
 });
