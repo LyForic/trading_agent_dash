@@ -177,9 +177,7 @@ export function useAgentData(
   const [liveCardViewModels, setLiveCardViewModels] = useState<Record<AgentId, AgentCardViewModel>>(
     () => (isSupabaseConfigured ? EMPTY_CARD_VIEW_MODELS : mockCardViewModels),
   );
-  const [source, setSource] = useState<Source>(
-    () => (isSupabaseConfigured ? 'live' : 'mock'),
-  );
+  const [source, setSource] = useState<Source>('mock');
   const [error, setError] = useState<AgentDataError | null>(
     () =>
       isSupabaseConfigured
@@ -210,6 +208,8 @@ export function useAgentData(
     if (!isSupabaseConfigured || !supabase) return;
 
     let cancelled = false;
+    // Intentional: setLoading(true) opens the async fetch cycle; setLoading(false)
+    // always closes it in the same IIFE's success and catch paths.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
 
