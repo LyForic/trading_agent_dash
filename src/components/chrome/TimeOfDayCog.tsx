@@ -88,17 +88,21 @@ export function TimeOfDayCog() {
   const popoverRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
 
-  // Close on Escape; restore focus to cog
+  // Close on Escape; restore focus to cog. Use capture phase + stopImmediatePropagation
+  // so this handler runs BEFORE other window-level Escape handlers (e.g., GymPage's
+  // exit-focus handler) and prevents them from firing for the same key event. Without
+  // this, Esc on a focused route would close the popover AND navigate away.
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        e.stopImmediatePropagation();
         setOpen(false);
         cogRef.current?.focus();
       }
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    window.addEventListener('keydown', onKey, true);
+    return () => window.removeEventListener('keydown', onKey, true);
   }, [open]);
 
   // Close on click outside cog and popover

@@ -48,4 +48,27 @@ describe('TimeOfDayCog body[data-mode] integration', () => {
     await user.click(await screen.findByRole('menuitemradio', { name: /Auto/ }));
     expect(document.body.dataset.mode).toBe('daytime');
   });
+
+  it('Esc with cog popover open does NOT propagate to other window-level Escape handlers', async () => {
+    const user = userEvent.setup();
+    const otherHandler = vi.fn();
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') otherHandler();
+    });
+
+    try {
+      render(<MemoryRouter><TimeOfDayCog /></MemoryRouter>);
+      await user.click(screen.getByRole('button', { name: 'Time of day settings' }));
+      await screen.findByRole('menu');
+      await user.keyboard('{Escape}');
+
+      // The cog's capture-phase + stopImmediatePropagation should suppress
+      // the other Escape listener entirely.
+      expect(otherHandler).not.toHaveBeenCalled();
+      expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+    } finally {
+      // Cleanup: remove the test listener (vitest doesn't auto-clean window listeners)
+      window.removeEventListener('keydown', otherHandler);
+    }
+  });
 });
