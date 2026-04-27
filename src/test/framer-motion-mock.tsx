@@ -7,7 +7,6 @@
  * in the DOM during animation and causes `.not.toBeInTheDocument()` to fail.
  */
 import React from 'react';
-import type { HTMLMotionProps } from 'framer-motion';
 
 type AnyProps = Record<string, unknown>;
 
@@ -33,7 +32,7 @@ function stripMotionProps(props: AnyProps): AnyProps {
   return rest;
 }
 
-function makeMotion(tag: keyof JSX.IntrinsicElements) {
+function makeMotion(tag: keyof React.JSX.IntrinsicElements) {
   const Component = React.forwardRef<HTMLElement, AnyProps>((props, ref) => {
     const clean = stripMotionProps(props);
     return React.createElement(tag, { ...clean, ref });
@@ -45,8 +44,9 @@ function makeMotion(tag: keyof JSX.IntrinsicElements) {
 export const motion = new Proxy(
   {},
   {
-    get(_target, prop: string) {
-      return makeMotion(prop as keyof JSX.IntrinsicElements);
+    get(_target, prop: string | symbol) {
+      if (typeof prop === 'symbol') return undefined;
+      return makeMotion(prop as keyof React.JSX.IntrinsicElements);
     },
   },
 ) as typeof import('framer-motion').motion;

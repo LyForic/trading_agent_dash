@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useTimeOfDayPreference } from '@/lib/useTimeOfDayPreference';
@@ -7,7 +7,7 @@ import type { TimeOfDayPreference } from '@/lib/timeOfDay';
 interface OptionDef {
   value: TimeOfDayPreference;
   label: string;
-  icon: JSX.Element;
+  icon: React.ReactElement;
 }
 
 const GearIcon = () => (
@@ -81,7 +81,7 @@ const OPTIONS: ReadonlyArray<OptionDef> = [
  * useTimeOfDayPreference. A developer with a stored preference will
  * not see their stored value applied while `?mode=` is set.
  */
-export function TimeOfDayCog(): JSX.Element {
+export function TimeOfDayCog() {
   const { mode, effectiveMode, setMode } = useTimeOfDayPreference();
   const [open, setOpen] = useState(false);
   const cogRef = useRef<HTMLButtonElement>(null);
