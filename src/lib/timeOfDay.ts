@@ -1,6 +1,13 @@
 export type WorldMode = 'daytime' | 'dusk' | 'moonlit';
 
 /**
+ * User preference for time-of-day mode. `'auto'` defers to the
+ * hour-derived value from `useTimeOfDay`; the three explicit values
+ * pin the world to a specific mode regardless of clock.
+ */
+export type TimeOfDayPreference = 'auto' | WorldMode;
+
+/**
  * Maps a local-time hour (0-23) to the Trading Gym world-layer mode
  * per spec §3.1. Cheap pure function so it's safe to call on every render.
  *
