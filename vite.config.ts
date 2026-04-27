@@ -16,5 +16,8 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
     css: false,
+    alias: {
+      'framer-motion': path.resolve(__dirname, './src/test/framer-motion-mock.tsx'),
+    },
   },
 });

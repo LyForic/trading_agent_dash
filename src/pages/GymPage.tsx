@@ -1,8 +1,7 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { WorldLayer } from '@/components/world/WorldLayer';
-import { useTimeOfDay } from '@/hooks/useTimeOfDay';
 import { AgentCard } from '@/components/content/AgentCard';
 import { TrustStrip } from '@/components/content/TrustStrip';
 import { FooterTicker } from '@/components/content/FooterTicker';
@@ -12,7 +11,6 @@ import { useAgentWindow } from '@/lib/useAgentWindow';
 import { useVisitDelta } from '@/lib/useVisitDelta';
 import { AGENT_IDS } from '@/lib/agentMeta';
 import type { AgentId, PerformanceWindow } from '@/lib/types';
-import type { WorldMode } from '@/lib/timeOfDay';
 
 /**
  * GymPage — the communal interior + agent focus mode, URL-driven.
@@ -45,13 +43,6 @@ export function GymPage() {
   const navigate = useNavigate();
   const expandedAgentId = agentIdFromPath(location.pathname);
 
-  const autoMode = useTimeOfDay();
-  const [override, setOverride] = useState<WorldMode | null>(null);
-  if (override && document.body.dataset.mode !== override) {
-    document.body.dataset.mode = override;
-  }
-  const effectiveMode = override ?? autoMode;
-
   const [apexWindow, setApexWindow] = useAgentWindow('apex');
   const [galeWindow, setGaleWindow] = useAgentWindow('gale');
   const [metheusWindow, setMetheusWindow] = useAgentWindow('metheus');
@@ -67,7 +58,7 @@ export function GymPage() {
     return setMetheusWindow;
   };
 
-  const { data, cardViewModels, source, error: dataError } = useAgentData(windowsByAgent);
+  const { data, cardViewModels, source } = useAgentData(windowsByAgent);
   const { delta, dismiss } = useVisitDelta(data, source);
 
   useEffect(() => {
@@ -141,69 +132,6 @@ export function GymPage() {
               Three agents. Live markets. Documented in public.
             </p>
           </header>
-
-          <div
-            className="gym-chrome flex flex-wrap items-center gap-2 text-[11px]"
-            style={{
-              color: 'var(--color-ink)',
-              backgroundColor: 'color-mix(in srgb, var(--color-paper) 82%, transparent)',
-              padding: '8px 10px',
-              borderRadius: '12px',
-              backdropFilter: 'blur(4px)',
-              WebkitBackdropFilter: 'blur(4px)',
-            }}
-          >
-            <span>
-              Mode: <strong>{effectiveMode}</strong>{' '}
-              <em style={{ color: 'var(--color-ink-muted)' }}>
-                {override ? '(forced)' : '(auto)'}
-              </em>
-              {' · '}
-              Data:{' '}
-              <strong
-                style={{
-                  color: source === 'live' ? 'var(--color-gain)' : 'var(--color-ink-muted)',
-                }}
-              >
-                {source}
-              </strong>
-              {dataError && (
-                <em style={{ color: 'var(--color-loss)' }} title={dataError}>
-                  {' '}
-                  (err)
-                </em>
-              )}
-            </span>
-            {(['daytime', 'dusk', 'moonlit'] as const).map((m) => (
-              <button
-                key={m}
-                onClick={() => setOverride(m)}
-                className="px-2 py-0.5 rounded-md border"
-                style={{
-                  borderColor: 'var(--color-border-default)',
-                  backgroundColor:
-                    effectiveMode === m ? 'var(--color-paper-raised)' : 'var(--color-paper)',
-                  color: 'var(--color-ink)',
-                }}
-              >
-                {m}
-              </button>
-            ))}
-            <button
-              onClick={() => {
-                setOverride(null);
-                document.body.dataset.mode = autoMode;
-              }}
-              className="px-2 py-0.5 rounded-md border opacity-70"
-              style={{
-                borderColor: 'var(--color-border-default)',
-                backgroundColor: 'var(--color-paper)',
-                color: 'var(--color-ink)',
-              }}
-            >
-              auto
-            </button>
-          </div>
 
           <div className="gym-chrome">
             <VisitDeltaStrip delta={delta} onDismiss={dismiss} />

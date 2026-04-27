@@ -5,7 +5,6 @@ import { useTimeOfDay } from '@/hooks/useTimeOfDay';
 describe('useTimeOfDay', () => {
   beforeEach(() => {
     window.localStorage.clear();
-    document.body.removeAttribute('data-mode');
   });
 
   afterEach(() => {
@@ -33,10 +32,17 @@ describe('useTimeOfDay', () => {
     expect(result.current).toBe('moonlit');
   });
 
-  it('sets body[data-mode] as a side effect so CSS variable inheritance works', () => {
+  it('invalidates cache when hour bucket crosses', () => {
     vi.useFakeTimers();
-    vi.setSystemTime(new Date(2026, 3, 21, 19, 0));
-    renderHook(() => useTimeOfDay());
-    expect(document.body.dataset.mode).toBe('dusk');
+    // 4:50pm — daytime per hourToMode (boundaries: 6-17 daytime, 17-22 dusk)
+    vi.setSystemTime(new Date(2026, 3, 26, 16, 50));
+    const { result: first, unmount: unmount1 } = renderHook(() => useTimeOfDay());
+    expect(first.current).toBe('daytime');
+    unmount1();
+
+    // Advance to 5:10pm — only 20 min later (well inside TTL), but hour bucket 16→17 → dusk
+    vi.setSystemTime(new Date(2026, 3, 26, 17, 10));
+    const { result: second } = renderHook(() => useTimeOfDay());
+    expect(second.current).toBe('dusk');
   });
 });

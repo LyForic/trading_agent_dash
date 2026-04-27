@@ -11,20 +11,26 @@ interface CacheEntry {
 }
 
 /**
- * Returns the current world-layer mode and applies it to `<body data-mode="...">`
- * as a side effect so the CSS variable overrides in globals.css take effect.
- * Caches in localStorage for 60 minutes so the same client doesn't recompute
- * on every page load inside the same hour.
+ * Returns the current world-layer mode (hour-derived). Pure derivation;
+ * does NOT write to `body[data-mode]` — that is owned by
+ * useTimeOfDayPreference which factors in user preference and dev URL
+ * override.
  *
- * Dev-only: `?mode=daytime|dusk|moonlit` pins the mode for QA. Stripped from
- * production builds via the `import.meta.env.DEV` guard.
+ * Caches in localStorage for up to 60 minutes AND only while the cached
+ * hour bucket matches the current hour bucket — without the bucket
+ * check, a 4:50pm load would stay 'daytime' until ~5:50pm even though
+ * dusk starts at 5pm per hourToMode.
+ *
+ * Note: cached hours are derived from `Date.getHours()`, which can
+ * repeat during DST "fall back" transitions. The result is a stale
+ * mode for up to one hour at the rollback boundary, once a year. Same
+ * class of minor staleness as the pre-fix bug, but bounded.
+ *
+ * Dev-only: `?mode=daytime|dusk|moonlit` pins the mode for QA. Stripped
+ * from production builds via the `import.meta.env.DEV` guard.
  */
 export function useTimeOfDay(): WorldMode {
   const [mode, setMode] = useState<WorldMode>(() => compute());
-
-  useEffect(() => {
-    document.body.dataset.mode = mode;
-  }, [mode]);
 
   useEffect(() => {
     // Skip the hourly recompute when a dev override is active so the interval
@@ -40,7 +46,7 @@ export function useTimeOfDay(): WorldMode {
   return mode;
 }
 
-function getDevModeOverride(): WorldMode | null {
+export function getDevModeOverride(): WorldMode | null {
   if (!import.meta.env.DEV) return null;
   if (typeof window === 'undefined') return null;
   try {
@@ -63,7 +69,12 @@ function compute(): WorldMode {
       const raw = window.localStorage.getItem(CACHE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as CacheEntry;
-        if (Date.now() - parsed.computedAt < CACHE_TTL_MS) {
+        const cachedHour = new Date(parsed.computedAt).getHours();
+        const currentHour = new Date().getHours();
+        if (
+          Date.now() - parsed.computedAt < CACHE_TTL_MS &&
+          cachedHour === currentHour
+        ) {
           return parsed.mode;
         }
       }
