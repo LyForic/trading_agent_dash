@@ -82,7 +82,7 @@ Implementation contract:
 
 - Lazy `useState` initializer reads `localStorage["gym:settings:time-mode"]`. Validates membership in `['auto', 'daytime', 'dusk', 'moonlit']`. Defaults to `'auto'` if missing, invalid, or if localStorage throws (try / catch).
 - `setMode` updates state AND writes to localStorage (try / catch on write).
-- Internally calls `useTimeOfDay()` to get `autoMode`. Computes `effectiveMode = mode === 'auto' ? autoMode : mode`.
+- Internally calls `useTimeOfDay()` to get `autoMode`, and `getDevModeOverride()` to detect a dev `?mode=` URL pin. Resolves `effectiveMode` with precedence **dev URL > stored preference > auto**: `effectiveMode = devOverride ?? (mode === 'auto' ? autoMode : mode)`. The dev URL override takes top precedence so QA debugging isn't silently masked by a stored preference.
 - `useLayoutEffect` (not `useEffect`) writes `document.body.dataset.mode = effectiveMode` whenever it changes — fires before first paint, no FOUC.
 - SSR guard: existing `useTimeOfDay` pattern uses `typeof window !== 'undefined'`. The new hook mirrors this defensively for future-proofing.
 
@@ -97,7 +97,7 @@ export function TimeOfDayCog(): JSX.Element;
 Rendered structure (high-level):
 
 ```
-<div className="time-of-day-cog-root" style={{ position: fixed; top: 16; right: 16; z-index: 50 }}>
+<div className="time-of-day-cog-root" style={{ position: fixed; top: 16; right: 16; z-index: 200 }}>
   <button aria-label="Time of day settings" aria-expanded={open} aria-haspopup="menu">
     <GearIcon />
   </button>
@@ -134,10 +134,11 @@ Rendered structure (high-level):
 
 | File | Change |
 |---|---|
-| `src/hooks/useTimeOfDay.ts` | **Remove** the `useEffect` that writes `body.dataset.mode`. Hook becomes a pure hour-derivation utility. |
+| `src/hooks/useTimeOfDay.ts` | **Three changes:** (1) **Remove** the `useEffect` that writes `body.dataset.mode`. (2) **Fix the cache rollover bug** — `compute()` currently returns the cached mode for up to 60 minutes (TTL-only). Update to invalidate cache when the hour bucket changes (compare cached `Date(computedAt).getHours()` to current hour; cache miss if different). (3) **Export** `getDevModeOverride` so the new hook can consume it. |
 | `src/App.tsx` | **Add** `<TimeOfDayCog />` once inside `<BrowserRouter>`, outside `<Routes>`, so it sits above all pages. |
 | `src/pages/GymPage.tsx` | **Remove** `[override, setOverride]` state (lines 48-53). **Remove** the chrome panel (lines 145-206) entirely (mode controls + data indicator both gone — see Out-of-Scope rationale). **Remove** `useTimeOfDay` and `WorldMode` imports. |
-| `src/pages/TownSquarePage.tsx` | **Remove the body-set useEffect at lines 293-296** (which currently writes `document.body.dataset.mode = autoMode`). **KEEP** the `useTimeOfDay` import + call (line 184) — `autoMode` is consumed at line 509 (`{autoMode !== 'moonlit' && LEAVES.map(...)}`) for ambient leaf rendering. |
+| `src/pages/TownSquarePage.tsx` | **Remove the body-set useEffect at lines 293-296**. **Remove the `autoMode !== 'moonlit'` JS conditional at line 509** — leaf suppression moves to CSS (see globals.css row below) so the leaves correctly follow user-effective mode rather than raw auto mode. With the conditional gone, `autoMode` has no remaining consumer; **drop** the `useTimeOfDay` import + call (line 184). |
+| `src/styles/globals.css` | **Two additions:** (1) `body[data-mode="moonlit"] .town-leaf { display: none }` so leaves disappear under any moonlit world (auto or forced). (2) Reposition `.town-bulletin-hud` from `top: 16px` to `top: 64px` (cog height + gap) — see "Top-right collision" below. |
 
 ## Data Flow
 
@@ -184,6 +185,8 @@ The new hook is the **only** writer to `body[data-mode]`. CSS and `WorldLayer` c
 
 The codebase is Vite SPA (BrowserRouter, no SSR), so `window.localStorage` is always available at hook execution time. Existing pattern in `useTimeOfDay.ts:46` guards `typeof window !== 'undefined'`. The new hook mirrors this pattern for consistency, even though we don't currently SSR. Cost: ~3 lines of guards. Worth it for future-proofing.
 
+If SSR ever lands, `useLayoutEffect` itself emits a server-side warning. The mitigation is the standard `useIsomorphicLayoutEffect` pattern (`typeof window !== 'undefined' ? useLayoutEffect : useEffect`). Out of scope for V1 since we don't SSR; left as a future-proofing pointer.
+
 ## Behavior
 
 ### Open / close triggers
@@ -229,6 +232,14 @@ The codebase has a defined z-index ecosystem (verified via `globals.css`):
 
 The cog popover shares the cog's stacking context (no separate z-index needed).
 
+### Top-right collision (Town Square bulletin)
+
+The visit-delta bulletin (`.town-bulletin-hud`) is currently pinned at `top: 16px; right: 16px` inside `.town-hud`. Since it lives at z-index 150 and the new cog is at z-index 200, the cog will visually cover the bulletin when delta is non-empty.
+
+**Resolution:** reposition `.town-bulletin-hud` to `top: 64px` (cog height ~42px + ~22px breathing room) so it stacks vertically below the cog. The bulletin's right edge stays at `right: 16px` so the visual column is consistent. The cog occupies the top-most slot; the bulletin docks below.
+
+This is a CSS-only change in `globals.css`; no JSX edit needed.
+
 ### Animation
 
 Use **framer-motion** (already a dependency, matches GymPage `AnimatePresence` pattern):
@@ -263,7 +274,7 @@ Use **framer-motion** (already a dependency, matches GymPage `AnimatePresence` p
 | `tests/lib/useTimeOfDayPreference.test.ts` | New unit (hook) | Preference state + localStorage + body side effect |
 | `tests/components/chrome/TimeOfDayCog.test.tsx` | New component | Open/close, selection, a11y, focus management |
 | `tests/integration/timeOfDayCog.integration.test.tsx` | New integration | Cog → preference → body[data-mode] end-to-end |
-| `tests/hooks/useTimeOfDay.test.ts` | Modify (if exists) | Drop assertions about `body.dataset.mode` since the side effect moved |
+| `tests/hooks/useTimeOfDay.test.ts` | Modify (if exists; otherwise create) | Drop assertions about `body.dataset.mode`. ADD a cache-rollover regression: populate cache at hour H with mode X, advance time past the next hour bucket, assert `compute()` returns the new bucket's mode (not the cached X). |
 
 ### Hook test cases (`useTimeOfDayPreference.test.ts`)
 
@@ -281,6 +292,8 @@ Use **framer-motion** (already a dependency, matches GymPage `AnimatePresence` p
 | 10 | localStorage `getItem` throws → falls back to `'auto'` default (no crash) |
 | 11 | localStorage `setItem` throws → state still updates (no crash) |
 | 12 | Corrupt localStorage value (e.g., `"lunch"`) → falls back to `'auto'` (validation guard) |
+| 13 | Dev `?mode=dusk` URL is set + preference is `'moonlit'` → `effectiveMode === 'dusk'` AND `body.dataset.mode === 'dusk'` (URL wins) |
+| 14 | Dev `?mode=` URL absent + preference is `'moonlit'` → `effectiveMode === 'moonlit'` (preference path, unchanged) |
 
 ### Component test cases (`TimeOfDayCog.test.tsx`)
 
@@ -297,6 +310,8 @@ Use **framer-motion** (already a dependency, matches GymPage `AnimatePresence` p
 | 9 | First menuitem receives focus when popover opens |
 | 10 | ArrowDown/ArrowUp moves focus through menuitems |
 | 11 | Renders 4 options in order: Auto, Daytime, Dusk, Moonlit |
+| 12 | Space activates the focused menuitem (parity with Enter) |
+| 13 | Home key jumps focus to the first menuitem (Auto); End key jumps to the last (Moonlit) |
 
 ### Integration test cases (`timeOfDayCog.integration.test.tsx`)
 
@@ -306,6 +321,9 @@ Use **framer-motion** (already a dependency, matches GymPage `AnimatePresence` p
 | 2 | Open popover → click "Dusk" → `body.dataset.mode === 'dusk'` |
 | 3 | Open popover → click "Auto" → `body.dataset.mode === autoMode` |
 | 4 | Existing `useTimeOfDay` no longer sets `body[data-mode]` — assert absence after dropping the cog |
+| 5 | TownSquarePage rendered with preference forced to `'moonlit'` at noon → `.town-leaf` elements have `display: none` (CSS handles suppression, NOT JS conditional) |
+| 6 | TownSquarePage rendered with preference forced to `'daytime'` at midnight → `.town-leaf` elements are visible (forced daytime correctly opts into leaves) |
+| 7 | TownSquarePage rendered at 390×844 with bulletin showing → cog and bulletin do not visually overlap (cog at top: 16, bulletin at top: 64) |
 
 ### TDD discipline
 
@@ -330,10 +348,11 @@ After migration, ONLY `src/lib/useTimeOfDayPreference.ts` writes. To avoid the i
 
 | # | Step | Why this order |
 |---|---|---|
+| 0 | **Refactor `useTimeOfDay.ts`** — fix the cache rollover bug (invalidate when hour bucket changes, not just on TTL) AND export `getDevModeOverride`. Add a regression test: cache populated at hour H, time advances past hour boundary, `compute()` returns the new bucket's mode. | Pre-existing bug that the new feature would otherwise mask further. Fixing first means the auto-rollover invariant in this spec is actually deliverable. The export is a no-op behavior change required by step 2. |
 | 1 | Add `TimeOfDayPreference` type to `src/lib/timeOfDay.ts` (export alongside `WorldMode`) | Type lands first so consumers compile |
-| 2 | Create `src/lib/useTimeOfDayPreference.ts` (preference + setMode + effectiveMode, **no body side effect yet**) | Logic without DOM writes — testable in isolation |
+| 2 | Create `src/lib/useTimeOfDayPreference.ts` (preference + setMode + effectiveMode with `dev URL > preference > auto` precedence, **no body side effect yet**) | Logic without DOM writes — testable in isolation |
 | 3 | Create `src/components/chrome/TimeOfDayCog.tsx` (uses hook, renders popover, no DOM side effects yet) | Component shape and accessibility lockdown without affecting body[data-mode] |
-| 4 | **Atomic migration commit:** (a) add `useLayoutEffect` body-set to new hook, (b) mount `<TimeOfDayCog />` in App.tsx, (c) remove `useEffect` from `useTimeOfDay.ts`, (d) remove body-set useEffect from `TownSquarePage.tsx` (lines 293-296), (e) remove `[override, setOverride]` state + chrome panel (lines 145-206) + `useTimeOfDay`/`WorldMode` imports from `GymPage.tsx`. | All writers must transition in one commit — if split, the new hook plus an old writer both run and may disagree on the active mode (race / flicker). |
+| 4 | **Atomic migration commit:** (a) add `useLayoutEffect` body-set to new hook; (b) mount `<TimeOfDayCog />` in App.tsx; (c) remove `useEffect` from `useTimeOfDay.ts`; (d) remove body-set useEffect from `TownSquarePage.tsx` (lines 293-296), drop the `autoMode !== 'moonlit'` JS conditional at line 509, drop `useTimeOfDay` import + call (line 184); (e) remove `[override, setOverride]` state + chrome panel (lines 145-206) + `useTimeOfDay`/`WorldMode` imports from `GymPage.tsx`; (f) add `body[data-mode="moonlit"] .town-leaf { display: none }` to `globals.css` (replacement for the JS conditional removed in (d)); (g) reposition `.town-bulletin-hud` from `top: 16px` to `top: 64px` in `globals.css`. | All writers must transition in one commit — if split, the new hook plus an old writer both run and may disagree on the active mode (race / flicker). The CSS leaf-hide must land in the same commit as the JS conditional drop, or moonlit world will render with daytime leaves between commits. |
 | 5 | Add tests per Testing section | TDD discipline applies per-step inline; this row is a catch-all for any tests not yet written |
 
 Step 4 is the load-bearing one — atomic to avoid the race.
@@ -346,7 +365,7 @@ Step 4 is the load-bearing one — atomic to avoid the race.
 | 2 | Two tabs with different preferences | localStorage doesn't sync across tabs by default. **YAGNI for V1** — single-user dashboard. If desired later, listen to `window.addEventListener('storage', ...)` in the hook. |
 | 3 | Corrupt localStorage value (e.g., `"lunch"`) | Hook validates: `if (!['auto','daytime','dusk','moonlit'].includes(stored)) return 'auto'`. Defensive parse, no crash. |
 | 4 | Future route adds top-right element that collides with cog | Document the constraint in component JSDoc: "top-right viewport reserved for TimeOfDayCog." Future Claude reads it. |
-| 5 | Existing dev `?mode=dusk` URL override | When preference is `'auto'`, URL override flows through `useTimeOfDay` → effective mode follows URL. When preference is explicit, user's choice wins; URL override is ignored. Document in JSDoc; small surprise for someone debugging. |
+| 5 | Dev `?mode=dusk` URL override (DEV-only) | URL override has **top precedence** — wins over both stored preference and auto-derivation. Resolution order: `dev URL > stored preference > auto`. Rationale: a developer who pinned the URL to debug shouldn't have the override silently masked by a previously-stored preference. Implemented by calling `getDevModeOverride()` first in the new hook's `effectiveMode` resolution. |
 | 6 | First-paint FOUC on `body[data-mode]` | Use `useLayoutEffect` (NOT `useEffect`) for the body-set side effect — fires before paint, no flash. |
 | 7 | WelcomeModal overlay on first TownSquare visit | `.welcome-backdrop` is at z-index 500 (verified in `globals.css:1014`); cog at 200 sits below it during onboarding (acceptable — modal is a hard interrupt; cog reappears on dismiss). |
 
