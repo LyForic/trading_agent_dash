@@ -101,7 +101,7 @@ Writes come only from the `service_role` key used by the trading daemons.
 
 | Mode | Query target |
 |------|-------------|
-| 24h / 7d window | `agent_trades_public` filtered by `entered_at` range |
+| 24h / 7d window | `agent_trades_public` filtered by `settled_at` range |
 | Lifetime | `agent_lifetime_stats` (one row per agent) |
 | Edge Function `leaderboard` | reads `agent_trades_public` |
 

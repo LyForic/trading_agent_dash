@@ -302,8 +302,11 @@ export function TownSquarePage() {
   // so it is impossible to show both simultaneously. The reveal pan
   // intentionally lets the avatar drift ~30 px offscreen-left; the user
   // already saw it land and the pan signals there is more world to the right.
+  const didRevealSmokeRef = useRef(false);
   useEffect(() => {
+    if (didRevealSmokeRef.current) return; // only fire once per page lifetime
     if (avatarState !== 'idle') return;
+    if (isWalking) return; // don't compete with explicit walk-to scroll
     if (viewport.w >= 768) return;
     const el = viewportRef.current;
     if (!el) return;
@@ -313,7 +316,8 @@ export function TownSquarePage() {
     const targetScroll = smokeLeftWorld * scale - (viewport.w - 20);
     const clamped = Math.max(0, Math.min(worldDisplay.w - viewport.w, targetScroll));
     el.scrollTo({ left: clamped, behavior: 'smooth' });
-  }, [avatarState, scale, viewport.w, worldDisplay.w]);
+    didRevealSmokeRef.current = true;
+  }, [avatarState, scale, viewport.w, worldDisplay.w, isWalking]);
 
   useEffect(() => {
     document.body.dataset.route = 'town-square';

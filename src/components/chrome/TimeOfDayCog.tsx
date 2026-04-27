@@ -132,6 +132,15 @@ export function TimeOfDayCog() {
     first?.focus();
   }, [open]);
 
+  // Sync popover open state to route changes: any navigation closes the
+  // popover. This is a legitimate "synchronize internal state with external
+  // value" useEffect pattern — the React 19 set-state-in-effect rule flags
+  // it, but the rule's heuristic is too aggressive for genuine sync use.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional route-change sync
+    setOpenedAtPath(null);
+  }, [location.pathname]);
+
   const handleSelect = (value: TimeOfDayPreference) => {
     setMode(value);
     setOpenedAtPath(null);

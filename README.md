@@ -14,7 +14,7 @@ V1 in active build. Spec frozen 2026-04-21. Phase 5 in progress.
 - **Track B — unified trade log**: replaces the prior single-receipt panel; shows settled trades and open positions in one scrollable component.
 - **Track B — In Battle pill**: rendered as a sibling of the summary button (a11y co-fix; no longer a child of an interactive element).
 - **Atmosphere — chimney smoke**: animated smoke particles above Metheus's house in the world layer.
-- **Global time-of-day toggle**: cog icon at top-right opens a popover to force Morning / Afternoon / Night or return to auto.
+- **Global time-of-day toggle**: cog icon at top-right opens a popover to select Auto / Daytime / Dusk / Moonlit.
 
 ## Design source of truth
 
