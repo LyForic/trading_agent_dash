@@ -72,14 +72,12 @@ describe('useTimeOfDayPreference', () => {
   });
 
   it('does not crash when localStorage.getItem throws', () => {
-    const original = window.localStorage.getItem.bind(window.localStorage);
-    vi.spyOn(window.localStorage, 'getItem').mockImplementation(() => {
+    const spy = vi.spyOn(window.localStorage, 'getItem').mockImplementation(() => {
       throw new Error('quota exceeded');
     });
-    expect(() => renderHook(() => useTimeOfDayPreference())).not.toThrow();
     const { result } = renderHook(() => useTimeOfDayPreference());
     expect(result.current.mode).toBe('auto');
-    vi.spyOn(window.localStorage, 'getItem').mockImplementation(original);
+    spy.mockRestore();
   });
 
   it('does not crash when localStorage.setItem throws; state still updates', () => {
