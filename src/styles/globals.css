@@ -366,19 +366,34 @@ body[data-room="gale"] .weather-window {
 /* In-Battle pill pulse — dual-signal: opacity breathing + a ring-ripple
    that expands outward from the pill. Intentionally louder than a pure
    breathing cycle so a viewer notices it without being told — per
-   Brandon's Phase 2 feedback. Still respects prefers-reduced-motion. */
+   Brandon's Phase 2 feedback. Still respects prefers-reduced-motion.
+
+   --in-battle-color is set per-component in InBattlePill.tsx so each
+   agent's accent drives the ring. Fallback is Metheus for any render
+   context that doesn't set the variable. */
 @keyframes in-battle-pulse {
   0%, 100% {
     opacity: 0.82;
-    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-metheus) 55%, transparent);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--in-battle-color, var(--color-metheus)) 55%, transparent);
   }
   50% {
     opacity: 1;
-    box-shadow: 0 0 0 6px color-mix(in srgb, var(--color-metheus) 0%, transparent);
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--in-battle-color, var(--color-metheus)) 0%, transparent);
   }
 }
 .in-battle-pulse {
   animation: in-battle-pulse 1.8s ease-out infinite;
+}
+
+/* Town Square visit-delta dot pulse — separate keyframes so the green
+   gain color is independent of the agent-accent variable above. */
+@keyframes town-house-pulse-ring {
+  0%, 100% {
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-gain) 60%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 6px color-mix(in srgb, var(--color-gain) 0%, transparent);
+  }
 }
 
 /* --- Phase-3 mobile framing (peer-review R3) ---
@@ -825,7 +840,7 @@ body[data-mode="moonlit"] .town-house {
   border-radius: 50%;
   background-color: var(--color-gain);
   box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-gain) 60%, transparent);
-  animation: in-battle-pulse 1.8s ease-out infinite;
+  animation: town-house-pulse-ring 1.8s ease-out infinite;
   pointer-events: none;
   z-index: 10;
 }

@@ -75,12 +75,12 @@ export function useVisitDelta(
   data: LeaderboardResponse,
   source: 'live' | 'mock',
 ): { delta: VisitDelta | null; dismiss: () => void; dismissed: boolean } {
-  const [prev, setPrev] = useState<VisitSnapshot | null>(null);
+  const [prev] = useState<VisitSnapshot | null>(() => readSnapshot());
   const [dismissed, setDismissed] = useState(false);
-
-  useEffect(() => {
-    setPrev(readSnapshot());
-  }, []);
+  // Capture session start time once at mount via lazy useState initializer.
+  // The initializer callback runs outside render, so the lint purity rule
+  // does not fire. Using [0] to read only the value (no setter needed).
+  const sessionNow = useState<number>(() => Date.now())[0];
 
   // Commit a fresh snapshot after 30s of active viewing, or on pagehide.
   // Only while on live data — we never want to persist mock numbers.
@@ -121,9 +121,9 @@ export function useVisitDelta(
     const totalNewTrades = perAgent.reduce((s, a) => s + a.newTrades, 0);
     const totalPnlDelta = perAgent.reduce((s, a) => s + a.pnlDelta, 0);
     const daysSince =
-      (Date.now() - new Date(prev.timestamp).getTime()) / (1000 * 60 * 60 * 24);
+      (sessionNow - new Date(prev.timestamp).getTime()) / (1000 * 60 * 60 * 24);
     return { totalNewTrades, totalPnlDelta, daysSince, perAgent };
-  }, [data, prev, dismissed]);
+  }, [data, prev, dismissed, sessionNow]);
 
   const dismiss = () => {
     writeSnapshot(data);

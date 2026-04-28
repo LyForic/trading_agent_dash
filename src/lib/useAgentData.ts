@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { supabase, isSupabaseConfigured } from './supabase';
 import { AGENT_META, AGENT_IDS } from './agentMeta';
-import { mockLeaderboard, mockCardViewModels } from './mockData';
+import { mockLeaderboard, mockCardViewModels, buildMockCardViewModel } from './mockData';
 import type {
   Agent,
   AgentId,
@@ -13,6 +13,10 @@ import type {
 } from './types';
 
 type Source = 'live' | 'mock';
+
+export type AgentDataError =
+  | { kind: 'not-configured'; message: string }
+  | { kind: 'fetch-failed'; message: string };
 
 interface AgentTradeRow {
   id: string;
@@ -125,7 +129,7 @@ export interface UseAgentDataResult {
   data: LeaderboardResponse;
   cardViewModels: Record<AgentId, AgentCardViewModel>;
   source: Source;
-  error: string | null;
+  error: AgentDataError | null;
   loading: boolean;
 }
 
@@ -165,16 +169,35 @@ export function useAgentData(
   windowsByAgent: Record<AgentId, PerformanceWindow>,
 ): UseAgentDataResult {
   // Lazy useState initializers so makeEmptyLeaderboard() runs once at mount,
-  // not on every render.
+  // not on every render. Unconfigured-mode initial state is set here rather
+  // than in a useEffect so we avoid set-state-in-effect anti-pattern.
   const [data, setData] = useState<LeaderboardResponse>(
     () => (isSupabaseConfigured ? makeEmptyLeaderboard() : mockLeaderboard),
   );
-  const [cardViewModels, setCardViewModels] = useState<Record<AgentId, AgentCardViewModel>>(
+  const [liveCardViewModels, setLiveCardViewModels] = useState<Record<AgentId, AgentCardViewModel>>(
     () => (isSupabaseConfigured ? EMPTY_CARD_VIEW_MODELS : mockCardViewModels),
   );
   const [source, setSource] = useState<Source>('mock');
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState<boolean>(isSupabaseConfigured);
+  const [error, setError] = useState<AgentDataError | null>(
+    () =>
+      isSupabaseConfigured
+        ? null
+        : { kind: 'not-configured', message: 'Supabase not configured — using mock data' },
+  );
+  const [loading, setLoading] = useState<boolean>(() => isSupabaseConfigured);
+
+  // Mock-mode: card view models recompute reactively when windowsByAgent changes.
+  // In live mode this memo is unused (liveCardViewModels comes from the async effect).
+  const mockCardViewModelsByWindow = useMemo<Record<AgentId, AgentCardViewModel>>(() => {
+    if (isSupabaseConfigured) return EMPTY_CARD_VIEW_MODELS;
+    return {
+      apex: buildMockCardViewModel('apex', windowsByAgent.apex),
+      gale: buildMockCardViewModel('gale', windowsByAgent.gale),
+      metheus: buildMockCardViewModel('metheus', windowsByAgent.metheus),
+    };
+  }, [windowsByAgent.apex, windowsByAgent.gale, windowsByAgent.metheus]);
+
+  const cardViewModels = isSupabaseConfigured ? liveCardViewModels : mockCardViewModelsByWindow;
 
   // Per-agent fetch cache keyed by [agentId, window]. Memoized so a window flip
   // on Apex does NOT trigger a refetch on Gale/Metheus. The ref outlives renders;
@@ -182,13 +205,12 @@ export function useAgentData(
   const cacheRef = useRef<Partial<Record<AgentId, PerAgentCache>>>({});
 
   useEffect(() => {
-    if (!isSupabaseConfigured || !supabase) {
-      setError('Supabase not configured — using mock data');
-      setLoading(false);
-      return;
-    }
+    if (!isSupabaseConfigured || !supabase) return;
 
     let cancelled = false;
+    // Intentional: setLoading(true) opens the async fetch cycle; setLoading(false)
+    // always closes it in the same IIFE's success and catch paths.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(true);
 
     (async () => {
@@ -237,7 +259,6 @@ export function useAgentData(
             const eligibleOpens = (openRows ?? []) as AgentTradeRow[];
             const latestOpen = eligibleOpens[0] ?? null;
             if (eligibleOpens.length > 1) {
-              // eslint-disable-next-line no-console
               console.warn(`[useAgentData] ${id}: ${eligibleOpens.length} eligible opens; using latest`);
             }
             const open_position: OpenPosition | null = latestOpen
@@ -276,13 +297,13 @@ export function useAgentData(
           updated_at: new Date().toISOString(),
           agents: agents.map((a) => a.agent),
         });
-        setCardViewModels(newViewModels);
+        setLiveCardViewModels(newViewModels);
         setSource('live');
         setError(null);
         setLoading(false);
       } catch (err) {
         if (cancelled) return;
-        setError((err as Error).message);
+        setError({ kind: 'fetch-failed', message: (err as Error).message });
         setLoading(false);
       }
     })();
@@ -292,6 +313,9 @@ export function useAgentData(
     };
     // Effect re-runs when ANY agent's window changes; the per-agent cache
     // ensures we only refetch the agent whose window actually flipped.
+    // windowsByAgent object ref changes every render (built in useMemo above);
+    // we intentionally subscribe to individual string values, not the object.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [windowsByAgent.apex, windowsByAgent.gale, windowsByAgent.metheus]);
 
   return { data, cardViewModels, source, error, loading };

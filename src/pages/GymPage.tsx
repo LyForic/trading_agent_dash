@@ -58,7 +58,7 @@ export function GymPage() {
     return setMetheusWindow;
   };
 
-  const { data, cardViewModels, source } = useAgentData(windowsByAgent);
+  const { data, cardViewModels, source, error } = useAgentData(windowsByAgent);
   const { delta, dismiss } = useVisitDelta(data, source);
 
   useEffect(() => {
@@ -74,6 +74,11 @@ export function GymPage() {
       delete document.body.dataset.route;
     };
   }, [expandedAgentId]);
+
+  const exitFocus = () => {
+    const from = (location.state as { from?: string } | null)?.from;
+    navigate(from ?? '/');
+  };
 
   // Esc exits focus — routed back to whoever linked us in.
   useEffect(() => {
@@ -94,11 +99,6 @@ export function GymPage() {
     }
   };
 
-  const exitFocus = () => {
-    const from = (location.state as { from?: string } | null)?.from;
-    navigate(from ?? '/');
-  };
-
   const backButtonLabel =
     (location.state as { from?: string } | null)?.from === '/gym'
       ? '← Back to gym'
@@ -112,7 +112,7 @@ export function GymPage() {
         style={{ color: 'var(--world-ink)' }}
       >
         <div className="gym-chrome">
-          <TrustStrip data={data} />
+          <TrustStrip data={data} error={error} />
         </div>
 
         <main className="px-4 pt-6 pb-10 space-y-4">

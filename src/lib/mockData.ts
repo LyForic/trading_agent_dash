@@ -2,6 +2,7 @@ import type {
   AgentId,
   AgentLifetimeStats,
   LeaderboardResponse,
+  PerformanceWindow,
   TradeLogEntry,
 } from './types';
 import type { AgentCardViewModel } from './useAgentData';
@@ -170,9 +171,20 @@ function aggregate(rows: TradeLogEntry[], hoursWindow: number | null) {
   return { total_pnl, record: { W, L, BE, settled: inWindow.length }, inWindow };
 }
 
-function buildVm(agentId: AgentId): AgentCardViewModel {
-  // 24h is the default window for the card view model
-  const { total_pnl, record, inWindow } = aggregate(mockTradeLog[agentId], 24);
+function windowToHours(window: PerformanceWindow): number | null {
+  if (window === 'lifetime') return null;
+  if (window === '7d') return 7 * 24;
+  return 24; // '24h'
+}
+
+export function buildMockCardViewModel(
+  agentId: AgentId,
+  window: PerformanceWindow,
+): AgentCardViewModel {
+  const { total_pnl, record, inWindow } = aggregate(
+    mockTradeLog[agentId],
+    windowToHours(window),
+  );
   return {
     total_pnl,
     record,
@@ -182,9 +194,9 @@ function buildVm(agentId: AgentId): AgentCardViewModel {
 }
 
 export const mockCardViewModels: Record<AgentId, AgentCardViewModel> = {
-  apex: buildVm('apex'),
-  gale: buildVm('gale'),
-  metheus: buildVm('metheus'),
+  apex: buildMockCardViewModel('apex', '24h'),
+  gale: buildMockCardViewModel('gale', '24h'),
+  metheus: buildMockCardViewModel('metheus', '24h'),
 };
 
 function buildLifetimeStats(agentId: AgentId): AgentLifetimeStats {

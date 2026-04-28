@@ -49,4 +49,18 @@ describe('InBattlePill', () => {
     const galePill = screen.getByRole('button');
     expect(galePill.getAttribute('style')).toContain('var(--color-gale)');
   });
+
+  it('sets --in-battle-color CSS variable per agentId for pulse-ring', () => {
+    const { rerender } = render(<InBattlePill agentId="apex" settlesAt={null} />);
+    const apexPill = screen.getByRole('button');
+    expect(apexPill.style.getPropertyValue('--in-battle-color')).toBe('var(--color-apex)');
+
+    rerender(<InBattlePill agentId="gale" settlesAt={null} />);
+    const galePill = screen.getByRole('button');
+    expect(galePill.style.getPropertyValue('--in-battle-color')).toBe('var(--color-gale)');
+
+    rerender(<InBattlePill agentId="metheus" settlesAt={null} />);
+    const metheusButt = screen.getByRole('button');
+    expect(metheusButt.style.getPropertyValue('--in-battle-color')).toBe('var(--color-metheus)');
+  });
 });

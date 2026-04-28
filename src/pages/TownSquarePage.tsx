@@ -218,10 +218,6 @@ export function TownSquarePage() {
     () => (showWelcome ? 'hidden' : 'dropping'),
   );
   useEffect(() => {
-    if (showWelcome) return;
-    if (avatarState === 'hidden') setAvatarState('dropping');
-  }, [showWelcome, avatarState]);
-  useEffect(() => {
     if (avatarState !== 'dropping') return;
     const t = window.setTimeout(() => setAvatarState('idle'), AVATAR_DROP_DURATION_MS);
     return () => window.clearTimeout(t);
@@ -254,6 +250,9 @@ export function TownSquarePage() {
       // ignore
     }
     setShowWelcome(false);
+    // Trigger avatar drop-in: transition 'hidden' → 'dropping' here instead of
+    // an effect so we avoid a cascading setState in useEffect.
+    setAvatarState((s) => (s === 'hidden' ? 'dropping' : s));
   }, []);
 
   // Viewport size tracking.
@@ -289,6 +288,36 @@ export function TownSquarePage() {
     );
     el.scrollLeft = clamped;
   }, [scale, viewport.w, worldDisplay.w]);
+
+  // Mobile smoke reveal: once the avatar drop animation finishes, smoothly
+  // pan right so Metheus's chimney smoke is partially visible at the right
+  // edge of the viewport. Fires once per mount (avatarState transitions
+  // hidden→dropping→idle exactly once). On wide viewports (≥ 768 px) the
+  // world is wide enough to show both lamp and smoke without panning, so
+  // we skip this effect entirely.
+  //
+  // Geometry note: at 390×844 the scale is ~1.56 (height-driven), making
+  // the world display 1500 px wide on a 390 px viewport. Lamp (x=480) and
+  // smoke (x=756) are 431 display-px apart — wider than the viewport —
+  // so it is impossible to show both simultaneously. The reveal pan
+  // intentionally lets the avatar drift ~30 px offscreen-left; the user
+  // already saw it land and the pan signals there is more world to the right.
+  const didRevealSmokeRef = useRef(false);
+  useEffect(() => {
+    if (didRevealSmokeRef.current) return; // only fire once per page lifetime
+    if (avatarState !== 'idle') return;
+    if (isWalking) return; // don't compete with explicit walk-to scroll
+    if (viewport.w >= 768) return;
+    const el = viewportRef.current;
+    if (!el) return;
+    // Target: smoke left edge (CHIMNEY_SMOKE.x - width/2) lands 20 px
+    // inset from the viewport right edge, giving a clear visual peek.
+    const smokeLeftWorld = CHIMNEY_SMOKE.x - CHIMNEY_SMOKE.width / 2;
+    const targetScroll = smokeLeftWorld * scale - (viewport.w - 20);
+    const clamped = Math.max(0, Math.min(worldDisplay.w - viewport.w, targetScroll));
+    el.scrollTo({ left: clamped, behavior: 'smooth' });
+    didRevealSmokeRef.current = true;
+  }, [avatarState, scale, viewport.w, worldDisplay.w, isWalking]);
 
   useEffect(() => {
     document.body.dataset.route = 'town-square';

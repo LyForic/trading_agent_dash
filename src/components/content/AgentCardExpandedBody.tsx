@@ -3,7 +3,7 @@ import type { AgentCardViewModel } from '@/lib/useAgentData';
 import { MovePill } from './MovePill';
 import { TradeLog } from './TradeLog';
 import { TimeFilterPill } from './TimeFilterPill';
-import { useSharedGaleWeather } from '@/lib/galeWeatherContext';
+import { useSharedGaleWeather } from '@/lib/galeWeatherContext-hooks';
 import type { WeatherCondition } from '@/lib/useGaleWeather';
 
 interface Props {

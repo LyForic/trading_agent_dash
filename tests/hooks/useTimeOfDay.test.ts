@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { renderHook } from '@testing-library/react';
-import { useTimeOfDay } from '@/hooks/useTimeOfDay';
+import { act, renderHook } from '@testing-library/react';
+import { useTimeOfDay, getDevModeOverride } from '@/hooks/useTimeOfDay';
 
 describe('useTimeOfDay', () => {
   beforeEach(() => {
@@ -32,6 +32,20 @@ describe('useTimeOfDay', () => {
     expect(result.current).toBe('moonlit');
   });
 
+  it('does not check URL — purely time-derived (interval always runs)', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 3, 21, 12, 0));
+    const { result } = renderHook(() => useTimeOfDay());
+    // Hook should always set up the interval (no early-exit for URL override)
+    expect(result.current).toBe('daytime');
+    // Advance time past an hour boundary: noon → 7pm
+    vi.setSystemTime(new Date(2026, 3, 21, 19, 0));
+    // Clear localStorage cache so compute picks up the new time
+    window.localStorage.clear();
+    act(() => { vi.advanceTimersByTime(60_000); });
+    expect(result.current).toBe('dusk');
+  });
+
   it('invalidates cache when hour bucket crosses', () => {
     vi.useFakeTimers();
     // 4:50pm — daytime per hourToMode (boundaries: 6-17 daytime, 17-22 dusk)
@@ -44,5 +58,19 @@ describe('useTimeOfDay', () => {
     vi.setSystemTime(new Date(2026, 3, 26, 17, 10));
     const { result: second } = renderHook(() => useTimeOfDay());
     expect(second.current).toBe('dusk');
+  });
+});
+
+describe('getDevModeOverride', () => {
+  it('honors explicit search string with a valid mode', () => {
+    expect(getDevModeOverride('?mode=dusk')).toBe('dusk');
+    expect(getDevModeOverride('?mode=daytime')).toBe('daytime');
+    expect(getDevModeOverride('?mode=moonlit')).toBe('moonlit');
+  });
+
+  it('returns null for unrecognised or absent mode param', () => {
+    expect(getDevModeOverride('?other=foo')).toBe(null);
+    expect(getDevModeOverride('')).toBe(null);
+    expect(getDevModeOverride('?mode=lunch')).toBe(null);
   });
 });

@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { WeatherParticles } from './WeatherParticles';
 import { AmbientMotion } from './AmbientMotion';
-import { useSharedGaleWeather } from '@/lib/galeWeatherContext';
+import { useSharedGaleWeather } from '@/lib/galeWeatherContext-hooks';
 
 /**
  * Fixed world behind all content. Four stacked layers from back to front:

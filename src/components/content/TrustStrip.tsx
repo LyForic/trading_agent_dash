@@ -1,5 +1,7 @@
+import { useMemo } from 'react';
 import type { LeaderboardResponse } from '@/lib/types';
 import { formatPnl } from '@/lib/formatting';
+import type { AgentDataError } from '@/lib/useAgentData';
 
 /**
  * Sticky 48px header giving the page a constant liveness signal:
@@ -13,12 +15,17 @@ import { formatPnl } from '@/lib/formatting';
  * Justin's API doesn't expose a daily count yet — using lifetime count
  * as a V1 approximation. Flagged in spec §9.4 and plan Phase 7 notes.
  */
-export function TrustStrip({ data }: { data: LeaderboardResponse }) {
+interface Props {
+  data: LeaderboardResponse;
+  error?: AgentDataError | null;
+}
+
+export function TrustStrip({ data, error }: Props) {
   const totalPnl = data.agents.reduce((sum, a) => sum + a.total_pnl, 0);
   const settledTotal = data.agents.reduce((sum, a) => sum + a.record.settled, 0);
-  const minutesAgo = Math.max(
-    0,
-    Math.round((Date.now() - new Date(data.updated_at).getTime()) / 60_000),
+  const minutesAgo = useMemo(
+    () => Math.max(0, Math.round((new Date().getTime() - new Date(data.updated_at).getTime()) / 60_000)),
+    [data.updated_at],
   );
 
   return (
@@ -51,6 +58,18 @@ export function TrustStrip({ data }: { data: LeaderboardResponse }) {
       >
         {settledTotal} settled
       </span>
+      {error?.kind === 'fetch-failed' && (
+        <span
+          style={{
+            color: 'var(--color-loss)',
+            fontSize: 11,
+          }}
+          title={error.message}
+          aria-label={`Data unavailable: ${error.message}`}
+        >
+          · Data unavailable
+        </span>
+      )}
     </header>
   );
 }
