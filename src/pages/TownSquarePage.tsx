@@ -57,7 +57,11 @@ const Z = {
 // Plaza anchor points. Tuned against town-square.png where the four
 // diagonal paths terminate; nudged per R4 feedback so houses sit on
 // the dirt pads instead of on grass.
-const LAMP_POST = { x: 480, y: 290 };
+// LAMP_POST.y anchors the painted bulb at the top of the post (not the
+// post's ground footing) so the radial glow emanates from the light
+// source. Verified against town-square.png — bulb's brightest pixel is
+// at native y=48 in the 200×112 PNG, which maps to world y≈231.
+const LAMP_POST = { x: 480, y: 231 };
 const CHIMNEY_SMOKE = { x: 756, y: 190, width: 38 };
 const CHIMNEY_SMOKE_DELAYS = [0, 1.7, 3.4] as const;
 const AVATAR_SPAWN = { x: 480, y: 375 };
