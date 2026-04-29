@@ -664,7 +664,12 @@ body[data-mode="moonlit"] .town-world-tint {
     transparent 70%
   );
   mix-blend-mode: screen;
-  transition: opacity 500ms ease;
+  /* Diegetic P&L modulation per design spec §2.1 + art brief L171.
+     Component sets `--lamp-pnl-brightness` from `lampBrightnessScalar(totalPnl)`
+     in [0.80, 1.20]. Default 1.0 = no modulation. 1500ms ease matches the
+     mode-transition smoothing from Slice 1a. */
+  filter: brightness(var(--lamp-pnl-brightness, 1));
+  transition: opacity 500ms ease, filter 1500ms ease;
   animation: hotspot-breathe 5s ease-in-out infinite;
 }
 body[data-mode="dusk"] .town-world-lamp-glow {

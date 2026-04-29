@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useAgentData } from '@/lib/useAgentData';
 import { useVisitDelta } from '@/lib/useVisitDelta';
+import { lampBrightnessScalar } from '@/lib/lampBrightness';
 import { WelcomeModal } from '@/components/town/WelcomeModal';
 import type { AgentId } from '@/lib/types';
 
@@ -388,7 +389,13 @@ export function TownSquarePage() {
             <div
               className="town-world-lamp-glow ambient-motion"
               aria-hidden
-              style={{ left: LAMP_POST.x, top: LAMP_POST.y }}
+              style={{
+                left: LAMP_POST.x,
+                top: LAMP_POST.y,
+                ['--lamp-pnl-brightness' as string]: lampBrightnessScalar(
+                  data.agents.reduce((sum, a) => sum + a.total_pnl, 0),
+                ),
+              }}
             />
             <div
               className="town-chimney-smoke"
