@@ -24,8 +24,14 @@ function stripMotionProps(props: AnyProps): AnyProps {
     whileInView: _whileInView,
     layout: _layout,
     layoutId: _layoutId,
+    drag: _drag,
+    dragConstraints: _dragConstraints,
+    dragElastic: _dragElastic,
+    dragListener: _dragListener,
+    dragControls: _dragControls,
     onAnimationStart: _onAnimationStart,
     onAnimationComplete: _onAnimationComplete,
+    onDragEnd: _onDragEnd,
     transformOrigin: _transformOrigin,
     ...rest
   } = props;

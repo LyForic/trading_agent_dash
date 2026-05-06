@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { WorldLayer } from '@/components/world/WorldLayer';
@@ -6,6 +6,8 @@ import { AgentCard } from '@/components/content/AgentCard';
 import { TrustStrip } from '@/components/content/TrustStrip';
 import { FooterTicker } from '@/components/content/FooterTicker';
 import { VisitDeltaStrip } from '@/components/content/VisitDeltaStrip';
+import { BattleArena } from '@/components/battle/BattleArena';
+import { BottomSheet } from '@/components/battle/BottomSheet';
 import { useAgentData } from '@/lib/useAgentData';
 import { useAgentWindow } from '@/lib/useAgentWindow';
 import { useVisitDelta } from '@/lib/useVisitDelta';
@@ -42,6 +44,7 @@ export function GymPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const expandedAgentId = agentIdFromPath(location.pathname);
+  const [battleAgentId, setBattleAgentId] = useState<AgentId | null>(null);
 
   const [apexWindow, setApexWindow] = useAgentWindow('apex');
   const [galeWindow, setGaleWindow] = useAgentWindow('gale');
@@ -60,6 +63,9 @@ export function GymPage() {
 
   const { data, cardViewModels, source, error } = useAgentData(windowsByAgent);
   const { delta, dismiss } = useVisitDelta(data, source);
+  const battleAgent = battleAgentId
+    ? data.agents.find((agent) => agent.id === battleAgentId && agent.open_position)
+    : null;
 
   useEffect(() => {
     if (expandedAgentId) {
@@ -82,7 +88,7 @@ export function GymPage() {
 
   // Esc exits focus — routed back to whoever linked us in.
   useEffect(() => {
-    if (!expandedAgentId) return;
+    if (!expandedAgentId || battleAgentId) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') exitFocus();
     };
@@ -172,6 +178,7 @@ export function GymPage() {
                       currentWindow={windowsByAgent[agent.id]}
                       setWindow={setWindowForAgent(agent.id)}
                       cardViewModel={cardViewModels[agent.id]}
+                      onBattleTap={() => setBattleAgentId(agent.id)}
                     />
                   </motion.div>
                 );
@@ -230,6 +237,14 @@ export function GymPage() {
           ← Back to plaza
         </button>
       )}
+
+      <BottomSheet
+        open={battleAgent !== null}
+        titleId="battle-arena-title"
+        onClose={() => setBattleAgentId(null)}
+      >
+        {battleAgent && <BattleArena agent={battleAgent} titleId="battle-arena-title" />}
+      </BottomSheet>
     </>
   );
 }

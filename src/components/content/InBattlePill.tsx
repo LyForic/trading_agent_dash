@@ -4,35 +4,37 @@ import type { AgentId } from '@/lib/types';
 interface Props {
   /** Drives accent color via `var(--color-${agentId})`. Replaces the prior hardcoded Metheus accent. */
   agentId: AgentId;
+  /** Used only for the actionable accessible name once V1.1 wires the pill. */
+  agentName?: string;
   /** Settle timestamp (ISO). When null, the pill renders without a countdown — "In Battle" alone. */
   settlesAt: string | null;
   /**
-   * Reserved for V1.1 Battle Arena handler. In Track B, the pill is
-   * `aria-disabled` and `onClick` is a no-op even when this prop is supplied.
-   * Drop `aria-disabled` (and the no-op behavior) when wiring this in V1.1.
+   * Battle Arena V1.1 handler. When supplied, tapping the pill opens the
+   * mobile-first battle bottom sheet for the delayed-visible open position.
    */
   onTap?: () => void;
 }
 
 const DELAY_COPY =
-  'Entries and settlements shown after 30-minute delay. Mid-price updates live from Kalshi (public market data, no delay).';
+  "Entries and settlements shown after 30-minute delay. Public Kalshi mid-price can update live when connected; this build's battle bar uses an entry-anchored preview.";
 
 /**
- * Status chip that doubles as the (future) invite to the Battle Arena overlay.
+ * Status chip that doubles as the invite to the Battle Arena overlay.
  * Tooltip is non-optional per spec §7 delay policy.
  *
  * Track B: rendered as a sibling of the AgentCard summary button (not a
- * descendant), preserving native <button> semantics on both. `aria-disabled`
- * is set because the Battle Arena route is V1.1 scope.
+ * descendant), preserving native <button> semantics on both.
  */
-export function InBattlePill({ agentId, settlesAt, onTap }: Props) {
-  void onTap; // V1.1 reservation slot — intentionally unused while aria-disabled.
+export function InBattlePill({ agentId, agentName, settlesAt, onTap }: Props) {
   const [tooltipOpen, setTooltipOpen] = useState(false);
   const tooltipId = useId();
   const settlesLabel = settlesAt
     ? new Date(settlesAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })
     : null;
-  const ariaLabel = settlesLabel ? `In battle, settles ${settlesLabel}` : 'In battle';
+  const ariaSubject = agentName ? ` for ${agentName}` : '';
+  const ariaLabel = settlesLabel
+    ? `Open battle arena${ariaSubject}, settles ${settlesLabel}`
+    : `Open battle arena${ariaSubject}`;
 
   return (
     <span className="relative inline-block">
@@ -42,7 +44,7 @@ export function InBattlePill({ agentId, settlesAt, onTap }: Props) {
         onMouseLeave={() => setTooltipOpen(false)}
         onFocus={() => setTooltipOpen(true)}
         onBlur={() => setTooltipOpen(false)}
-        onClick={() => { /* aria-disabled in Track B; no-op until V1.1 */ }}
+        onClick={onTap}
         className="in-battle-pulse px-3 py-1 rounded-full text-xs font-medium border"
         style={{
           '--in-battle-color': `var(--color-${agentId})`,
@@ -50,7 +52,6 @@ export function InBattlePill({ agentId, settlesAt, onTap }: Props) {
           color: `var(--color-${agentId})`,
           borderColor: `color-mix(in srgb, var(--color-${agentId}) 40%, transparent)`,
         } as React.CSSProperties}
-        aria-disabled="true"
         aria-label={ariaLabel}
         aria-describedby={tooltipId}
       >

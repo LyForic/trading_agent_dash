@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { useState } from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -18,9 +18,11 @@ const stubViewModel: AgentCardViewModel = {
 function Harness({
   agent,
   cardViewModel,
+  onBattleTap,
 }: {
   agent: Agent;
   cardViewModel?: AgentCardViewModel;
+  onBattleTap?: () => void;
 }) {
   const [expanded, setExpanded] = useState(false);
   return (
@@ -31,6 +33,7 @@ function Harness({
       currentWindow="24h"
       setWindow={() => undefined}
       cardViewModel={cardViewModel ?? mockCardViewModels[agent.id]}
+      onBattleTap={onBattleTap}
     />
   );
 }
@@ -198,8 +201,29 @@ describe('AgentCard a11y restructure', () => {
     const buttons = container.querySelectorAll('button');
     expect(buttons.length).toBeGreaterThanOrEqual(2);
     const summaryButton = screen.getByRole('button', { name: /Expand Apex's card/ });
-    const battleButton = screen.getByRole('button', { name: /In battle/ });
+    const battleButton = screen.getByRole('button', { name: /Open battle arena/ });
     expect(summaryButton).not.toBe(battleButton);
     expect(battleButton.parentElement?.parentElement).toBe(summaryButton.parentElement);
+  });
+
+  it('invokes onBattleTap from the sibling pill without expanding the card', async () => {
+    const user = userEvent.setup();
+    const onBattleTap = vi.fn();
+    const agent = makeAgent({
+      open_position: {
+        contract_ticker: 'KX-ABC',
+        entry_price_cents: 67,
+        side: 'yes',
+        size: 25,
+        entered_at_delayed: new Date().toISOString(),
+        settles_at: null,
+      },
+    });
+    render(<Harness agent={agent} onBattleTap={onBattleTap} />);
+
+    await user.click(screen.getByRole('button', { name: /Open battle arena/ }));
+
+    expect(onBattleTap).toHaveBeenCalledTimes(1);
+    expect(screen.queryByText('decision')).not.toBeInTheDocument();
   });
 });

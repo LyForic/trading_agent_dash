@@ -13,7 +13,7 @@ interface Props {
   setWindow: (w: PerformanceWindow) => void;
   /** Per-agent view model (stats + trade log) keyed off currentWindow. */
   cardViewModel: AgentCardViewModel;
-  /** Reserved for V1.1 Battle Arena handler. Currently unused (pill is aria-disabled). */
+  /** Opens the Battle Arena V1.1 bottom sheet for delayed-visible open positions. */
   onBattleTap?: () => void;
 }
 
@@ -68,6 +68,7 @@ export function AgentCard({
         {agent.open_position && (
           <InBattlePill
             agentId={agent.id}
+            agentName={agent.name}
             settlesAt={agent.open_position.settles_at}
             onTap={onBattleTap}
           />
