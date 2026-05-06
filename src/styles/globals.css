@@ -664,8 +664,16 @@ body[data-mode="moonlit"] .town-world-tint {
     transparent 70%
   );
   mix-blend-mode: screen;
-  transition: opacity 500ms ease;
-  animation: hotspot-breathe 5s ease-in-out infinite;
+  /* Diegetic P&L modulation per design spec §2.1 + art brief L171.
+     Component sets `--lamp-pnl-brightness` from `lampBrightnessScalar(totalPnl)`
+     in [0.80, 1.20]. Default 1.0 = no modulation. 1500ms ease matches the
+     mode-transition smoothing from Slice 1a.
+     `hotspot-breathe` is intentionally NOT applied here — that keyframe
+     animates `filter` and would override this brightness rule. The
+     dusk/moonlit `lamp-flicker-*` keyframes below provide ambient
+     motion via opacity + transform (no filter), composing cleanly. */
+  filter: brightness(var(--lamp-pnl-brightness, 1));
+  transition: opacity 500ms ease, filter 1500ms ease;
 }
 body[data-mode="dusk"] .town-world-lamp-glow {
   opacity: 0.75;
@@ -712,11 +720,14 @@ body[data-mode="moonlit"] .town-chimney-smoke {
     50%  { opacity: 0.9; }
     100% { opacity: 0; transform: translateY(-28px) scale(1.15); }
   }
+  /* Lamp ambient motion is opacity + transform only (via lamp-flicker-*).
+     `hotspot-breathe` removed because it animates `filter`, which would
+     override the P&L brightness modulation set on the base rule. */
   body[data-mode="dusk"] .town-world-lamp-glow {
-    animation: hotspot-breathe 5s ease-in-out infinite, lamp-flicker-dusk 2.4s ease-in-out infinite;
+    animation: lamp-flicker-dusk 2.4s ease-in-out infinite;
   }
   body[data-mode="moonlit"] .town-world-lamp-glow {
-    animation: hotspot-breathe 5s ease-in-out infinite, lamp-flicker-moonlit 2.4s ease-in-out infinite;
+    animation: lamp-flicker-moonlit 2.4s ease-in-out infinite;
   }
   body[data-mode="dusk"] .town-chimney-smoke-puff,
   body[data-mode="moonlit"] .town-chimney-smoke-puff {
