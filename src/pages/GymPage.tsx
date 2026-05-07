@@ -64,7 +64,7 @@ export function GymPage() {
   const { data, cardViewModels, source, error, loading } = useAgentData(windowsByAgent);
   const { delta, dismiss } = useVisitDelta(data, source);
   const battleAgent = battleAgentId
-    ? data.agents.find((agent) => agent.id === battleAgentId && agent.open_position)
+    ? data.agents.find((agent) => agent.id === battleAgentId) ?? null
     : null;
   const showDataState = data.agents.length === 0 && (loading || error !== null);
 
