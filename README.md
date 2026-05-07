@@ -6,13 +6,13 @@ Cozy pixel-art trading gym. Real data. No demos.
 
 ## Status
 
-V1 code is launch-candidate on `main`. Vercel production is live at `https://tradingagentdash.vercel.app/`; `gym.lyforic.com` is attached to the Vercel project but still needs its Cloudflare DNS `A` record before it resolves publicly.
+V1 code is launch-candidate on `main`. Production is live at `https://gym.lyforic.com/` through Vercel, with `https://tradingagentdash.vercel.app/` as the fallback Vercel URL.
 
 Current deploy evidence:
 
 - Vercel project: `brandonopenclaws-projects/trading_agent_dash`
-- Latest manual production deploy: `dpl_B9TZ82T5hFynikYFyFokMvbQkhVS`
-- Custom domain DNS required: `A gym.lyforic.com 76.76.21.21`
+- Latest Git-triggered production deploy: `dpl_52P4cB5hgJaDxLX7ppps4JWvwFQq`
+- Custom domain DNS: `gym.lyforic.com` resolves and returns HTTPS 200.
 - GitHub auto-deploy is connected to `LyForic/trading_agent_dash` with production branch `main`.
 
 ## Phase 5 features
