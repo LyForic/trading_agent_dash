@@ -61,11 +61,12 @@ export function GymPage() {
     return setMetheusWindow;
   };
 
-  const { data, cardViewModels, source, error } = useAgentData(windowsByAgent);
+  const { data, cardViewModels, source, error, loading } = useAgentData(windowsByAgent);
   const { delta, dismiss } = useVisitDelta(data, source);
   const battleAgent = battleAgentId
     ? data.agents.find((agent) => agent.id === battleAgentId && agent.open_position)
     : null;
+  const showDataState = data.agents.length === 0 && (loading || error !== null);
 
   useEffect(() => {
     if (expandedAgentId) {
@@ -122,6 +123,19 @@ export function GymPage() {
         </div>
 
         <main className="px-4 pt-6 pb-10 space-y-4">
+          {/* Communal /gym exit lives in normal flow so it never covers
+              the TrustStrip's liveness signal on narrow screens. Focus
+              routes keep the fixed top-left back button below. */}
+          {!expandedAgentId && location.pathname === '/gym' && (
+            <button
+              onClick={() => navigate('/')}
+              className="gym-inline-back-button"
+              aria-label="Back to Town Square"
+            >
+              ← Back to plaza
+            </button>
+          )}
+
           <header
             className="gym-chrome inline-block rounded-2xl px-4 py-3"
             style={{
@@ -142,6 +156,30 @@ export function GymPage() {
           <div className="gym-chrome">
             <VisitDeltaStrip delta={delta} onDismiss={dismiss} />
           </div>
+
+          {showDataState && (
+            <section
+              className="gym-data-state"
+              role={error?.kind === 'fetch-failed' ? 'alert' : 'status'}
+              aria-live="polite"
+            >
+              <h2>
+                {error?.kind === 'fetch-failed'
+                  ? 'Live data unavailable'
+                  : 'Loading delayed public data'}
+              </h2>
+              <p>
+                {error?.kind === 'fetch-failed'
+                  ? 'The public 30-minute-delayed data view did not respond. No private live trade data is exposed in this browser.'
+                  : 'Reading the public 30-minute-delayed views for Apex, Gale, and Metheus.'}
+              </p>
+              {error?.kind === 'fetch-failed' && (
+                <p className="gym-data-state-muted">
+                  Refresh in a minute; if this persists, check Supabase and Vercel before sharing the link.
+                </p>
+              )}
+            </section>
+          )}
 
           <div className="space-y-3">
             <AnimatePresence mode="sync" initial={false}>
@@ -225,18 +263,6 @@ export function GymPage() {
           </motion.button>
         )}
       </AnimatePresence>
-
-      {/* Back-to-plaza on the communal /gym view so users aren't
-          trapped on the communal surface if they navigated in directly. */}
-      {!expandedAgentId && location.pathname === '/gym' && (
-        <button
-          onClick={() => navigate('/')}
-          className="focus-back-button"
-          aria-label="Back to Town Square"
-        >
-          ← Back to plaza
-        </button>
-      )}
 
       <BottomSheet
         open={battleAgent !== null}

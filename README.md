@@ -6,15 +6,17 @@ Cozy pixel-art trading gym. Real data. No demos.
 
 ## Status
 
-V1 in active build. Spec frozen 2026-04-21. Phase 5 in progress.
+V1 launch hardening in progress on branch `battle-arena-v1-1`. Production deploys from `main` to `gym.lyforic.com` through Vercel auto-deploy.
 
-## Phase 5 features (as of 2026-04-26)
+## Phase 5 features
 
 - **Track B — per-agent P&L time-window filter** (24h / 7d / Lifetime): window selector pill on each agent card; Lifetime mode reads `agent_lifetime_stats` view, windowed modes read `agent_trades_public`.
 - **Track B — unified trade log**: replaces the prior single-receipt panel; shows settled trades and open positions in one scrollable component.
-- **Track B — In Battle pill**: rendered as a sibling of the summary button (a11y co-fix; no longer a child of an interactive element).
+- **Track B — In Battle pill**: rendered as a sibling of the summary button and opens Battle Arena for delayed-visible open positions.
+- **Battle Arena V1.1**: mobile-first bottom sheet for active open positions. The price bar is an entry-anchored preview until a public Kalshi quote feed exists; it must not be described as a private live signal.
 - **Atmosphere — chimney smoke**: animated smoke particles above Metheus's house in the world layer.
 - **Global time-of-day toggle**: cog icon at top-right opens a popover to select Auto / Daytime / Dusk / Moonlit.
+- **Launch hardening**: `/gym` back chrome avoids TrustStrip overlap, and first-load live-data failures render an explicit delayed-data error state instead of a blank roster.
 
 ## Design source of truth
 
@@ -45,7 +47,22 @@ Full architecture in the locked spec.
 
 ## Running locally
 
-_To be scaffolded. See the implementation plan._
+```bash
+npm install
+npm run dev -- --host 127.0.0.1
+```
+
+Open `http://127.0.0.1:5173/`.
+
+Useful gates:
+
+```bash
+npm test
+npm run lint
+npm run build
+```
+
+Supabase credentials are optional for local work. Without `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`, the app uses mock data. With credentials configured, the app reads only the public delayed views documented in `supabase/README.md`.
 
 ## People
 
