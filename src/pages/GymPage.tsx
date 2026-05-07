@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { AnimatePresence, motion } from 'framer-motion';
 import { WorldLayer } from '@/components/world/WorldLayer';
@@ -6,6 +6,8 @@ import { AgentCard } from '@/components/content/AgentCard';
 import { TrustStrip } from '@/components/content/TrustStrip';
 import { FooterTicker } from '@/components/content/FooterTicker';
 import { VisitDeltaStrip } from '@/components/content/VisitDeltaStrip';
+import { BattleArena } from '@/components/battle/BattleArena';
+import { BottomSheet } from '@/components/battle/BottomSheet';
 import { useAgentData } from '@/lib/useAgentData';
 import { useAgentWindow } from '@/lib/useAgentWindow';
 import { useVisitDelta } from '@/lib/useVisitDelta';
@@ -42,6 +44,7 @@ export function GymPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const expandedAgentId = agentIdFromPath(location.pathname);
+  const [battleAgentId, setBattleAgentId] = useState<AgentId | null>(null);
 
   const [apexWindow, setApexWindow] = useAgentWindow('apex');
   const [galeWindow, setGaleWindow] = useAgentWindow('gale');
@@ -58,8 +61,12 @@ export function GymPage() {
     return setMetheusWindow;
   };
 
-  const { data, cardViewModels, source, error } = useAgentData(windowsByAgent);
+  const { data, cardViewModels, source, error, loading } = useAgentData(windowsByAgent);
   const { delta, dismiss } = useVisitDelta(data, source);
+  const battleAgent = battleAgentId
+    ? data.agents.find((agent) => agent.id === battleAgentId) ?? null
+    : null;
+  const showDataState = data.agents.length === 0 && (loading || error !== null);
 
   useEffect(() => {
     if (expandedAgentId) {
@@ -82,7 +89,7 @@ export function GymPage() {
 
   // Esc exits focus — routed back to whoever linked us in.
   useEffect(() => {
-    if (!expandedAgentId) return;
+    if (!expandedAgentId || battleAgentId) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.key === 'Escape') exitFocus();
     };
@@ -116,6 +123,19 @@ export function GymPage() {
         </div>
 
         <main className="px-4 pt-6 pb-10 space-y-4">
+          {/* Communal /gym exit lives in normal flow so it never covers
+              the TrustStrip's liveness signal on narrow screens. Focus
+              routes keep the fixed top-left back button below. */}
+          {!expandedAgentId && location.pathname === '/gym' && (
+            <button
+              onClick={() => navigate('/')}
+              className="gym-inline-back-button"
+              aria-label="Back to Town Square"
+            >
+              ← Back to plaza
+            </button>
+          )}
+
           <header
             className="gym-chrome inline-block rounded-2xl px-4 py-3"
             style={{
@@ -136,6 +156,30 @@ export function GymPage() {
           <div className="gym-chrome">
             <VisitDeltaStrip delta={delta} onDismiss={dismiss} />
           </div>
+
+          {showDataState && (
+            <section
+              className="gym-data-state"
+              role={error?.kind === 'fetch-failed' ? 'alert' : 'status'}
+              aria-live="polite"
+            >
+              <h2>
+                {error?.kind === 'fetch-failed'
+                  ? 'Live data unavailable'
+                  : 'Loading delayed public data'}
+              </h2>
+              <p>
+                {error?.kind === 'fetch-failed'
+                  ? 'The public 30-minute-delayed data view did not respond. No private live trade data is exposed in this browser.'
+                  : 'Reading the public 30-minute-delayed views for Apex, Gale, and Metheus.'}
+              </p>
+              {error?.kind === 'fetch-failed' && (
+                <p className="gym-data-state-muted">
+                  Refresh in a minute; if this persists, check Supabase and Vercel before sharing the link.
+                </p>
+              )}
+            </section>
+          )}
 
           <div className="space-y-3">
             <AnimatePresence mode="sync" initial={false}>
@@ -172,6 +216,7 @@ export function GymPage() {
                       currentWindow={windowsByAgent[agent.id]}
                       setWindow={setWindowForAgent(agent.id)}
                       cardViewModel={cardViewModels[agent.id]}
+                      onBattleTap={() => setBattleAgentId(agent.id)}
                     />
                   </motion.div>
                 );
@@ -219,17 +264,13 @@ export function GymPage() {
         )}
       </AnimatePresence>
 
-      {/* Back-to-plaza on the communal /gym view so users aren't
-          trapped on the communal surface if they navigated in directly. */}
-      {!expandedAgentId && location.pathname === '/gym' && (
-        <button
-          onClick={() => navigate('/')}
-          className="focus-back-button"
-          aria-label="Back to Town Square"
-        >
-          ← Back to plaza
-        </button>
-      )}
+      <BottomSheet
+        open={battleAgent !== null}
+        titleId="battle-arena-title"
+        onClose={() => setBattleAgentId(null)}
+      >
+        {battleAgent && <BattleArena agent={battleAgent} titleId="battle-arena-title" />}
+      </BottomSheet>
     </>
   );
 }
