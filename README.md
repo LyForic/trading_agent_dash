@@ -13,7 +13,7 @@ Current deploy evidence:
 - Vercel project: `brandonopenclaws-projects/trading_agent_dash`
 - Latest manual production deploy: `dpl_B9TZ82T5hFynikYFyFokMvbQkhVS`
 - Custom domain DNS required: `A gym.lyforic.com 76.76.21.21`
-- GitHub auto-deploy is not connected yet; Vercel CLI could not connect the private `LyForic/trading_agent_dash` repo during project setup.
+- GitHub auto-deploy is connected to `LyForic/trading_agent_dash` with production branch `main`.
 
 ## Phase 5 features
 
