@@ -13,6 +13,7 @@ import { useAgentWindow } from '@/lib/useAgentWindow';
 import { useVisitDelta } from '@/lib/useVisitDelta';
 import { AGENT_IDS } from '@/lib/agentMeta';
 import type { AgentId, PerformanceWindow } from '@/lib/types';
+import type { RoomAgentState } from '@/components/world/RoomAgentLayer';
 
 /**
  * GymPage — the communal interior + agent focus mode, URL-driven.
@@ -63,6 +64,15 @@ export function GymPage() {
 
   const { data, cardViewModels, source, error, loading } = useAgentData(windowsByAgent);
   const { delta, dismiss } = useVisitDelta(data, source);
+  const roomAgents = useMemo<RoomAgentState[]>(
+    () => data.agents.map((agent) => ({
+      id: agent.id,
+      spriteUrl: agent.sprite_url,
+      isInBattle: agent.open_position !== null,
+      totalPnl: cardViewModels[agent.id]?.total_pnl ?? agent.total_pnl,
+    })),
+    [cardViewModels, data.agents],
+  );
   const battleAgent = battleAgentId
     ? data.agents.find((agent) => agent.id === battleAgentId) ?? null
     : null;
@@ -113,7 +123,7 @@ export function GymPage() {
 
   return (
     <>
-      <WorldLayer />
+      <WorldLayer agents={roomAgents} activeRoom={expandedAgentId} />
       <div
         className="min-h-screen max-w-[420px] mx-auto relative"
         style={{ color: 'var(--world-ink)' }}

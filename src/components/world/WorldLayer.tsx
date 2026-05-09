@@ -1,14 +1,18 @@
 import { useEffect } from 'react';
 import { WeatherParticles } from './WeatherParticles';
 import { AmbientMotion } from './AmbientMotion';
+import { RoomAgentLayer, type RoomAgentState } from './RoomAgentLayer';
 import { useSharedGaleWeather } from '@/lib/galeWeatherContext-hooks';
+import type { AgentId } from '@/lib/types';
 
 /**
- * Fixed world behind all content. Four stacked layers from back to front:
+ * Fixed world behind all content. The 16:9 game stage scales as one
+ * unit behind the UI, so room art and sprites share one coordinate system.
+ * Four stacked layers from back to front:
  *
- *   1. Room images — four `<div>`s absolutely positioned with
- *      background-image per room (gym/apex/gale/metheus). Each has
- *      opacity: 0 except the active one, driven by body[data-room].
+ *   1. Room images — four `<img>`s absolutely positioned per room
+ *      (gym/apex/gale/metheus). Each has opacity: 0 except the active
+ *      one, driven by body[data-room].
  *      Gym is the hero/default when no room is focused. Crossfades via
  *      400ms opacity transition = the "door-step" feel without motion.
  *
@@ -38,8 +42,17 @@ const ROOMS = [
   { id: 'metheus', url: '/rooms/metheus.png' },
 ] as const;
 
-export function WorldLayer() {
+export function WorldLayer({
+  agents = [],
+  activeRoom,
+}: {
+  agents?: RoomAgentState[];
+  activeRoom: AgentId | null;
+}) {
   const { current: weather } = useSharedGaleWeather();
+  const visibleRooms = activeRoom
+    ? ROOMS.filter((room) => room.id === 'gym' || room.id === activeRoom)
+    : ROOMS.filter((room) => room.id === 'gym');
 
   useEffect(() => {
     const onVisibility = () => {
@@ -55,52 +68,46 @@ export function WorldLayer() {
       className="fixed inset-0 -z-10 pointer-events-none overflow-hidden"
       style={{ backgroundColor: '#0a0a0a' }}
     >
-      {/* Room layer — four stacked background divs, one per room.
-          Active visibility is controlled purely by body[data-room] via
-          CSS; NO inline opacity here, because inline styles beat class
-          selectors and would permanently pin a room to 0. */}
-      {ROOMS.map((room) => (
+      <div className="gym-world-stage absolute overflow-hidden">
+        {/* Room layer — four stacked images, one per room. The stage is a
+            fixed 16:9 game world scaled to cover the viewport, so room art
+            and scene sprites share one coordinate system. */}
+        {visibleRooms.map((room) => (
+          <img
+            key={room.id}
+            src={room.url}
+            alt=""
+            draggable={false}
+            className={`gym-room-bg gym-room-bg--${room.id} absolute inset-0`}
+          />
+        ))}
+
+        <RoomAgentLayer agents={agents} />
+
+        {/* Time-of-day tint overlay — multiply blend so dusk/moonlit
+            genuinely darken both room art and sprites. */}
         <div
-          key={room.id}
-          className={`gym-room-bg gym-room-bg--${room.id} absolute inset-0`}
-          style={{
-            backgroundImage: `url(${room.url})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            backgroundRepeat: 'no-repeat',
-            imageRendering: 'pixelated',
-          }}
+          className="gym-tint-overlay absolute inset-0 transition-colors duration-500"
+          aria-hidden
         />
-      ))}
 
-      {/* Time-of-day tint overlay — multiply blend so dusk/moonlit
-          genuinely darken the art (like dim ambient light), rather than
-          washing it out with a flat color. Driven by body[data-mode]. */}
-      <div
-        className="gym-tint-overlay absolute inset-0 transition-colors duration-500"
-        aria-hidden
-      />
+        {/* Light-source glow — simulates sunset through window (dusk) or
+            moonbeam (moonlit). Positioned center-top because most of our
+            room art places windows along the back wall. */}
+        <div
+          className="gym-light-source absolute inset-0 transition-opacity duration-500"
+          aria-hidden
+        />
 
-      {/* Light-source glow — simulates sunset through window (dusk) or
-          moonbeam (moonlit). Positioned center-top because most of our
-          room art places windows along the back wall. Invisible in
-          daytime. */}
-      <div
-        className="gym-light-source absolute inset-0 transition-opacity duration-500"
-        aria-hidden
-      />
+        {/* Ambient motion — dust motes everywhere + per-room warm hotspots
+            that fade in with body[data-room]. */}
+        <AmbientMotion activeRoom={activeRoom} />
 
-      {/* Ambient motion — dust motes everywhere + per-room warm hotspots
-          that fade in with body[data-room]. Cheap "this place is alive"
-          layer without needing layered sprites. */}
-      <AmbientMotion />
-
-      {/* Weather particles in Gale's window rect. Always mounted; CSS
-          opacity on body[data-room="gale"] controls visibility so the
-          fade-in matches the room crossfade. Condition defaults to
-          'clouds' while the hook is loading so the window isn't empty
-          on first paint. */}
-      <WeatherParticles condition={weather?.condition ?? 'clouds'} />
+        {/* Gale's particles are comparatively expensive. Mount them only
+            inside Gale's room so Apex's battle animation gets the frame
+            budget when it is the active room. */}
+        {activeRoom === 'gale' && <WeatherParticles condition={weather?.condition ?? 'clouds'} />}
+      </div>
     </div>
   );
 }

@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import type { Agent, PerformanceWindow } from '@/lib/types';
 import type { AgentCardViewModel } from '@/lib/useAgentData';
 import { MovePill } from './MovePill';
@@ -24,6 +25,21 @@ const WEATHER_ICON: Record<WeatherCondition, string> = {
   clear: '☀️',
 };
 
+function StatBlock({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
+  return (
+    <div className="agent-stat-block">
+      <div className="agent-stat-label">{label}</div>
+      <div className="agent-stat-value">{children}</div>
+    </div>
+  );
+}
+
 /**
  * Full detail body shown when an AgentCard is expanded. Layered blocks:
  *   1. TimeFilterPill (24h / 7d / Lifetime)
@@ -44,10 +60,7 @@ export function AgentCardExpandedBody({ agent, currentWindow, setWindow, cardVie
   const activeCity = agent.id === 'gale' ? weather?.city ?? null : null;
 
   return (
-    <div
-      className="mt-3 pt-3 border-t space-y-3 text-sm"
-      style={{ borderColor: 'var(--color-border-default)' }}
-    >
+    <div className="agent-detail-panel">
       <TimeFilterPill
         agentId={agent.id}
         agentName={agent.name}
@@ -55,24 +68,10 @@ export function AgentCardExpandedBody({ agent, currentWindow, setWindow, cardVie
         setWindow={setWindow}
       />
 
-      <div className="grid grid-cols-2 gap-3">
-        <div>
-          <div
-            className="text-[10px] uppercase tracking-wide"
-            style={{ color: 'var(--color-ink-muted)' }}
-          >
-            Market
-          </div>
-          <div>{agent.market_label}</div>
-        </div>
-        <div>
-          <div
-            className="text-[10px] uppercase tracking-wide"
-            style={{ color: 'var(--color-ink-muted)' }}
-          >
-            Status
-          </div>
-          <div className="capitalize">
+      <div className="agent-stat-grid">
+        <StatBlock label="Market">{agent.market_label}</StatBlock>
+        <StatBlock label="Status">
+          <span className="capitalize">
             {/* Delay policy §7.1: any surface implying live trade data
                 must use "In Battle", not "Live", so the 30-min delay is
                 consistent across every visible string. */}
@@ -81,101 +80,64 @@ export function AgentCardExpandedBody({ agent, currentWindow, setWindow, cardVie
               : agent.state === 'arriving_soon'
                 ? 'Arriving soon'
                 : 'Idle'}
-          </div>
-        </div>
+          </span>
+        </StatBlock>
+
+        {cardViewModel.record.settled > 0 && (
+          <StatBlock label="Record">
+            <span className="tabular-nums">
+              {cardViewModel.record.W}W / {cardViewModel.record.L}L / {cardViewModel.record.BE}BE ·{' '}
+              {cardViewModel.record.settled} settled
+            </span>
+          </StatBlock>
+        )}
+
+        {agent.brier_7d.n > 0 && (
+          <StatBlock label="Brier · 7d">
+            <span className="agent-stat-inline tabular-nums">
+              {agent.brier_7d.value.toFixed(3)}
+              {agent.brier_7d.n < 20 && (
+                <span className="agent-badge">
+                  Low sample · n={agent.brier_7d.n}
+                </span>
+              )}
+            </span>
+          </StatBlock>
+        )}
+
+        {agent.id === 'gale' && weather && (
+          <StatBlock label="Window">
+            <span className="agent-stat-inline">
+              <span className="agent-weather-icon" aria-hidden>
+                {WEATHER_ICON[weather.condition]}
+              </span>
+              <span className="tabular-nums">
+                {weather.label}{' '}
+                <span className="agent-muted">
+                  · {weather.temp_f}°F · {weather.condition}
+                </span>
+              </span>
+              {weatherSource === 'fallback' && (
+                <span
+                  className="agent-badge"
+                  title="Live data temporarily unavailable; showing last-known fallback."
+                >
+                  cached
+                </span>
+              )}
+            </span>
+          </StatBlock>
+        )}
       </div>
 
-      {cardViewModel.record.settled > 0 && (
-        <div>
-          <div
-            className="text-[10px] uppercase tracking-wide"
-            style={{ color: 'var(--color-ink-muted)' }}
-          >
-            Record
-          </div>
-          <div className="tabular-nums">
-            {cardViewModel.record.W}W / {cardViewModel.record.L}L / {cardViewModel.record.BE}BE ·{' '}
-            {cardViewModel.record.settled} settled
-          </div>
-        </div>
-      )}
-
-      {agent.brier_7d.n > 0 && (
-        <div>
-          <div
-            className="text-[10px] uppercase tracking-wide"
-            style={{ color: 'var(--color-ink-muted)' }}
-          >
-            Brier · 7d
-          </div>
-          <div className="tabular-nums flex items-center gap-2">
-            {agent.brier_7d.value.toFixed(3)}
-            {agent.brier_7d.n < 20 && (
-              <span
-                className="px-2 py-0.5 text-[10px] rounded"
-                style={{
-                  backgroundColor: 'color-mix(in srgb, var(--color-border-default) 40%, transparent)',
-                  color: 'var(--color-ink-muted)',
-                }}
-              >
-                Low sample · n={agent.brier_7d.n}
-              </span>
-            )}
-          </div>
-        </div>
-      )}
-
-      {agent.id === 'gale' && weather && (
-        <div>
-          <div
-            className="text-[10px] uppercase tracking-wide"
-            style={{ color: 'var(--color-ink-muted)' }}
-          >
-            Window
-          </div>
-          <div className="flex items-center gap-2 mt-0.5">
-            <span className="text-base" aria-hidden>
-              {WEATHER_ICON[weather.condition]}
-            </span>
-            <span className="tabular-nums">
-              {weather.label}{' '}
-              <span style={{ color: 'var(--color-ink-muted)' }}>
-                · {weather.temp_f}°F · {weather.condition}
-              </span>
-            </span>
-            {weatherSource === 'fallback' && (
-              <span
-                className="text-[9px] px-1.5 py-0.5 rounded"
-                style={{
-                  backgroundColor: 'color-mix(in srgb, var(--color-border-default) 50%, transparent)',
-                  color: 'var(--color-ink-muted)',
-                }}
-                title="Live data temporarily unavailable; showing last-known fallback."
-              >
-                cached
-              </span>
-            )}
-          </div>
-        </div>
-      )}
-
       {agent.cities_or_tags.length > 0 && (
-        <div className="flex flex-wrap gap-1">
+        <div className="agent-tags">
           {agent.cities_or_tags.map((t) => {
             const isActive = activeCity === t;
             return (
               <span
                 key={t}
-                className="px-2 py-0.5 rounded-md text-[10px] font-medium tracking-wide"
-                style={{
-                  backgroundColor: isActive
-                    ? `color-mix(in srgb, var(--color-${agent.id}) 22%, var(--color-paper-raised))`
-                    : 'var(--color-paper-raised)',
-                  color: isActive ? 'var(--color-ink)' : 'var(--color-ink-muted)',
-                  outline: isActive
-                    ? `1px solid color-mix(in srgb, var(--color-${agent.id}) 55%, transparent)`
-                    : 'none',
-                }}
+                className={`agent-tag${isActive ? ' agent-tag--active' : ''}`}
                 title={isActive ? 'Currently watching this city' : undefined}
               >
                 {t}
@@ -186,7 +148,7 @@ export function AgentCardExpandedBody({ agent, currentWindow, setWindow, cardVie
       )}
 
       {agent.moves.length > 0 && (
-        <div className="flex flex-wrap gap-1">
+        <div className="agent-moves">
           {agent.moves.map((m, i) => (
             <MovePill key={i} move={m} />
           ))}

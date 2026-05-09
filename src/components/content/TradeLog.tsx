@@ -32,25 +32,19 @@ function shortReceiptId(id: string) {
 function FirstRow({ row }: { row: TradeLogEntry }) {
   const isGain = row.pnl >= 0;
   return (
-    <div
-      className="p-3 rounded-lg border"
-      style={{
-        backgroundColor: 'var(--color-paper-raised)',
-        borderColor: 'var(--color-border-default)',
-      }}
-    >
-      <div className="flex items-center justify-between mb-1.5">
-        <span className="font-mono text-[10px]" style={{ color: 'var(--color-ink-muted)' }}>
+    <div className="trade-log-featured">
+      <div className="trade-log-featured-head">
+        <span className="trade-log-receipt-id">
           {shortReceiptId(row.id)}
         </span>
         <span
-          className="text-sm font-medium tabular-nums"
+          className="trade-log-pnl tabular-nums"
           style={{ color: isGain ? 'var(--color-gain)' : 'var(--color-loss)' }}
         >
           {formatPnl(row.pnl)}
         </span>
       </div>
-      <div className="text-xs tabular-nums truncate" style={{ color: 'var(--color-ink)' }}>
+      <div className="trade-log-featured-line tabular-nums">
         {row.contract_ticker} · {row.side.toUpperCase()} {row.entry_price_cents}¢→{row.settle_price_cents}¢ · size {row.size} · {fmtTime(row.settled_at)}
       </div>
     </div>
@@ -60,23 +54,23 @@ function FirstRow({ row }: { row: TradeLogEntry }) {
 function LedgerRow({ row }: { row: TradeLogEntry }) {
   const isGain = row.pnl >= 0;
   return (
-    <div className="flex items-center justify-between gap-2 py-1.5 text-xs tabular-nums">
-      <span className="font-mono text-[10px] flex-shrink-0" style={{ color: 'var(--color-ink-muted)' }}>
+    <div className="trade-log-row tabular-nums">
+      <span className="trade-log-receipt-id">
         {shortReceiptId(row.id)}
       </span>
-      <span className="truncate flex-1" style={{ color: 'var(--color-ink)' }}>
+      <span className="trade-log-row-main">
         {row.side.toUpperCase()} {row.entry_price_cents}¢→{row.settle_price_cents}¢
       </span>
-      <span className="flex-shrink-0" style={{ color: 'var(--color-ink-muted)' }}>
+      <span className="trade-log-row-size">
         {row.size}
       </span>
       <span
-        className="flex-shrink-0 font-medium"
+        className="trade-log-row-pnl"
         style={{ color: isGain ? 'var(--color-gain)' : 'var(--color-loss)' }}
       >
         {formatPnl(row.pnl)}
       </span>
-      <span className="flex-shrink-0 text-[10px]" style={{ color: 'var(--color-ink-muted)' }}>
+      <span className="trade-log-row-time">
         {fmtTime(row.settled_at)}
       </span>
     </div>
@@ -93,10 +87,7 @@ export function TradeLog({ rows, windowSettledCount, window, hasOpenPosition }: 
     const trySuggestion = next ? ` Try ${next}.` : '';
     const lifetimeCopy = window === 'lifetime' ? 'No settled trades yet.' : `${noun} in ${WINDOW_LABEL[window]}.${trySuggestion}`;
     return (
-      <div
-        className="text-center text-xs py-6"
-        style={{ color: 'var(--color-ink-muted)' }}
-      >
+      <div className="trade-log-empty">
         {lifetimeCopy}
       </div>
     );
@@ -106,25 +97,25 @@ export function TradeLog({ rows, windowSettledCount, window, hasOpenPosition }: 
   const showFooter = windowSettledCount > 25;
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-baseline justify-between text-[10px] uppercase tracking-wide" style={{ color: 'var(--color-ink-muted)' }}>
+    <div className="trade-log">
+      <div className="trade-log-header">
         <span>Trades · {WINDOW_LABEL[window]}</span>
         <span>{windowSettledCount} settled</span>
       </div>
       <FirstRow row={first} />
       {rest.length > 0 && (
-        <div className="divide-y" style={{ borderColor: 'var(--color-border-default)' }}>
+        <div className="trade-log-ledger">
           {rest.map((row) => (
             <LedgerRow key={row.id} row={row} />
           ))}
         </div>
       )}
       {showFooter && (
-        <div className="text-[10px] text-right" style={{ color: 'var(--color-ink-muted)' }}>
+        <div className="trade-log-footer">
           Latest 25 of {windowSettledCount}
         </div>
       )}
-      <p className="text-[9px] mt-1 leading-tight" style={{ color: 'var(--color-ink-muted)' }}>
+      <p className="trade-log-delay-note">
         Settlements shown after 30-minute delay.
       </p>
     </div>

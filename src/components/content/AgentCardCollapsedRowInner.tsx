@@ -24,47 +24,28 @@ export function AgentCardCollapsedRowInner({ agent, cardViewModel }: Props) {
   const isGain = cardViewModel.total_pnl >= 0;
 
   return (
-    <div className="flex items-center gap-3 p-3">
+    <div className="agent-card-summary">
       <AgentAvatar id={agent.id} name={agent.name} spriteUrl={agent.sprite_url} size={48} />
-      <div className="flex-1 min-w-0">
-        <div className="flex items-baseline flex-wrap gap-2">
-          <span
-            className="text-base font-medium"
-            style={{ fontFamily: 'var(--font-display)' }}
-          >
-            {agent.name}
-          </span>
+      <div className="agent-card-identity">
+        <div className="agent-card-title-row">
+          <span className="agent-card-name">{agent.name}</span>
           {isArrivingSoon && (
-            <span
-              className="text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wide"
-              style={{
-                backgroundColor: 'color-mix(in srgb, var(--color-border-default) 40%, transparent)',
-                color: 'var(--color-ink-muted)',
-              }}
-            >
+            <span className="agent-badge">
               Arriving soon
             </span>
           )}
         </div>
-        <div
-          className="text-xs truncate"
-          style={{ color: 'var(--color-ink-muted)' }}
-        >
-          {agent.nickname}
-        </div>
+        <div className="agent-card-subtitle">{agent.nickname}</div>
       </div>
       {!isArrivingSoon && (
-        <div className="text-right">
+        <div className="agent-card-metrics">
           <div
-            className="text-lg font-medium tabular-nums"
+            className="agent-card-pnl tabular-nums"
             style={{ color: isGain ? 'var(--color-gain)' : 'var(--color-loss)' }}
           >
             {formatPnl(cardViewModel.total_pnl)}
           </div>
-          <div
-            className="text-[11px] tabular-nums"
-            style={{ color: 'var(--color-ink-muted)' }}
-          >
+          <div className="agent-card-wr tabular-nums">
             {formatWinRate(cardViewModel.record.W, cardViewModel.record.settled)} WR
           </div>
         </div>

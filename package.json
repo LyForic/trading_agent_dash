@@ -10,7 +10,14 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "visual:qa": "playwright test -c playwright.visual.config.ts",
+    "visual:qa:headed": "playwright test -c playwright.visual.config.ts --headed",
+    "visual:qa:record": "VISUAL_QA_VIDEO=1 playwright test -c playwright.visual.config.ts",
+    "visual:apex": "playwright test -c playwright.visual.config.ts --grep @apex",
+    "visual:town": "playwright test -c playwright.visual.config.ts --grep @town",
+    "visual:rooms": "playwright test -c playwright.visual.config.ts --grep @rooms",
+    "visual:report": "playwright show-report artifacts/visual/html-report"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.104.0",
@@ -19,6 +26,8 @@
     "clsx": "^2.1.1",
     "framer-motion": "^12.38.0",
     "lucide-react": "^1.8.0",
+    "navmesh": "^2.3.1",
+    "phaser": "^4.1.0",
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-router-dom": "^7.14.2",
@@ -27,6 +36,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
+    "@playwright/test": "^1.59.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",

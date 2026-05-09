@@ -1,16 +1,17 @@
 {
   "character": {
     "id": "5f814c1a-9f65-47c3-8c34-ab204244f78d",
-    "name": "Anthropomorphic small fluffy songbird creature, NO ARMS \u2014 tiny folded wings tucked against fluffy round body. Very round fluffy body like a fat sparrow puffed up in cold weather. Small sharp pointed beak, big expressive round eyes, cheerful alert expression. Prominent fluffy feathered crest swept backward by wind on top of head. Teal (#0D9B8E) feathers covering head, back, wings, crest, tail feathers fanning outward. Pale silver-white (#D4DDE1) face cheek patches and wing tips. Soft cream (#F5EDE3) round fluffy chest and belly. Small thin bird legs with tiny feet. Fluffy round body with visible tail feathers \u2014 NOT a penguin, NOT upright posture, NOT flippers, body tilts slightly forward like a perched bird. Cozy indie pixel art style, Pok\u00e9mon Gen 3 starter readability, Stardew Valley warmth. Limited palette ~10 colors, no anti-aliasing, crisp 1-bit outlines, black outline color, transparent background, front-facing, 48 pixel height.",
-    "prompt": "Anthropomorphic small fluffy songbird creature, NO ARMS \u2014 tiny folded wings tucked against fluffy round body. Very round fluffy body like a fat sparrow puffed up in cold weather. Small sharp pointed beak, big expressive round eyes, cheerful alert expression. Prominent fluffy feathered crest swept backward by wind on top of head. Teal (#0D9B8E) feathers covering head, back, wings, crest, tail feathers fanning outward. Pale silver-white (#D4DDE1) face cheek patches and wing tips. Soft cream (#F5EDE3) round fluffy chest and belly. Small thin bird legs with tiny feet. Fluffy round body with visible tail feathers \u2014 NOT a penguin, NOT upright posture, NOT flippers, body tilts slightly forward like a perched bird. Cozy indie pixel art style, Pok\u00e9mon Gen 3 starter readability, Stardew Valley warmth. Limited palette ~10 colors, no anti-aliasing, crisp 1-bit outlines, black outline color, transparent background, front-facing, 48 pixel height.",
+    "name": "Gale",
+    "prompt": "Weather wizard penguin avatar. Small chibi penguin mage with round penguin body, cream face and belly, deep teal-blue feathers, navy wizard hat with gold band, short cloak, tiny orange beak and feet, and flippers used as casting arms. Match Apex's polished cozy RPG sprite style: painterly pixel-sprite finish, crisp dark outline, soft cel-painted highlights, compact monster-battler proportions, transparent background.",
+    "identity": "weather wizard",
     "size": {
       "width": 68,
       "height": 68
     },
-    "template_id": "mannequin",
+    "template_id": "imagegen-sprite",
     "directions": 4,
     "view": "low top-down",
-    "created_at": "2026-04-23T05:17:14.242886+00:00"
+    "created_at": "2026-05-08T06:00:00.000000+00:00"
   },
   "frames": {
     "rotations": {
@@ -19,8 +20,10 @@
       "east": "rotations/east.png",
       "north": "rotations/north.png"
     },
-    "animations": {}
+    "animations": {
+      "weather_cast": "animations/weather-cast.png"
+    }
   },
-  "export_version": "2.0",
-  "export_date": "2026-04-23T05:21:09.586812"
+  "export_version": "3.0",
+  "export_date": "2026-05-08T06:00:00.000000+00:00"
 }

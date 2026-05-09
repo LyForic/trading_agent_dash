@@ -38,19 +38,18 @@ export function AgentCard({
 
   return (
     <article
-      className="rounded-2xl border"
+      className={`agent-card agent-card--${agent.id}${expanded ? ' agent-card--expanded' : ''}${
+        agent.open_position ? ' agent-card--in-battle' : ''
+      }`}
       style={{
-        backgroundColor: 'var(--color-paper)',
-        borderColor: 'var(--color-border-default)',
-        boxShadow: '0 4px 12px rgba(62, 53, 41, 0.15)',
-        color: 'var(--color-ink)',
+        ['--agent-accent' as string]: `var(--color-${agent.id})`,
       }}
     >
-      <div className="agent-card-row" style={{ display: 'flex', alignItems: 'center', gap: 8, position: 'relative' }}>
+      <div className="agent-card-row">
         <button
           type="button"
           onClick={() => { if (canExpand) onToggle(); }}
-          className="agent-card-summary-btn flex-1 text-left focus:outline-2 focus:outline-offset-[-2px] rounded-2xl"
+          className="agent-card-summary-btn flex-1 text-left focus:outline-2 focus:outline-offset-[-2px]"
           style={{
             outlineColor: `var(--color-${agent.id})`,
             cursor: canExpand ? 'pointer' : 'default',

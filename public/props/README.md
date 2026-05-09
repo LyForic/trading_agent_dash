@@ -1,6 +1,6 @@
 # public/props/
 
-Per-house diegetic grounding props that overlap the seam where each house sprite meets the plaza (Phase 5 Slice 1a). Each prop is a small transparent PNG positioned in code at a slight forward offset from the house foot anchor so it breaks up the straight bottom edge of the house sprite — the Stardew / Animal Crossing idiom for making a structure feel planted.
+Legacy per-house diegetic grounding props from the first composited Town Square pass. The active overworld bakes house grounding, paths, and props directly into `public/rooms/town-overworld.png`.
 
 Expected files (drop them here as PixelLab generates them):
 
@@ -13,6 +13,6 @@ Expected files (drop them here as PixelLab generates them):
 
 PixelLab prompt text for each sprite lives in vault `2026-04-24-phase-5-slice-1a-design.md` §PixelLab prompts.
 
-Format: transparent PNG, oblique 3/4 camera matching `public/rooms/town-square.png`, Stardew Valley / Animal Crossing 16-bit pixel-art style.
+Format for any future standalone prop work: transparent PNG, oblique 3/4 camera matching `public/rooms/town-overworld.png`, cozy 16-bit pixel-art style.
 
 Growth pattern: adding a new agent house means adding one new prop here that fits that agent's character (mailbox / fence / tools / instrument). Plaza and house sprites stay untouched.

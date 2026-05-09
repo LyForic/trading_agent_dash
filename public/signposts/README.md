@@ -8,6 +8,6 @@ Expected files (drop them here as PixelLab generates them):
 |---|---|---|
 | `signpost.png` | Small wooden signpost — warm-brown post driven into dirt patch with grass tufts, blank rectangular plaque at top | vault `2026-04-24-phase-5-slice-1a-design.md` §PixelLab prompts → Signpost |
 
-Suggested size: 16×24 to 24×32 transparent PNG, oblique 3/4 camera matching `public/rooms/town-square.png`.
+Suggested size: 16×24 to 24×32 transparent PNG, oblique 3/4 camera matching `public/rooms/town-overworld.png`.
 
 Growth pattern: if a future Coming Soon slot gets its own distinct wayfinding treatment, drop an additional variant here (e.g. `signpost-portal.png`). The shared default stays as `signpost.png`.

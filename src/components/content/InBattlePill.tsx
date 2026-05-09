@@ -37,7 +37,7 @@ export function InBattlePill({ agentId, agentName, settlesAt, onTap }: Props) {
     : `Open battle arena${ariaSubject}`;
 
   return (
-    <span className="relative inline-block">
+    <span className="in-battle-pill-wrap">
       <button
         type="button"
         onMouseEnter={() => setTooltipOpen(true)}
@@ -45,7 +45,7 @@ export function InBattlePill({ agentId, agentName, settlesAt, onTap }: Props) {
         onFocus={() => setTooltipOpen(true)}
         onBlur={() => setTooltipOpen(false)}
         onClick={onTap}
-        className="in-battle-pulse px-3 py-1 rounded-full text-xs font-medium border"
+        className="in-battle-pill in-battle-pulse"
         style={{
           '--in-battle-color': `var(--color-${agentId})`,
           backgroundColor: `color-mix(in srgb, var(--color-${agentId}) 18%, transparent)`,
@@ -55,12 +55,12 @@ export function InBattlePill({ agentId, agentName, settlesAt, onTap }: Props) {
         aria-label={ariaLabel}
         aria-describedby={tooltipId}
       >
-        ● In Battle{settlesLabel ? ` · settles ${settlesLabel}` : ''}
+        ● In Battle{settlesLabel ? ` · ${settlesLabel}` : ''}
       </button>
       <div
         id={tooltipId}
         role="tooltip"
-        className="absolute top-full left-0 mt-2 w-64 p-2 text-xs rounded-md shadow-lg z-20 leading-snug"
+        className="in-battle-tooltip"
         style={{
           backgroundColor: 'var(--color-ink)',
           color: 'var(--color-paper)',

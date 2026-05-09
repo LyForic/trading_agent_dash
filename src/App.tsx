@@ -1,5 +1,6 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { GaleWeatherProvider } from '@/lib/galeWeatherContext';
+import { WorldV2Page } from './pages/WorldV2Page';
 import { TownSquarePage } from './pages/TownSquarePage';
 import { GymPage } from './pages/GymPage';
 import { TimeOfDayCog } from './components/chrome/TimeOfDayCog';
@@ -7,7 +8,8 @@ import { TimeOfDayCog } from './components/chrome/TimeOfDayCog';
 /**
  * Router + global providers.
  *
- *   /               → TownSquarePage (plaza, new default entry point)
+ *   /               → WorldV2Page (experimental living overworld)
+ *   /town           → TownSquarePage (V1 plaza)
  *   /gym            → GymPage (communal roster, URL-driven Focus Mode off)
  *   /apex|gale|metheus → GymPage (URL-driven Focus Mode on)
  *   anything else   → GymPage (any path outside '/' falls through)
@@ -20,15 +22,21 @@ import { TimeOfDayCog } from './components/chrome/TimeOfDayCog';
  * TimeOfDayCog mounts once outside <Routes> so the floating settings
  * cog persists across navigation and writes body[data-mode] globally.
  */
+function RoutedTimeOfDayCog() {
+  const location = useLocation();
+  return location.pathname === '/' ? null : <TimeOfDayCog />;
+}
+
 export default function App() {
   return (
     <GaleWeatherProvider>
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<TownSquarePage />} />
+          <Route path="/" element={<WorldV2Page />} />
+          <Route path="/town" element={<TownSquarePage />} />
           <Route path="/*" element={<GymPage />} />
         </Routes>
-        <TimeOfDayCog />
+        <RoutedTimeOfDayCog />
       </BrowserRouter>
     </GaleWeatherProvider>
   );

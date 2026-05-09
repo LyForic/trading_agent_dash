@@ -20,10 +20,10 @@ import type { WeatherCondition } from '@/lib/useGaleWeather';
  */
 
 const WINDOW_RECT = {
-  top: '10%',
-  left: '25%',
-  width: '50%',
-  height: '45%',
+  top: '8%',
+  left: '31%',
+  width: '38%',
+  height: '25%',
 };
 
 interface DropSpec {

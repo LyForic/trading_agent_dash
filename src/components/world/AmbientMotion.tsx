@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+import type { AgentId } from '@/lib/types';
 
 /**
  * AmbientMotion — low-cost "the room is alive" pass. Two always-mounted
@@ -24,7 +25,7 @@ import { useMemo } from 'react';
  * prefers-reduced-motion via the global transition-zeroing rule.
  */
 
-const MOTE_COUNT = 14;
+const MOTE_COUNT = 8;
 
 interface MoteSpec {
   key: string;
@@ -53,8 +54,10 @@ function useSeededMotes(): MoteSpec[] {
   }, []);
 }
 
-export function AmbientMotion() {
+export function AmbientMotion({ activeRoom }: { activeRoom: AgentId | null }) {
   const motes = useSeededMotes();
+  const activeHotspot = activeRoom ?? 'gym';
+
   return (
     <>
       <div aria-hidden className="dust-motes absolute inset-0 pointer-events-none">
@@ -76,18 +79,24 @@ export function AmbientMotion() {
 
       {/* Per-room hotspots — radial glows placed at plausible in-scene
           light sources. Only the room with data-room matching fades in. */}
-      <div
-        aria-hidden
-        className="room-hotspot room-hotspot--gym ambient-motion absolute inset-0 pointer-events-none"
-      />
-      <div
-        aria-hidden
-        className="room-hotspot room-hotspot--apex ambient-motion absolute inset-0 pointer-events-none"
-      />
-      <div
-        aria-hidden
-        className="room-hotspot room-hotspot--metheus ambient-motion absolute inset-0 pointer-events-none"
-      />
+      {activeHotspot === 'gym' && (
+        <div
+          aria-hidden
+          className="room-hotspot room-hotspot--gym ambient-motion absolute inset-0 pointer-events-none"
+        />
+      )}
+      {activeHotspot === 'apex' && (
+        <div
+          aria-hidden
+          className="room-hotspot room-hotspot--apex ambient-motion absolute inset-0 pointer-events-none"
+        />
+      )}
+      {activeHotspot === 'metheus' && (
+        <div
+          aria-hidden
+          className="room-hotspot room-hotspot--metheus ambient-motion absolute inset-0 pointer-events-none"
+        />
+      )}
     </>
   );
 }

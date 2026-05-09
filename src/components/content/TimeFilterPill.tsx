@@ -23,10 +23,9 @@ const LABELS: Record<PerformanceWindow, string> = {
 export function TimeFilterPill({ agentId, agentName, currentWindow, setWindow }: Props) {
   return (
     <fieldset
-      className="time-filter-pill flex items-center gap-1 rounded-full border px-1 py-0.5"
+      className="time-filter-pill"
       style={{
-        borderColor: 'var(--color-border-default)',
-        backgroundColor: 'var(--color-paper-raised)',
+        ['--agent-accent' as string]: `var(--color-${agentId})`,
       }}
       aria-label="Time window"
     >
@@ -34,21 +33,9 @@ export function TimeFilterPill({ agentId, agentName, currentWindow, setWindow }:
       {WINDOWS.map((w) => (
         <label
           key={w}
-          className="time-filter-pill__option relative cursor-pointer text-xs font-medium px-2 py-1 rounded-full"
-          style={{
-            color:
-              currentWindow === w
-                ? 'var(--color-ink)'
-                : 'var(--color-ink-muted)',
-            outline:
-              currentWindow === w
-                ? `1px solid color-mix(in srgb, var(--color-${agentId}) 55%, transparent)`
-                : 'none',
-            backgroundColor:
-              currentWindow === w
-                ? `color-mix(in srgb, var(--color-${agentId}) 15%, transparent)`
-                : 'transparent',
-          }}
+          className={`time-filter-pill__option${
+            currentWindow === w ? ' time-filter-pill__option--active' : ''
+          }`}
         >
           <input
             type="radio"

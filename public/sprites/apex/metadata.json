@@ -1,16 +1,17 @@
 {
   "character": {
     "id": "14c07acd-a89b-4cd8-9608-fda3f5b49290",
-    "name": "Anthropomorphic falcon creature, NO ARMS \u2014 wings fold tightly against body with tips crossing at lower back. Angular wedge-shaped body, streamlined pointed chest, sharp raptor silhouette. Prominent hooked yellow raptor beak curving downward (not a small triangle). Slitted predatory eyes with heavy dark brow ridge, focused alert expression. Head tilted slightly to the side, asymmetric confident perched pose. Cerulean blue (#3FADC9) feathers covering head, back, folded wings, tail. Amber orange (#F5A742) accents only on: crest feather, chest stripe, wing tip edges. White or cream (#F5EDE3) underbelly. Sharp yellow taloned feet, two legs planted firmly. Silhouette inspired by Staraptor, Talonflame, or Swellow \u2014 perched raptor energy, NOT penguin, NOT owl, NOT mascot with arms. Cozy indie pixel art style, Pok\u00e9mon Gen 3 starter readability, Stardew Valley warmth. Limited palette ~10 colors, no anti-aliasing, crisp 1-bit outlines, black outline color, transparent background, front-facing, 48 pixel height.",
-    "prompt": "Anthropomorphic falcon creature, NO ARMS \u2014 wings fold tightly against body with tips crossing at lower back. Angular wedge-shaped body, streamlined pointed chest, sharp raptor silhouette. Prominent hooked yellow raptor beak curving downward (not a small triangle). Slitted predatory eyes with heavy dark brow ridge, focused alert expression. Head tilted slightly to the side, asymmetric confident perched pose. Cerulean blue (#3FADC9) feathers covering head, back, folded wings, tail. Amber orange (#F5A742) accents only on: crest feather, chest stripe, wing tip edges. White or cream (#F5EDE3) underbelly. Sharp yellow taloned feet, two legs planted firmly. Silhouette inspired by Staraptor, Talonflame, or Swellow \u2014 perched raptor energy, NOT penguin, NOT owl, NOT mascot with arms. Cozy indie pixel art style, Pok\u00e9mon Gen 3 starter readability, Stardew Valley warmth. Limited palette ~10 colors, no anti-aliasing, crisp 1-bit outlines, black outline color, transparent background, front-facing, 48 pixel height.",
+    "name": "Apex",
+    "prompt": "Blue-haired chibi fighter avatar in a white-and-blue training jacket, boxing gloves, blue pants, and brown boots. Match the polished cozy RPG sprite style used by the room battle animation: painterly pixel-sprite finish, crisp dark outline, soft cel-painted highlights, compact monster-battler proportions, transparent background.",
+    "identity": "battle trader",
     "size": {
       "width": 68,
       "height": 68
     },
-    "template_id": "mannequin",
+    "template_id": "imagegen-sprite",
     "directions": 4,
     "view": "low top-down",
-    "created_at": "2026-04-22T04:01:42.950229+00:00"
+    "created_at": "2026-05-08T07:20:00.000000+00:00"
   },
   "frames": {
     "rotations": {
@@ -19,8 +20,11 @@
       "east": "rotations/east.png",
       "north": "rotations/north.png"
     },
-    "animations": {}
+    "animations": {
+      "battle_punch": "animations/battle-punch.png",
+      "idle_walk": "animations/idle-walk.png"
+    }
   },
-  "export_version": "2.0",
-  "export_date": "2026-04-23T05:04:07.570777"
+  "export_version": "3.0",
+  "export_date": "2026-05-08T07:20:00.000000+00:00"
 }
