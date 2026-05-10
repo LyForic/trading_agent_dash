@@ -10,7 +10,10 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "onboarding:capture": "node scripts/capture-onboarding-stills.mjs",
+    "onboarding:render": "node scripts/render-onboarding.mjs",
+    "onboarding:studio": "remotion studio remotion/index.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.104.0",
@@ -27,6 +30,10 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.4",
+    "@playwright/test": "^1.59.1",
+    "@remotion/bundler": "^4.0.459",
+    "@remotion/cli": "^4.0.459",
+    "@remotion/renderer": "^4.0.459",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^14.6.1",
@@ -40,6 +47,7 @@
     "eslint-plugin-react-refresh": "^0.5.2",
     "globals": "^17.5.0",
     "jsdom": "^29.0.2",
+    "remotion": "^4.0.459",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.58.2",
     "vite": "^8.0.9",
