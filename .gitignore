@@ -51,5 +51,15 @@ supabase/.temp/
 # Brainstorming session artifacts
 .superpowers/
 
+# World V2 authoring workspaces are local source material, not production assets.
+public/world-v2/source/
+private/world-v2/source/
+public/world-v2/actors/walk/raw/
+public/world-v2/actors/walk/pilots/
+private/world-v2/actors/walk/raw/
+private/world-v2/actors/walk/pilots/
+private/world-v2/actors/walk/candidates/
+private/world-v2/actors/walk/archive/
+
 # Agent handoff scratch (codex-implement, etc.)
 .ai/

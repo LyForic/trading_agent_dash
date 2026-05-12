@@ -4,7 +4,7 @@ from collections import deque
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SHEET = ROOT / "public/world-v2/source/generated-vegetation-sheet.png"
+SHEET = ROOT / "private/world-v2/source/generated-vegetation-sheet.png"
 OUT_DIR = ROOT / "public/world-v2/foreground"
 KEY = (255, 0, 255)
 

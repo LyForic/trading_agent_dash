@@ -33,9 +33,16 @@ export interface WorldProp {
   src: string;
   x: number;
   y: number;
+  renderX?: number;
+  renderY?: number;
+  width?: number;
+  height?: number;
   depthY: number;
   layer: 'ground' | 'sorted';
+  crop?: { x: number; y: number; width: number; height: number };
   scale?: number;
+  assetStatus?: 'needed' | 'reused' | 'needs-regeneration' | 'generated' | 'placed' | 'verified';
+  occludesActors?: boolean;
   colliders?: WorldPoint[][];
   glow?: {
     x: number;
@@ -51,16 +58,48 @@ export interface WorldCollider {
   points: WorldPoint[];
 }
 
+export interface WorldTexture {
+  key: string;
+  src: string;
+}
+
+export interface WorldLayerAsset {
+  key: string;
+  src: string;
+}
+
+export interface WorldMapData {
+  worldSize: typeof WORLD_SIZE;
+  groundLayer: WorldLayerAsset;
+  referenceLayer: WorldLayerAsset;
+  zones: Record<ZoneId, ZoneBounds>;
+  navMeshPolygons: Record<ZoneId, WorldPoint[][]>;
+  pois: Poi[];
+  props: WorldProp[];
+  colliders: WorldCollider[];
+  propTextures: WorldTexture[];
+}
+
 export const WORLD_SIZE = { width: 1536, height: 1024 };
 
 export const GROUND_LAYER = {
   key: 'world-v2-ground',
-  src: '/world-v2/layers/reference.png',
+  src: '/world-v2/layers/ground.png',
 };
 
 export const REFERENCE_LAYER = {
   key: 'world-v2-reference',
   src: '/world-v2/layers/reference.png',
+};
+
+export const TILED_WORLD_MAP = {
+  key: 'world-v2-authored-map',
+  src: '/world-v2/maps/world-v2-apex-slice.tmj',
+};
+
+export const WORLD_OBJECT_MANIFEST = {
+  key: 'world-v2-object-manifest',
+  src: '/world-v2/maps/world-v2-object-manifest.json',
 };
 
 export const ZONES: Record<ZoneId, ZoneBounds> = {
@@ -132,6 +171,54 @@ export const WORLD_COLLIDERS: WorldCollider[] = WORLD_PROPS.flatMap((propItem) =
 
 export const PROP_TEXTURES = Array.from(new Map(WORLD_PROPS.map((propItem) => [propItem.key, propItem.src])).entries())
   .map(([key, src]) => ({ key, src }));
+
+export function propTextureKey(asset: string): string {
+  return `world-v2-prop-${asset}`;
+}
+
+const AUTHORED_PROP_ASSETS = [
+  'apex-dojo',
+  'apex-training-platform',
+  'apex-zen-garden',
+  'apex-koi-pond',
+  'cherry-tree-large',
+  'cherry-tree-large-base',
+  'cherry-tree-large-canopy',
+  'cherry-tree-large-trunk',
+  'cherry-tree-small',
+  'cherry-tree-small-base',
+  'cherry-tree-small-canopy',
+  'cherry-tree-small-trunk',
+  'low-fence',
+  'bench',
+  'lamp-post',
+  'signpost',
+  'pink-flowers',
+  'purple-flowers',
+  'yellow-flowers',
+  'sunflowers',
+  'grass-clump',
+  'rock-small',
+  'rock-tall',
+  'rock-moss',
+] as const;
+
+export const AUTHORED_PROP_TEXTURES: WorldTexture[] = AUTHORED_PROP_ASSETS.map((asset) => ({
+  key: propTextureKey(asset),
+  src: `/world-v2/foreground/${asset}.png`,
+}));
+
+export const FALLBACK_WORLD_DATA: WorldMapData = {
+  worldSize: WORLD_SIZE,
+  groundLayer: GROUND_LAYER,
+  referenceLayer: REFERENCE_LAYER,
+  zones: ZONES,
+  navMeshPolygons: NAV_MESH_POLYGONS,
+  pois: POIS,
+  props: WORLD_PROPS,
+  colliders: WORLD_COLLIDERS,
+  propTextures: PROP_TEXTURES,
+};
 
 export const ACTOR_TEXTURES = [
   'apex-idle',

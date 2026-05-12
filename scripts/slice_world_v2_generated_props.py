@@ -4,15 +4,15 @@ from collections import deque
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SHEET = ROOT / "public/world-v2/source/generated-props-sheet.png"
+SHEET = ROOT / "private/world-v2/source/generated-props-sheet.png"
 OUT_DIR = ROOT / "public/world-v2/foreground"
 KEY = (255, 0, 255)
 
 
 SPRITES = {
     "apex-dojo": (35, 18, 285, 280),
-    "apex-training-platform": (355, 60, 690, 292),
-    "apex-zen-garden": (718, 50, 946, 292),
+    "apex-training-platform": (374, 60, 688, 292),
+    "apex-zen-garden": (742, 50, 1000, 292),
     "apex-koi-pond": (1000, 75, 1225, 280),
     "metheus-observatory": (1262, 14, 1530, 286),
     "metheus-bookshelf-tall": (48, 335, 250, 522),
@@ -33,8 +33,8 @@ SPRITES = {
     "signpost": (202, 778, 326, 914),
     "lamp-post": (342, 775, 414, 910),
     "hanging-lamp": (424, 768, 494, 910),
-    "bench": (500, 805, 626, 904),
-    "low-fence": (628, 805, 746, 904),
+    "bench": (460, 789, 548, 864),
+    "low-fence": (580, 789, 675, 864),
     "round-bush": (760, 780, 850, 900),
     "pine-tree": (854, 770, 946, 900),
     "pink-bush": (950, 780, 1048, 900),
@@ -56,8 +56,15 @@ SPRITES = {
     "cart": (1338, 915, 1518, 1018),
 }
 
+KEEP_LARGEST_COMPONENT = {
+    "apex-zen-garden",
+    "apex-koi-pond",
+}
 
-def keyed_alpha(crop: Image.Image) -> Image.Image:
+CLEAR_REGIONS = {}
+
+
+def keyed_alpha(crop: Image.Image, name: str) -> Image.Image:
     rgba = crop.convert("RGBA")
     pixels = rgba.load()
     width, height = rgba.size
@@ -75,8 +82,56 @@ def keyed_alpha(crop: Image.Image) -> Image.Image:
             elif soft_key:
                 alpha = min(255, max(0, (dist - 90) * 3))
                 pixels[x, y] = (min(r, 190), g, min(b, 190), alpha)
+    if name in KEEP_LARGEST_COMPONENT:
+        keep_largest_alpha_component(rgba)
+    for region in CLEAR_REGIONS.get(name, []):
+        clear_region(rgba, region)
     bbox = rgba.getbbox()
     return rgba.crop(bbox) if bbox else rgba
+
+
+def clear_region(rgba: Image.Image, region: tuple[int, int, int, int]) -> None:
+    pixels = rgba.load()
+    width, height = rgba.size
+    left, top, right, bottom = region
+    for y in range(max(0, top), min(height, bottom)):
+        for x in range(max(0, left), min(width, right)):
+            r, g, b, _ = pixels[x, y]
+            pixels[x, y] = (r, g, b, 0)
+
+
+def keep_largest_alpha_component(rgba: Image.Image) -> None:
+    pixels = rgba.load()
+    width, height = rgba.size
+    seen: set[tuple[int, int]] = set()
+    largest: set[tuple[int, int]] = set()
+
+    for start_y in range(height):
+        for start_x in range(width):
+            if (start_x, start_y) in seen or pixels[start_x, start_y][3] == 0:
+                continue
+            component: set[tuple[int, int]] = set()
+            queue: deque[tuple[int, int]] = deque([(start_x, start_y)])
+            while queue:
+                x, y = queue.popleft()
+                if (x, y) in seen or x < 0 or y < 0 or x >= width or y >= height:
+                    continue
+                seen.add((x, y))
+                if pixels[x, y][3] == 0:
+                    continue
+                component.add((x, y))
+                queue.append((x + 1, y))
+                queue.append((x - 1, y))
+                queue.append((x, y + 1))
+                queue.append((x, y - 1))
+            if len(component) > len(largest):
+                largest = component
+
+    for y in range(height):
+        for x in range(width):
+            if pixels[x, y][3] > 0 and (x, y) not in largest:
+                r, g, b, _ = pixels[x, y]
+                pixels[x, y] = (r, g, b, 0)
 
 
 def flood_chroma_edges(rgba: Image.Image) -> None:
@@ -114,7 +169,7 @@ def main() -> None:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     sheet = Image.open(SHEET)
     for name, bbox in SPRITES.items():
-        keyed_alpha(sheet.crop(bbox)).save(OUT_DIR / f"{name}.png")
+        keyed_alpha(sheet.crop(bbox), name).save(OUT_DIR / f"{name}.png")
 
 
 if __name__ == "__main__":

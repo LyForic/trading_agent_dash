@@ -1,0 +1,1077 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "frameWidth": 96,
+    "frameHeight": 112,
+    "frameCount": 6,
+    "directions": [
+      "down",
+      "left",
+      "right",
+      "up"
+    ],
+    "notes": "Manual walk-cycle pose labels and foot markers for regenerating clearer actor walking sprites."
+  },
+  "poseDefinitions": {
+    "left-forward": "Left foot is the visible forward/contact foot.",
+    "passing": "Feet align under the body in the in-between passing pose.",
+    "right-forward": "Right foot is the visible forward/contact foot.",
+    "passing-alt": "Second passing pose variant between contact poses.",
+    "unclear": "Pose is usable but foot motion is not obvious.",
+    "bad": "Pose should be regenerated."
+  },
+  "requiredPoseDefinitions": {
+    "left-contact": "Left foot forward, planted, or lifted as the clear leading step.",
+    "passing-a": "Feet aligned under body between contact poses.",
+    "right-contact": "Right foot forward, planted, or lifted as the clear leading step.",
+    "passing-b": "Second feet-aligned in-between pose."
+  },
+  "actors": {
+    "apex-idle": {
+      "directions": {
+        "right": [
+          {
+            "pose": "left-forward"
+          },
+          {
+            "pose": "passing"
+          },
+          {
+            "pose": "right-forward",
+            "leftFoot": {
+              "x": 31,
+              "y": 86
+            },
+            "rightFoot": {
+              "x": 58,
+              "y": 92
+            }
+          },
+          {
+            "pose": "passing-alt"
+          },
+          {
+            "pose": "left-forward"
+          },
+          {
+            "pose": "passing"
+          }
+        ],
+        "down": [
+          {
+            "pose": "left-forward",
+            "leftFoot": {
+              "x": 56,
+              "y": 94
+            },
+            "rightFoot": {
+              "x": 41,
+              "y": 92
+            }
+          },
+          {
+            "pose": "passing"
+          },
+          {
+            "pose": "right-forward"
+          },
+          {
+            "pose": "passing-alt"
+          },
+          {
+            "pose": "left-forward",
+            "leftFoot": {
+              "x": 59,
+              "y": 89
+            },
+            "rightFoot": {
+              "x": 41,
+              "y": 94
+            }
+          },
+          {
+            "pose": "passing"
+          }
+        ],
+        "left": [
+          {
+            "pose": "left-forward",
+            "leftFoot": {
+              "x": 32,
+              "y": 94
+            },
+            "rightFoot": {
+              "x": 61,
+              "y": 94
+            }
+          },
+          {
+            "pose": "passing",
+            "leftFoot": {
+              "x": 46,
+              "y": 94
+            },
+            "rightFoot": {
+              "x": 54,
+              "y": 94
+            }
+          },
+          {
+            "pose": "right-forward",
+            "leftFoot": {
+              "x": 57,
+              "y": 95
+            },
+            "rightFoot": {
+              "x": 31,
+              "y": 92
+            }
+          },
+          {
+            "pose": "passing-alt",
+            "leftFoot": {
+              "x": 46,
+              "y": 94
+            },
+            "rightFoot": {
+              "x": 54,
+              "y": 94
+            }
+          },
+          {
+            "pose": "left-forward",
+            "leftFoot": {
+              "x": 32,
+              "y": 92
+            },
+            "rightFoot": {
+              "x": 57,
+              "y": 95
+            }
+          },
+          {
+            "pose": "passing",
+            "leftFoot": {
+              "x": 46,
+              "y": 94
+            },
+            "rightFoot": {
+              "x": 54,
+              "y": 94
+            }
+          }
+        ],
+        "up": [
+          {
+            "pose": "left-forward",
+            "leftFoot": {
+              "x": 42,
+              "y": 90
+            },
+            "rightFoot": {
+              "x": 55,
+              "y": 87
+            }
+          },
+          {
+            "pose": "passing",
+            "leftFoot": {
+              "x": 43,
+              "y": 81
+            },
+            "rightFoot": {
+              "x": 55,
+              "y": 91
+            }
+          },
+          {
+            "pose": "right-forward",
+            "leftFoot": {
+              "x": 39,
+              "y": 90
+            },
+            "rightFoot": {
+              "x": 56,
+              "y": 87
+            }
+          },
+          {
+            "pose": "passing-alt",
+            "leftFoot": {
+              "x": 41,
+              "y": 87
+            },
+            "rightFoot": {
+              "x": 55,
+              "y": 92
+            }
+          },
+          {
+            "pose": "left-forward",
+            "leftFoot": {
+              "x": 42,
+              "y": 87
+            },
+            "rightFoot": {
+              "x": 56,
+              "y": 91
+            }
+          },
+          {
+            "pose": "passing",
+            "leftFoot": {
+              "x": 42,
+              "y": 88
+            },
+            "rightFoot": {
+              "x": 56,
+              "y": 90
+            }
+          }
+        ]
+      },
+      "requirements": {
+        "right": {
+          "left-contact": {
+            "status": "missing"
+          },
+          "passing-a": {
+            "status": "missing"
+          },
+          "passing-b": {
+            "status": "missing"
+          },
+          "right-contact": {
+            "status": "present",
+            "frame": 0,
+            "notes": "all frames show right foot as clear leading step. "
+          }
+        },
+        "down": {
+          "left-contact": {
+            "status": "present",
+            "frame": 0
+          },
+          "right-contact": {
+            "status": "present",
+            "frame": 1
+          },
+          "passing-a": {
+            "status": "present",
+            "frame": 2
+          },
+          "passing-b": {
+            "status": "missing"
+          }
+        },
+        "left": {
+          "left-contact": {
+            "status": "present",
+            "frame": 0,
+            "notes": "every frame is the same"
+          },
+          "passing-a": {
+            "status": "missing"
+          },
+          "right-contact": {
+            "status": "missing"
+          },
+          "passing-b": {
+            "status": "missing"
+          }
+        },
+        "up": {
+          "right-contact": {
+            "status": "present",
+            "frame": 0
+          },
+          "left-contact": {
+            "status": "present",
+            "frame": 1
+          },
+          "passing-b": {
+            "status": "missing"
+          },
+          "passing-a": {
+            "status": "missing"
+          }
+        }
+      }
+    },
+    "metheus-idle": {
+      "directions": {},
+      "requirements": {
+        "up": {
+          "right-contact": {
+            "status": "present",
+            "frame": 1
+          },
+          "passing-a": {
+            "status": "present",
+            "frame": 5
+          },
+          "passing-b": {
+            "status": "present",
+            "frame": 0
+          },
+          "left-contact": {
+            "status": "missing",
+            "notes": "frame 2 shows clearly the left foot being raised up but not frames clearly show right foot lifting up, indicating the left foot is leading. "
+          }
+        },
+        "right": {
+          "passing-a": {
+            "status": "unclear",
+            "notes": "hard to say since every frame the left foot is always in the same position, slightly in front "
+          },
+          "left-contact": {
+            "status": "present",
+            "frame": 5
+          },
+          "right-contact": {
+            "status": "missing",
+            "notes": "no frames show the right foot in front. seems to only be the left foot in front in all frame. the right foot only lifts up and goes in passing pose but never in front from the looks of it."
+          },
+          "passing-b": {
+            "status": "unclear"
+          }
+        },
+        "left": {
+          "passing-a": {
+            "status": "unclear",
+            "notes": "frame 1 is the closest but im not too sure"
+          },
+          "right-contact": {
+            "status": "present",
+            "frame": 1
+          },
+          "left-contact": {
+            "status": "missing",
+            "notes": "every frame shows the right foot forward. need a frame with left foot forward."
+          },
+          "passing-b": {
+            "status": "unclear",
+            "notes": "frame 6 also close but left foot is not fully under body. "
+          }
+        },
+        "down": {
+          "passing-a": {
+            "status": "present",
+            "frame": 0
+          },
+          "right-contact": {
+            "status": "present",
+            "frame": 1
+          },
+          "left-contact": {
+            "status": "present",
+            "frame": 2
+          },
+          "passing-b": {
+            "status": "missing"
+          }
+        }
+      }
+    },
+    "gale-idle": {
+      "directions": {},
+      "requirements": {
+        "down": {
+          "left-contact": {
+            "status": "present",
+            "frame": 0
+          },
+          "right-contact": {
+            "status": "present",
+            "frame": 1
+          },
+          "passing-a": {
+            "status": "missing"
+          },
+          "passing-b": {
+            "status": "missing"
+          }
+        },
+        "left": {
+          "right-contact": {
+            "status": "present",
+            "frame": 0
+          },
+          "left-contact": {
+            "status": "missing",
+            "notes": "all frames show right foot forward."
+          },
+          "passing-a": {
+            "status": "missing"
+          },
+          "passing-b": {
+            "status": "missing"
+          }
+        },
+        "right": {
+          "left-contact": {
+            "status": "present",
+            "frame": 0,
+            "notes": "not too clear if its the left or right but either way, every frame is the same as this one"
+          },
+          "passing-a": {
+            "status": "missing"
+          },
+          "right-contact": {
+            "status": "unclear"
+          },
+          "passing-b": {
+            "status": "missing"
+          }
+        },
+        "up": {
+          "left-contact": {
+            "status": "present",
+            "frame": 3
+          },
+          "passing-a": {
+            "status": "missing",
+            "notes": "every frame shows the bottom of the right foot, indicating left foot is leading. "
+          },
+          "right-contact": {
+            "status": "missing"
+          },
+          "passing-b": {
+            "status": "missing"
+          }
+        }
+      }
+    },
+    "apex-helper-idle": {
+      "directions": {},
+      "requirements": {
+        "down": {
+          "left-contact": {
+            "status": "present",
+            "frame": 0
+          },
+          "right-contact": {
+            "status": "present",
+            "frame": 1
+          },
+          "passing-a": {
+            "status": "missing"
+          },
+          "passing-b": {
+            "status": "missing"
+          }
+        },
+        "left": {
+          "left-contact": {
+            "status": "present",
+            "frame": 0
+          },
+          "right-contact": {
+            "status": "present",
+            "frame": 1
+          },
+          "passing-a": {
+            "status": "missing"
+          },
+          "passing-b": {
+            "status": "missing"
+          }
+        },
+        "right": {
+          "right-contact": {
+            "status": "present",
+            "frame": 0
+          },
+          "left-contact": {
+            "status": "missing",
+            "notes": "all frame show right foot leading. only the arms are moving but not the legs. "
+          },
+          "passing-a": {
+            "status": "missing"
+          },
+          "passing-b": {
+            "status": "missing"
+          }
+        },
+        "up": {
+          "left-contact": {
+            "status": "present",
+            "frame": 0
+          },
+          "right-contact": {
+            "status": "present",
+            "frame": 1
+          },
+          "passing-a": {
+            "status": "missing"
+          },
+          "passing-b": {
+            "status": "missing"
+          }
+        }
+      }
+    },
+    "apex-helper-carry": {
+      "directions": {},
+      "requirements": {
+        "up": {
+          "left-contact": {
+            "status": "present",
+            "frame": 0
+          },
+          "right-contact": {
+            "status": "present",
+            "frame": 1
+          },
+          "passing-a": {
+            "status": "missing"
+          },
+          "passing-b": {
+            "status": "missing"
+          }
+        },
+        "right": {
+          "left-contact": {
+            "status": "present",
+            "frame": 0
+          },
+          "passing-a": {
+            "status": "missing",
+            "notes": "all frames show same left leg forward."
+          },
+          "right-contact": {
+            "status": "missing"
+          },
+          "passing-b": {
+            "status": "missing"
+          }
+        },
+        "left": {
+          "right-contact": {
+            "status": "present",
+            "frame": 0
+          },
+          "left-contact": {
+            "status": "missing",
+            "notes": "all frames show same right leg leading. "
+          },
+          "passing-a": {
+            "status": "missing"
+          },
+          "passing-b": {
+            "status": "missing"
+          }
+        },
+        "down": {
+          "right-contact": {
+            "status": "present",
+            "frame": 2
+          },
+          "left-contact": {
+            "status": "present",
+            "frame": 5
+          },
+          "passing-a": {
+            "status": "missing"
+          },
+          "passing-b": {
+            "status": "missing"
+          }
+        }
+      }
+    },
+    "apex-helper-sweep": {
+      "directions": {},
+      "requirements": {
+        "down": {
+          "left-contact": {
+            "status": "present",
+            "frame": 1
+          },
+          "passing-a": {
+            "status": "missing",
+            "notes": "all frames show left foot leading"
+          },
+          "right-contact": {
+            "status": "missing"
+          },
+          "passing-b": {
+            "status": "missing"
+          }
+        },
+        "left": {
+          "right-contact": {
+            "status": "present",
+            "frame": 0
+          },
+          "left-contact": {
+            "status": "missing",
+            "notes": "all frames show right leg leading"
+          },
+          "passing-a": {
+            "status": "missing"
+          },
+          "passing-b": {
+            "status": "missing"
+          }
+        },
+        "right": {
+          "left-contact": {
+            "status": "present",
+            "frame": 0
+          },
+          "passing-a": {
+            "status": "missing",
+            "notes": "all frames show left leg leading"
+          },
+          "right-contact": {
+            "status": "missing"
+          },
+          "passing-b": {
+            "status": "missing"
+          }
+        },
+        "up": {
+          "left-contact": {
+            "status": "present",
+            "frame": 0
+          },
+          "right-contact": {
+            "status": "present",
+            "frame": 1
+          },
+          "passing-a": {
+            "status": "missing"
+          },
+          "passing-b": {
+            "status": "missing"
+          }
+        }
+      }
+    },
+    "metheus-helper-books": {
+      "directions": {},
+      "requirements": {
+        "up": {
+          "right-contact": {
+            "status": "present",
+            "frame": 1
+          },
+          "passing-a": {
+            "status": "present",
+            "frame": 0
+          },
+          "passing-b": {
+            "status": "present",
+            "frame": 4
+          },
+          "left-contact": {
+            "status": "missing"
+          }
+        },
+        "right": {
+          "left-contact": {
+            "status": "present",
+            "frame": 0
+          },
+          "passing-a": {
+            "status": "missing",
+            "notes": "all frames show left leg leading."
+          },
+          "right-contact": {
+            "status": "missing"
+          },
+          "passing-b": {
+            "status": "missing"
+          }
+        },
+        "left": {
+          "right-contact": {
+            "status": "present",
+            "frame": 0
+          },
+          "left-contact": {
+            "status": "missing",
+            "notes": "all frames show right leg leading."
+          },
+          "passing-a": {
+            "status": "missing"
+          },
+          "passing-b": {
+            "status": "missing"
+          }
+        },
+        "down": {
+          "passing-a": {
+            "status": "present",
+            "frame": 0
+          },
+          "right-contact": {
+            "status": "present",
+            "frame": 1
+          },
+          "left-contact": {
+            "status": "present",
+            "frame": 2
+          },
+          "passing-b": {
+            "status": "missing"
+          }
+        }
+      }
+    },
+    "metheus-helper-scroll": {
+      "directions": {},
+      "requirements": {
+        "down": {
+          "passing-a": {
+            "status": "present",
+            "frame": 0
+          },
+          "right-contact": {
+            "status": "present",
+            "frame": 1
+          },
+          "left-contact": {
+            "status": "present",
+            "frame": 2
+          },
+          "passing-b": {
+            "status": "missing"
+          }
+        },
+        "left": {
+          "right-contact": {
+            "status": "present",
+            "frame": 0
+          },
+          "left-contact": {
+            "status": "missing",
+            "notes": "all frames have right leg leading"
+          },
+          "passing-a": {
+            "status": "missing"
+          },
+          "passing-b": {
+            "status": "missing"
+          }
+        },
+        "right": {
+          "right-contact": {
+            "status": "present",
+            "frame": 0,
+            "notes": "not too sure but maybe frame 1"
+          },
+          "left-contact": {
+            "status": "present",
+            "frame": 2
+          },
+          "passing-a": {
+            "status": "missing"
+          },
+          "passing-b": {
+            "status": "missing"
+          }
+        },
+        "up": {
+          "right-contact": {
+            "status": "present",
+            "frame": 1
+          },
+          "passing-a": {
+            "status": "present",
+            "frame": 1
+          },
+          "left-contact": {
+            "status": "unclear"
+          },
+          "passing-b": {
+            "status": "present",
+            "frame": 5
+          }
+        }
+      }
+    },
+    "metheus-helper-lantern": {
+      "directions": {},
+      "requirements": {
+        "up": {
+          "left-contact": {
+            "status": "present",
+            "frame": 5
+          },
+          "right-contact": {
+            "status": "present",
+            "frame": 0
+          },
+          "passing-a": {
+            "status": "missing"
+          },
+          "passing-b": {
+            "status": "missing"
+          }
+        },
+        "right": {
+          "left-contact": {
+            "status": "present",
+            "frame": 1
+          },
+          "passing-a": {
+            "status": "missing",
+            "notes": "all frames show left leg leading"
+          },
+          "right-contact": {
+            "status": "missing"
+          },
+          "passing-b": {
+            "status": "missing"
+          }
+        },
+        "left": {
+          "passing-a": {
+            "status": "present",
+            "frame": 1
+          },
+          "passing-b": {
+            "status": "present",
+            "frame": 3
+          },
+          "left-contact": {
+            "status": "unclear",
+            "notes": "might be frame 5 but it could also be the right foot"
+          },
+          "right-contact": {
+            "status": "unclear",
+            "notes": "might be frame 5 but could be left foot"
+          }
+        },
+        "down": {
+          "right-contact": {
+            "status": "present",
+            "frame": 0
+          },
+          "passing-b": {
+            "status": "missing"
+          },
+          "passing-a": {
+            "status": "missing"
+          },
+          "left-contact": {
+            "status": "missing",
+            "notes": "all frames show right foot forward in some capacity. meaning while the frames are different, they all show right foot leading or about to lead"
+          }
+        }
+      }
+    },
+    "gale-helper-crystal": {
+      "directions": {},
+      "requirements": {
+        "down": {
+          "left-contact": {
+            "status": "present",
+            "frame": 3
+          },
+          "right-contact": {
+            "status": "present",
+            "frame": 1
+          },
+          "passing-a": {
+            "status": "missing"
+          },
+          "passing-b": {
+            "status": "missing"
+          }
+        },
+        "left": {
+          "right-contact": {
+            "status": "present",
+            "frame": 1
+          },
+          "left-contact": {
+            "status": "missing",
+            "notes": "all frames show the same right leg leading"
+          },
+          "passing-a": {
+            "status": "missing"
+          },
+          "passing-b": {
+            "status": "missing"
+          }
+        },
+        "right": {
+          "left-contact": {
+            "status": "present",
+            "frame": 0
+          },
+          "passing-a": {
+            "status": "missing",
+            "notes": "all frames show the same left leg leading"
+          },
+          "right-contact": {
+            "status": "missing"
+          },
+          "passing-b": {
+            "status": "missing"
+          }
+        },
+        "up": {
+          "right-contact": {
+            "status": "present",
+            "frame": 1
+          },
+          "passing-a": {
+            "status": "present",
+            "frame": 2
+          },
+          "passing-b": {
+            "status": "present",
+            "frame": 3
+          },
+          "left-contact": {
+            "status": "missing"
+          }
+        }
+      }
+    },
+    "gale-helper-jar": {
+      "directions": {},
+      "requirements": {
+        "up": {
+          "passing-a": {
+            "status": "present",
+            "frame": 0
+          },
+          "left-contact": {
+            "status": "present",
+            "frame": 1
+          },
+          "right-contact": {
+            "status": "present",
+            "frame": 3
+          },
+          "passing-b": {
+            "status": "missing"
+          }
+        },
+        "right": {
+          "left-contact": {
+            "status": "present",
+            "frame": 0
+          },
+          "passing-a": {
+            "status": "missing",
+            "notes": "all frames show left leg leading"
+          },
+          "right-contact": {
+            "status": "missing"
+          },
+          "passing-b": {
+            "status": "missing"
+          }
+        },
+        "left": {
+          "right-contact": {
+            "status": "present",
+            "frame": 0
+          },
+          "left-contact": {
+            "status": "missing",
+            "notes": "all frames show right leg leading"
+          },
+          "passing-a": {
+            "status": "missing"
+          },
+          "passing-b": {
+            "status": "missing"
+          }
+        },
+        "down": {
+          "left-contact": {
+            "status": "present",
+            "frame": 0
+          },
+          "passing-a": {
+            "status": "missing",
+            "notes": "all frames show left leg leading"
+          },
+          "right-contact": {
+            "status": "missing"
+          },
+          "passing-b": {
+            "status": "missing"
+          }
+        }
+      }
+    },
+    "gale-helper-tool": {
+      "directions": {},
+      "requirements": {
+        "down": {
+          "left-contact": {
+            "status": "present",
+            "frame": 1
+          },
+          "passing-a": {
+            "status": "missing",
+            "notes": "all frames show left leg leading"
+          },
+          "right-contact": {
+            "status": "missing"
+          },
+          "passing-b": {
+            "status": "missing"
+          }
+        },
+        "left": {
+          "right-contact": {
+            "status": "present",
+            "frame": 0
+          },
+          "left-contact": {
+            "status": "missing",
+            "notes": "all frames show right leg leading"
+          },
+          "passing-a": {
+            "status": "missing"
+          },
+          "passing-b": {
+            "status": "missing"
+          }
+        },
+        "right": {
+          "left-contact": {
+            "status": "present",
+            "frame": 0
+          },
+          "passing-a": {
+            "status": "missing",
+            "notes": "all frames show left leg leading"
+          },
+          "right-contact": {
+            "status": "missing"
+          },
+          "passing-b": {
+            "status": "missing"
+          }
+        },
+        "up": {
+          "right-contact": {
+            "status": "present",
+            "frame": 1
+          },
+          "left-contact": {
+            "status": "present",
+            "frame": 3
+          },
+          "passing-a": {
+            "status": "present",
+            "frame": 0
+          },
+          "passing-b": {
+            "status": "missing"
+          }
+        }
+      }
+    }
+  }
+}

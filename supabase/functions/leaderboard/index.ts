@@ -2,7 +2,7 @@
 //
 // Deno Edge Function serving the unified Trading Gym leaderboard.
 //
-// Reads agent_trades (the formal-reset table), aggregates per bot into
+// Reads agent_trades_public (the delayed public view), aggregates per bot into
 // the dashboard's Agent shape. Metheus writes agent_trades directly;
 // Apex + Gale are mirrored in from pm_bets via the
 // mirror_pm_bet_to_agent_trade trigger.
@@ -93,7 +93,6 @@ interface AgentTradeRow {
   settle_price: number | null;
   pnl: number | null;
   move_used: string | null;
-  created_at: string;
 }
 
 function buildAgent(id: string, rows: AgentTradeRow[]) {
@@ -117,8 +116,8 @@ function buildAgent(id: string, rows: AgentTradeRow[]) {
     .slice()
     .sort(
       (a, b) =>
-        new Date(b.settled_at ?? b.created_at).getTime() -
-        new Date(a.settled_at ?? a.created_at).getTime(),
+        new Date(b.settled_at ?? b.entered_at).getTime() -
+        new Date(a.settled_at ?? a.entered_at).getTime(),
     );
   const latestRow = sortedByClose[0];
 
@@ -131,7 +130,7 @@ function buildAgent(id: string, rows: AgentTradeRow[]) {
         settle_price_cents: latestRow.settle_price ?? 0,
         size: latestRow.size,
         pnl: latestRow.pnl ?? 0,
-        settled_at: latestRow.settled_at ?? latestRow.created_at,
+        settled_at: latestRow.settled_at ?? latestRow.entered_at,
       }
     : null;
 
@@ -152,24 +151,37 @@ function buildAgent(id: string, rows: AgentTradeRow[]) {
   };
 }
 
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'GET, OPTIONS',
-};
+const ALLOWED_ORIGINS = new Set([
+  'https://gym.lyforic.com',
+  'https://tradingagentdash.vercel.app',
+  'http://127.0.0.1:5173',
+  'http://localhost:5173',
+]);
+
+function corsHeaders(req: Request) {
+  const origin = req.headers.get('origin') ?? '';
+  const allowedOrigin = ALLOWED_ORIGINS.has(origin) ? origin : 'https://gym.lyforic.com';
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    Vary: 'Origin',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  };
+}
 
 Deno.serve(async (req) => {
+  const cors = corsHeaders(req);
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: CORS_HEADERS });
+    return new Response(null, { headers: cors });
   }
   if (req.method !== 'GET') {
-    return new Response('method not allowed', { status: 405, headers: CORS_HEADERS });
+    return new Response('method not allowed', { status: 405, headers: cors });
   }
 
   const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
   const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY');
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-    return new Response('misconfigured', { status: 500, headers: CORS_HEADERS });
+    return new Response('misconfigured', { status: 500, headers: cors });
   }
   const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, { auth: { persistSession: false } });
 
@@ -180,7 +192,7 @@ Deno.serve(async (req) => {
           // anon-readable view (30-min delay floor); base agent_trades is revoked from anon
           .from('agent_trades_public')
           .select(
-            'id,agent_id,contract_ticker,side,entry_price,size,entered_at,settled_at,settle_price,pnl,move_used,created_at',
+            'id,agent_id,contract_ticker,side,entry_price,size,entered_at,settled_at,settle_price,pnl,move_used',
           )
           .eq('agent_id', id)
           .order('settled_at', { ascending: false, nullsFirst: false })
@@ -194,7 +206,7 @@ Deno.serve(async (req) => {
       JSON.stringify({ updated_at: new Date().toISOString(), agents }),
       {
         headers: {
-          ...CORS_HEADERS,
+          ...cors,
           'Content-Type': 'application/json',
           'Cache-Control': 'public, max-age=15',
         },
@@ -203,7 +215,7 @@ Deno.serve(async (req) => {
   } catch (err) {
     return new Response(
       JSON.stringify({ error: (err as Error).message }),
-      { status: 500, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } },
+      { status: 500, headers: { ...cors, 'Content-Type': 'application/json' } },
     );
   }
 });

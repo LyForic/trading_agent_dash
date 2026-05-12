@@ -44,18 +44,57 @@ async function pauseForVideo(page: Page, duration = 2_400) {
 
 test.describe('visual QA captures', () => {
   test('town square overview @town', async ({ page }, testInfo) => {
-    await gotoStable(page, '/');
+    await gotoStable(page, '/town');
     await expect(page.getByLabel('Trading Gym town map')).toBeVisible();
     await screenshot(page, testInfo, 'town-square');
   });
 
   test('town square pathing into Apex room @town @apex', async ({ page }, testInfo) => {
-    await gotoStable(page, '/');
+    await gotoStable(page, '/town');
     await page.getByRole('button', { name: "Enter Apex's room" }).click();
     await page.waitForURL('**/apex', { timeout: 10_000 });
     await page.waitForLoadState('networkidle');
     await page.waitForTimeout(500);
     await screenshot(page, testInfo, 'town-to-apex');
+  });
+
+  test('World V2 authored Apex slice @world-v2', async ({ page }, testInfo) => {
+    const loaded = new Set<string>();
+    page.on('requestfinished', (request) => {
+      const url = request.url();
+      if (url.includes('/world-v2/')) loaded.add(url);
+    });
+
+    await gotoStable(page, '/');
+    await expect(page.locator('canvas')).toBeVisible();
+    await expect(page.locator('.world-v2-menu')).toBeVisible();
+    expect([...loaded].some((url) => url.includes('/world-v2/maps/world-v2-apex-slice.tmj'))).toBe(true);
+    expect([...loaded].some((url) => url.includes('/world-v2/layers/ground.png'))).toBe(true);
+    expect([...loaded].some((url) => url.includes('/world-v2/layers/reference.png'))).toBe(false);
+    await screenshot(page, testInfo, 'world-v2-authored-apex-slice');
+  });
+
+  test('World V2 debug overlay @world-v2', async ({ page }, testInfo) => {
+    await gotoStable(page, '/?debugWorld');
+    await expect(page.locator('canvas')).toBeVisible();
+    await page.mouse.click(650, 520);
+    await page.keyboard.press('2');
+    await page.waitForTimeout(450);
+    await screenshot(page, testInfo, 'world-v2-debug');
+  });
+
+  test('World V2 manifest overlay @world-v2', async ({ page }, testInfo) => {
+    const loaded = new Set<string>();
+    page.on('requestfinished', (request) => {
+      const url = request.url();
+      if (url.includes('/world-v2/')) loaded.add(url);
+    });
+
+    await gotoStable(page, '/?manifestWorld');
+    await expect(page.locator('canvas')).toBeVisible();
+    expect([...loaded].some((url) => url.includes('/world-v2/maps/world-v2-object-manifest.json'))).toBe(true);
+    expect([...loaded].some((url) => url.includes('/world-v2/layers/reference.png'))).toBe(true);
+    await screenshot(page, testInfo, 'world-v2-manifest');
   });
 
   test('Apex battle rig alignment @apex', async ({ page }, testInfo) => {

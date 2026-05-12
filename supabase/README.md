@@ -24,13 +24,14 @@ live dashboard.
   underlying view. Anon `SELECT` GRANTED. No row is emitted for an agent
   with zero qualifying rows — clients must handle the missing-row case.
 - **`pm_bets`** — canonical per-trade table the trading daemons already
-  write to. Untouched by this frontend.
+  write to. Untouched by this frontend. Anon/authenticated/public privileges
+  are revoked; writes belong only to privileged daemon credentials.
 - **`bots`** — agent registry (bot_id, display_name, owner, trading_mode,
-  machine_host).
+  machine_host). Not anon-readable; expose a sanitized public view first if
+  the dashboard ever needs registry metadata.
 - **`v_leaderboard`** — cross-bot ranking view. Not used by the dashboard
   V1 (it rolls up all-time history, which conflicts with the fresh-start
-  directive). Available for Phase 4 if we want a cross-bot "Iris/Megatron
-  are also cooking" strip.
+  directive). Anon/authenticated/public privileges are revoked.
 
 ## One-time setup (Brandon, runs from this repo root)
 
@@ -46,8 +47,9 @@ supabase link --project-ref zzfmmsuzzbbrfptmtmfu
 supabase db push
 #   — or paste each migration file into the Supabase dashboard SQL editor
 
-# 4. Deploy the leaderboard Edge Function
+# 4. Deploy the Edge Functions
 supabase functions deploy leaderboard
+supabase functions deploy weather
 ```
 
 ## Verifying the trigger
@@ -78,15 +80,16 @@ It is enforced at the database layer so no client-side bypass is possible:
    path to trade-level data.
 2. **`agent_lifetime_stats`** is built on `agent_trades_public`, so the delay
    floor applies to aggregates too.
-3. **Anon `SELECT` is REVOKED on the base `agent_trades` table** (migration
-   `20260426000001_revoke_base_anon_select.sql`). Even with the anon key in
-   the browser bundle, a client cannot read undelayed data.
+3. **Anon/authenticated/public access is REVOKED on base tables and legacy
+   views** (migration `20260512000000_harden_public_read_boundary.sql`). Even
+   with the anon key in the browser bundle, a client cannot read undelayed
+   trade rows, `pm_bets`, `bots`, or `v_leaderboard`.
 4. The **`leaderboard` Edge Function** reads from `agent_trades_public`, not
    the base table.
 
-Anon write access (INSERT/UPDATE/DELETE) is also revoked on `pm_bets`,
-`agent_trades`, and `bots` (migration `20260423000000_lock_down_writes.sql`).
-Writes come only from the `service_role` key used by the trading daemons.
+Anon/authenticated/public write access (INSERT/UPDATE/DELETE) is also revoked
+on `pm_bets`, `agent_trades`, and `bots`. Writes come only from privileged
+credentials used by the trading daemons.
 
 ## Migration history
 
@@ -96,6 +99,8 @@ Writes come only from the `service_role` key used by the trading daemons.
 | `20260423010000_mirror_pm_bets_to_agent_trades.sql` | Trigger: mirror Apex/Gale settles from `pm_bets` → `agent_trades` |
 | `20260426000000_track_b_views.sql` | Create `agent_trades_public` (30-min-delayed view) and `agent_lifetime_stats` (per-agent rollup); grant anon SELECT on both |
 | `20260426000001_revoke_base_anon_select.sql` | Revoke anon SELECT on base `agent_trades`; views are now the only anon-readable paths |
+| `20260512000000_harden_public_read_boundary.sql` | Revoke anon/authenticated/public access on base sensitive tables and legacy leaderboard; keep anon SELECT only on delayed/sanitized public views |
+| `20260512001000_tighten_public_view_grants.sql` | Revoke inherited/previous non-SELECT privileges on delayed public views; re-grant anon SELECT only |
 
 ## Frontend read paths (current)
 

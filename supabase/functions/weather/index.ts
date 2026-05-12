@@ -60,18 +60,31 @@ function mapCondition(main: string): Condition {
 const CACHE_TTL_MS = 10 * 60 * 1000;
 const cache = new Map<string, { data: WeatherResponse; expires: number }>();
 
-const CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'GET, OPTIONS',
-};
+const ALLOWED_ORIGINS = new Set([
+  'https://gym.lyforic.com',
+  'https://tradingagentdash.vercel.app',
+  'http://127.0.0.1:5173',
+  'http://localhost:5173',
+]);
+
+function corsHeaders(req: Request) {
+  const origin = req.headers.get('origin') ?? '';
+  const allowedOrigin = ALLOWED_ORIGINS.has(origin) ? origin : 'https://gym.lyforic.com';
+  return {
+    'Access-Control-Allow-Origin': allowedOrigin,
+    Vary: 'Origin',
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Access-Control-Allow-Methods': 'GET, OPTIONS',
+  };
+}
 
 Deno.serve(async (req) => {
+  const cors = corsHeaders(req);
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: CORS_HEADERS });
+    return new Response(null, { headers: cors });
   }
   if (req.method !== 'GET') {
-    return new Response('method not allowed', { status: 405, headers: CORS_HEADERS });
+    return new Response('method not allowed', { status: 405, headers: cors });
   }
 
   const url = new URL(req.url);
@@ -81,7 +94,7 @@ Deno.serve(async (req) => {
   if (!coords) {
     return new Response(
       JSON.stringify({ error: `unknown city: ${cityRaw}` }),
-      { status: 400, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } },
+      { status: 400, headers: { ...cors, 'Content-Type': 'application/json' } },
     );
   }
 
@@ -89,7 +102,7 @@ Deno.serve(async (req) => {
   if (cached && cached.expires > Date.now()) {
     return new Response(JSON.stringify(cached.data), {
       headers: {
-        ...CORS_HEADERS,
+        ...cors,
         'Content-Type': 'application/json',
         'X-Cache': 'HIT',
         'Cache-Control': 'public, max-age=60',
@@ -101,7 +114,7 @@ Deno.serve(async (req) => {
   if (!apiKey) {
     return new Response(
       JSON.stringify({ error: 'OPENWEATHER_API_KEY not configured' }),
-      { status: 500, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } },
+      { status: 500, headers: { ...cors, 'Content-Type': 'application/json' } },
     );
   }
 
@@ -127,7 +140,7 @@ Deno.serve(async (req) => {
 
     return new Response(JSON.stringify(data), {
       headers: {
-        ...CORS_HEADERS,
+        ...cors,
         'Content-Type': 'application/json',
         'X-Cache': 'MISS',
         'Cache-Control': 'public, max-age=60',
@@ -136,7 +149,7 @@ Deno.serve(async (req) => {
   } catch (err) {
     return new Response(
       JSON.stringify({ error: (err as Error).message }),
-      { status: 502, headers: { ...CORS_HEADERS, 'Content-Type': 'application/json' } },
+      { status: 502, headers: { ...cors, 'Content-Type': 'application/json' } },
     );
   }
 });

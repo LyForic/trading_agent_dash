@@ -30,7 +30,6 @@ interface AgentTradeRow {
   settle_price: number | null;
   pnl: number | null;
   move_used: string | null;
-  created_at: string;
 }
 
 interface LifetimeStatsRow {
@@ -44,7 +43,8 @@ interface LifetimeStatsRow {
 }
 
 const COLUMNS =
-  'id,agent_id,contract_ticker,side,entry_price,size,entered_at,settled_at,settle_price,pnl,move_used,created_at';
+  'id,agent_id,contract_ticker,side,entry_price,size,entered_at,settled_at,settle_price,pnl,move_used';
+const LIFETIME_COLUMNS = 'agent_id,settled,wins,losses,breakeven,total_pnl,open_count';
 
 const ZERO_LIFETIME: Omit<LifetimeStatsRow, 'agent_id'> = {
   settled: 0,
@@ -177,7 +177,7 @@ export function useAgentData(
   const [liveCardViewModels, setLiveCardViewModels] = useState<Record<AgentId, AgentCardViewModel>>(
     () => (isSupabaseConfigured ? EMPTY_CARD_VIEW_MODELS : mockCardViewModels),
   );
-  const [source, setSource] = useState<Source>('mock');
+  const [source, setSource] = useState<Source>(() => (isSupabaseConfigured ? 'live' : 'mock'));
   const [error, setError] = useState<AgentDataError | null>(
     () =>
       isSupabaseConfigured
@@ -218,7 +218,7 @@ export function useAgentData(
         // --- Lifetime aggregate (single query for all agents) ---
         const { data: lifetimeRows, error: lifetimeErr } = await supabase!
           .from('agent_lifetime_stats')
-          .select('*');
+          .select(LIFETIME_COLUMNS);
         if (lifetimeErr) throw lifetimeErr;
 
         const lifetimeByAgent: Record<AgentId, LifetimeStatsRow> = {} as Record<AgentId, LifetimeStatsRow>;

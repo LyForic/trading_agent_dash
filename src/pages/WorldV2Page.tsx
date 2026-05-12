@@ -35,9 +35,10 @@ const WORLD_AGENT_ORDER: AgentId[] = ['apex', 'metheus', 'gale'];
 
 interface PhaserWorldProps {
   selectedAgentId: AgentId | null;
+  focusRequestId: number;
 }
 
-function PhaserWorld({ selectedAgentId }: PhaserWorldProps) {
+function PhaserWorld({ selectedAgentId, focusRequestId }: PhaserWorldProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const sceneRef = useRef<LivingWorldSceneInstance | null>(null);
 
@@ -64,7 +65,6 @@ function PhaserWorld({ selectedAgentId }: PhaserWorldProps) {
         autoFocus: false,
         banner: false,
         desynchronized: true,
-        input: false,
         powerPreference: 'high-performance',
         scene: [scene],
         scale: {
@@ -95,7 +95,7 @@ function PhaserWorld({ selectedAgentId }: PhaserWorldProps) {
 
   useEffect(() => {
     sceneRef.current?.focusAgent(selectedAgentId);
-  }, [selectedAgentId]);
+  }, [selectedAgentId, focusRequestId]);
 
   return <div ref={hostRef} className="world-v2-game" aria-hidden />;
 }
@@ -120,7 +120,13 @@ function isMobileViewport() {
 }
 
 export function WorldV2Page() {
+  const worldTestParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+  const isolatedTestMode = worldTestParams?.has('apexTest') === true
+    || worldTestParams?.has('treeTest') === true
+    || worldTestParams?.has('manifestWorld') === true
+    || worldTestParams?.has('groundOnly') === true;
   const [selectedAgentId, setSelectedAgentId] = useState<AgentId | null>(null);
+  const [focusRequestId, setFocusRequestId] = useState(0);
   const [menuHidden, setMenuHidden] = useState(false);
   const dragStartY = useRef<number | null>(null);
 
@@ -153,11 +159,13 @@ export function WorldV2Page() {
 
   const closeFocus = () => {
     setSelectedAgentId(null);
+    setFocusRequestId((requestId) => requestId + 1);
     if (isMobileViewport()) setMenuHidden(false);
   };
 
   const selectAgent = (id: AgentId) => {
     setSelectedAgentId(id);
+    setFocusRequestId((requestId) => requestId + 1);
     if (isMobileViewport()) setMenuHidden(true);
   };
 
@@ -181,11 +189,11 @@ export function WorldV2Page() {
 
   return (
     <main className="world-v2-page">
-      <PhaserWorld selectedAgentId={selectedAgentId} />
+      <PhaserWorld selectedAgentId={selectedAgentId} focusRequestId={focusRequestId} />
 
-      <div className="world-v2-vignette" />
+      {!isolatedTestMode && <div className="world-v2-vignette" />}
 
-      {menuHidden && (
+      {!isolatedTestMode && menuHidden && (
         <button
           type="button"
           className="world-v2-menu-peek"
@@ -196,6 +204,7 @@ export function WorldV2Page() {
         </button>
       )}
 
+      {!isolatedTestMode && (
       <aside
         className={`world-v2-menu${menuHidden ? ' world-v2-menu--hidden' : ''}`}
         onPointerDown={handlePointerDown}
@@ -255,8 +264,9 @@ export function WorldV2Page() {
           <span>{dataSourceLabel}</span>
         </div>
       </aside>
+      )}
 
-      {selectedAgentId && selectedAgent && selectedVm && (
+      {!isolatedTestMode && selectedAgentId && selectedAgent && selectedVm && (
         <section
           className="world-v2-stats-panel"
           aria-label={`${selectedAgent.name} trade stats`}

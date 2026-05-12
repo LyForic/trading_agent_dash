@@ -1,0 +1,547 @@
+{
+  "type": "map",
+  "version": "1.10",
+  "tiledversion": "1.11.0",
+  "orientation": "orthogonal",
+  "renderorder": "right-down",
+  "width": 96,
+  "height": 64,
+  "tilewidth": 16,
+  "tileheight": 16,
+  "infinite": false,
+  "layers": [
+    {
+      "id": 1,
+      "name": "Ground",
+      "type": "imagelayer",
+      "image": "../layers/ground.png",
+      "visible": true,
+      "opacity": 1,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": 2,
+      "name": "Reference",
+      "type": "imagelayer",
+      "image": "../layers/reference.png",
+      "visible": false,
+      "opacity": 0.42,
+      "x": 0,
+      "y": 0
+    },
+    {
+      "id": 3,
+      "name": "Walkable",
+      "type": "objectgroup",
+      "objects": [
+        {
+          "id": 1,
+          "name": "apex-main-yard",
+          "x": 78,
+          "y": 218,
+          "polygon": [
+            { "x": 0, "y": 38 },
+            { "x": 116, "y": 8 },
+            { "x": 296, "y": 0 },
+            { "x": 474, "y": 52 },
+            { "x": 605, "y": 142 },
+            { "x": 612, "y": 222 },
+            { "x": 492, "y": 252 },
+            { "x": 270, "y": 236 },
+            { "x": 72, "y": 212 },
+            { "x": -22, "y": 156 }
+          ],
+          "properties": [
+            { "name": "zone", "type": "string", "value": "apex" }
+          ]
+        },
+        {
+          "id": 2,
+          "name": "apex-dojo-front-path",
+          "x": 268,
+          "y": 160,
+          "polygon": [
+            { "x": 0, "y": 36 },
+            { "x": 112, "y": 0 },
+            { "x": 232, "y": 4 },
+            { "x": 338, "y": 76 },
+            { "x": 300, "y": 160 },
+            { "x": 78, "y": 168 }
+          ],
+          "properties": [
+            { "name": "zone", "type": "string", "value": "apex" }
+          ]
+        },
+        {
+          "id": 3,
+          "name": "apex-koi-path",
+          "x": 398,
+          "y": 312,
+          "polygon": [
+            { "x": 0, "y": 28 },
+            { "x": 120, "y": 0 },
+            { "x": 290, "y": 36 },
+            { "x": 306, "y": 112 },
+            { "x": 160, "y": 152 },
+            { "x": 22, "y": 122 }
+          ],
+          "properties": [
+            { "name": "zone", "type": "string", "value": "apex" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "name": "Collision",
+      "type": "objectgroup",
+      "objects": [
+        {
+          "id": 10,
+          "name": "apex-left-cliff-edge",
+          "x": 32,
+          "y": 158,
+          "width": 96,
+          "height": 266,
+          "properties": [
+            { "name": "zone", "type": "string", "value": "apex" }
+          ]
+        },
+        {
+          "id": 11,
+          "name": "apex-dojo-stairs-edge",
+          "x": 306,
+          "y": 208,
+          "width": 178,
+          "height": 38,
+          "properties": [
+            { "name": "zone", "type": "string", "value": "apex" }
+          ]
+        },
+        {
+          "id": 12,
+          "name": "apex-koi-water",
+          "x": 520,
+          "y": 332,
+          "polygon": [
+            { "x": 0, "y": 60 },
+            { "x": 0, "y": 20 },
+            { "x": 62, "y": 0 },
+            { "x": 132, "y": 10 },
+            { "x": 150, "y": 52 },
+            { "x": 112, "y": 88 },
+            { "x": 36, "y": 92 }
+          ],
+          "properties": [
+            { "name": "zone", "type": "string", "value": "apex" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "name": "PropsSorted",
+      "type": "objectgroup",
+      "objects": [
+        {
+          "id": 20,
+          "name": "apex-cherry-left-base",
+          "x": -110,
+          "y": -42,
+          "width": 487,
+          "height": 392,
+          "properties": [
+            { "name": "asset", "type": "string", "value": "cherry-tree-large-base" },
+            { "name": "zone", "type": "string", "value": "apex" },
+            { "name": "depthY", "type": "float", "value": 296 },
+            { "name": "scale", "type": "float", "value": 0.72 },
+            { "name": "renderLayer", "type": "string", "value": "ground" },
+            { "name": "assetStatus", "type": "string", "value": "needs-regeneration" },
+            { "name": "collider", "type": "string", "value": "206,252,78,96" }
+          ]
+        },
+        {
+          "id": 34,
+          "name": "apex-cherry-left-canopy",
+          "x": -110,
+          "y": -42,
+          "width": 487,
+          "height": 392,
+          "properties": [
+            { "name": "asset", "type": "string", "value": "cherry-tree-large-canopy" },
+            { "name": "zone", "type": "string", "value": "apex" },
+            { "name": "depthY", "type": "float", "value": 246 },
+            { "name": "scale", "type": "float", "value": 0.72 },
+            { "name": "assetStatus", "type": "string", "value": "needs-regeneration" }
+          ]
+        },
+        {
+          "id": 36,
+          "name": "apex-cherry-left-trunk",
+          "x": -110,
+          "y": -42,
+          "width": 487,
+          "height": 392,
+          "properties": [
+            { "name": "asset", "type": "string", "value": "cherry-tree-large-trunk" },
+            { "name": "zone", "type": "string", "value": "apex" },
+            { "name": "depthY", "type": "float", "value": 292 },
+            { "name": "scale", "type": "float", "value": 0.72 },
+            { "name": "assetStatus", "type": "string", "value": "needs-regeneration" }
+          ]
+        },
+        {
+          "id": 21,
+          "name": "apex-dojo",
+          "x": 284,
+          "y": 8,
+          "width": 233,
+          "height": 257,
+          "properties": [
+            { "name": "asset", "type": "string", "value": "apex-dojo" },
+            { "name": "zone", "type": "string", "value": "apex" },
+            { "name": "depthY", "type": "float", "value": 256 },
+            { "name": "assetStatus", "type": "string", "value": "reused" },
+            { "name": "collider", "type": "string", "value": "20,118,194,118" },
+            { "name": "glowColor", "type": "string", "value": "#ffbd62" },
+            { "name": "glowX", "type": "float", "value": 338 },
+            { "name": "glowY", "type": "float", "value": 165 },
+            { "name": "glowRadius", "type": "float", "value": 30 }
+          ]
+        },
+        {
+          "id": 22,
+          "name": "apex-cherry-right-base",
+          "x": 530,
+          "y": -68,
+          "width": 487,
+          "height": 392,
+          "properties": [
+            { "name": "asset", "type": "string", "value": "cherry-tree-large-base" },
+            { "name": "zone", "type": "string", "value": "apex" },
+            { "name": "depthY", "type": "float", "value": 252 },
+            { "name": "scale", "type": "float", "value": 0.58 },
+            { "name": "renderLayer", "type": "string", "value": "ground" },
+            { "name": "assetStatus", "type": "string", "value": "needs-regeneration" },
+            { "name": "collider", "type": "string", "value": "214,260,76,92" }
+          ]
+        },
+        {
+          "id": 35,
+          "name": "apex-cherry-right-canopy",
+          "x": 530,
+          "y": -68,
+          "width": 487,
+          "height": 392,
+          "properties": [
+            { "name": "asset", "type": "string", "value": "cherry-tree-large-canopy" },
+            { "name": "zone", "type": "string", "value": "apex" },
+            { "name": "depthY", "type": "float", "value": 210 },
+            { "name": "scale", "type": "float", "value": 0.58 },
+            { "name": "assetStatus", "type": "string", "value": "needs-regeneration" }
+          ]
+        },
+        {
+          "id": 37,
+          "name": "apex-cherry-right-trunk",
+          "x": 530,
+          "y": -68,
+          "width": 487,
+          "height": 392,
+          "properties": [
+            { "name": "asset", "type": "string", "value": "cherry-tree-large-trunk" },
+            { "name": "zone", "type": "string", "value": "apex" },
+            { "name": "depthY", "type": "float", "value": 244 },
+            { "name": "scale", "type": "float", "value": 0.58 },
+            { "name": "renderLayer", "type": "string", "value": "ground" },
+            { "name": "assetStatus", "type": "string", "value": "needs-regeneration" }
+          ]
+        },
+        {
+          "id": 23,
+          "name": "apex-training-platform",
+          "x": 30,
+          "y": 232,
+          "width": 314,
+          "height": 220,
+          "properties": [
+            { "name": "asset", "type": "string", "value": "apex-training-platform" },
+            { "name": "zone", "type": "string", "value": "apex" },
+            { "name": "depthY", "type": "float", "value": 430 },
+            { "name": "renderLayer", "type": "string", "value": "ground" },
+            { "name": "assetStatus", "type": "string", "value": "reused" },
+            { "name": "collider", "type": "string", "value": "0,162,314,28" }
+          ]
+        },
+        {
+          "id": 24,
+          "name": "apex-zen-garden",
+          "x": 506,
+          "y": 102,
+          "width": 245,
+          "height": 211,
+          "properties": [
+            { "name": "asset", "type": "string", "value": "apex-zen-garden" },
+            { "name": "zone", "type": "string", "value": "apex" },
+            { "name": "depthY", "type": "float", "value": 292 },
+            { "name": "scale", "type": "float", "value": 0.9 },
+            { "name": "renderLayer", "type": "string", "value": "ground" },
+            { "name": "assetStatus", "type": "string", "value": "reused" },
+            { "name": "collider", "type": "string", "value": "66,116,104,58" }
+          ]
+        },
+        {
+          "id": 25,
+          "name": "apex-koi-pond",
+          "x": 502,
+          "y": 292,
+          "width": 197,
+          "height": 185,
+          "properties": [
+            { "name": "asset", "type": "string", "value": "apex-koi-pond" },
+            { "name": "zone", "type": "string", "value": "apex" },
+            { "name": "depthY", "type": "float", "value": 426 },
+            { "name": "scale", "type": "float", "value": 0.85 },
+            { "name": "renderLayer", "type": "string", "value": "ground" },
+            { "name": "assetStatus", "type": "string", "value": "reused" },
+            { "name": "collider", "type": "string", "value": "34,56,154,82" }
+          ]
+        },
+        {
+          "id": 26,
+          "name": "apex-cherry-small-base",
+          "x": 650,
+          "y": -8,
+          "width": 246,
+          "height": 294,
+          "properties": [
+            { "name": "asset", "type": "string", "value": "cherry-tree-small-base" },
+            { "name": "zone", "type": "string", "value": "apex" },
+            { "name": "depthY", "type": "float", "value": 160 },
+            { "name": "scale", "type": "float", "value": 0.38 },
+            { "name": "renderLayer", "type": "string", "value": "ground" },
+            { "name": "assetStatus", "type": "string", "value": "needs-regeneration" },
+            { "name": "collider", "type": "string", "value": "100,206,48,54" }
+          ]
+        },
+        {
+          "id": 38,
+          "name": "apex-cherry-small-canopy",
+          "x": 650,
+          "y": -8,
+          "width": 246,
+          "height": 294,
+          "properties": [
+            { "name": "asset", "type": "string", "value": "cherry-tree-small-canopy" },
+            { "name": "zone", "type": "string", "value": "apex" },
+            { "name": "depthY", "type": "float", "value": 118 },
+            { "name": "scale", "type": "float", "value": 0.38 },
+            { "name": "assetStatus", "type": "string", "value": "needs-regeneration" }
+          ]
+        },
+        {
+          "id": 39,
+          "name": "apex-cherry-small-trunk",
+          "x": 650,
+          "y": -8,
+          "width": 246,
+          "height": 294,
+          "properties": [
+            { "name": "asset", "type": "string", "value": "cherry-tree-small-trunk" },
+            { "name": "zone", "type": "string", "value": "apex" },
+            { "name": "depthY", "type": "float", "value": 152 },
+            { "name": "scale", "type": "float", "value": 0.38 },
+            { "name": "assetStatus", "type": "string", "value": "needs-regeneration" }
+          ]
+        },
+        {
+          "id": 27,
+          "name": "apex-low-fence-front",
+          "x": 184,
+          "y": 394,
+          "width": 95,
+          "height": 74,
+          "properties": [
+            { "name": "asset", "type": "string", "value": "low-fence" },
+            { "name": "zone", "type": "string", "value": "apex" },
+            { "name": "depthY", "type": "float", "value": 446 },
+            { "name": "assetStatus", "type": "string", "value": "verified" },
+            { "name": "collider", "type": "string", "value": "8,42,79,18" }
+          ]
+        },
+        {
+          "id": 28,
+          "name": "apex-bench-path",
+          "x": 538,
+          "y": 452,
+          "width": 87,
+          "height": 73,
+          "properties": [
+            { "name": "asset", "type": "string", "value": "bench" },
+            { "name": "zone", "type": "string", "value": "apex" },
+            { "name": "depthY", "type": "float", "value": 526 },
+            { "name": "assetStatus", "type": "string", "value": "verified" },
+            { "name": "collider", "type": "string", "value": "7,42,73,22" }
+          ]
+        },
+        {
+          "id": 29,
+          "name": "apex-lamp-left",
+          "x": 112,
+          "y": 156,
+          "width": 37,
+          "height": 135,
+          "properties": [
+            { "name": "asset", "type": "string", "value": "lamp-post" },
+            { "name": "zone", "type": "string", "value": "apex" },
+            { "name": "depthY", "type": "float", "value": 288 },
+            { "name": "assetStatus", "type": "string", "value": "reused" },
+            { "name": "collider", "type": "string", "value": "12,102,14,22" },
+            { "name": "glowColor", "type": "string", "value": "#ffcf77" },
+            { "name": "glowX", "type": "float", "value": 130 },
+            { "name": "glowY", "type": "float", "value": 196 },
+            { "name": "glowRadius", "type": "float", "value": 24 }
+          ]
+        },
+        {
+          "id": 30,
+          "name": "apex-signpost",
+          "x": 660,
+          "y": 252,
+          "width": 118,
+          "height": 85,
+          "properties": [
+            { "name": "asset", "type": "string", "value": "signpost" },
+            { "name": "zone", "type": "string", "value": "apex" },
+            { "name": "depthY", "type": "float", "value": 328 },
+            { "name": "assetStatus", "type": "string", "value": "reused" },
+            { "name": "collider", "type": "string", "value": "46,46,30,28" }
+          ]
+        },
+        {
+          "id": 31,
+          "name": "apex-purple-flowers",
+          "x": 370,
+          "y": 404,
+          "width": 66,
+          "height": 54,
+          "properties": [
+            { "name": "asset", "type": "string", "value": "purple-flowers" },
+            { "name": "zone", "type": "string", "value": "apex" },
+            { "name": "depthY", "type": "float", "value": 454 },
+            { "name": "assetStatus", "type": "string", "value": "reused" },
+            { "name": "renderLayer", "type": "string", "value": "ground" },
+            { "name": "occludesActors", "type": "bool", "value": false }
+          ]
+        },
+        {
+          "id": 32,
+          "name": "apex-pink-flowers",
+          "x": 648,
+          "y": 372,
+          "width": 63,
+          "height": 55,
+          "properties": [
+            { "name": "asset", "type": "string", "value": "pink-flowers" },
+            { "name": "zone", "type": "string", "value": "apex" },
+            { "name": "depthY", "type": "float", "value": 422 },
+            { "name": "assetStatus", "type": "string", "value": "reused" },
+            { "name": "renderLayer", "type": "string", "value": "ground" },
+            { "name": "occludesActors", "type": "bool", "value": false }
+          ]
+        },
+        {
+          "id": 33,
+          "name": "apex-rock-small",
+          "x": 684,
+          "y": 330,
+          "width": 78,
+          "height": 70,
+          "properties": [
+            { "name": "asset", "type": "string", "value": "rock-small" },
+            { "name": "zone", "type": "string", "value": "apex" },
+            { "name": "depthY", "type": "float", "value": 394 },
+            { "name": "assetStatus", "type": "string", "value": "reused" },
+            { "name": "collider", "type": "string", "value": "22,38,36,22" }
+          ]
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "name": "POI",
+      "type": "objectgroup",
+      "objects": [
+        {
+          "id": 40,
+          "name": "dojo-mat",
+          "point": true,
+          "x": 252,
+          "y": 328,
+          "properties": [
+            { "name": "zone", "type": "string", "value": "apex" },
+            { "name": "label", "type": "string", "value": "Strike dummy" },
+            { "name": "actionTexture", "type": "string", "value": "actor-apex-strike" },
+            { "name": "effect", "type": "string", "value": "apex-strike" }
+          ]
+        },
+        {
+          "id": 41,
+          "name": "zen-garden",
+          "point": true,
+          "x": 592,
+          "y": 268,
+          "properties": [
+            { "name": "zone", "type": "string", "value": "apex" },
+            { "name": "label", "type": "string", "value": "Meditate" },
+            { "name": "actionTexture", "type": "string", "value": "actor-apex-meditate" },
+            { "name": "effect", "type": "string", "value": "apex-meditate" }
+          ]
+        },
+        {
+          "id": 42,
+          "name": "petal-sweep",
+          "point": true,
+          "x": 438,
+          "y": 418,
+          "properties": [
+            { "name": "zone", "type": "string", "value": "apex" },
+            { "name": "label", "type": "string", "value": "Sweep petals" },
+            { "name": "actionTexture", "type": "string", "value": "actor-apex-helper-sweep" },
+            { "name": "effect", "type": "string", "value": "helper" },
+            { "name": "helperOnly", "type": "bool", "value": true }
+          ]
+        },
+        {
+          "id": 43,
+          "name": "water-carry",
+          "point": true,
+          "x": 366,
+          "y": 438,
+          "properties": [
+            { "name": "zone", "type": "string", "value": "apex" },
+            { "name": "label", "type": "string", "value": "Carry water" },
+            { "name": "actionTexture", "type": "string", "value": "actor-apex-helper-carry" },
+            { "name": "effect", "type": "string", "value": "helper" },
+            { "name": "helperOnly", "type": "bool", "value": true }
+          ]
+        },
+        {
+          "id": 44,
+          "name": "banner-check",
+          "point": true,
+          "x": 662,
+          "y": 308,
+          "properties": [
+            { "name": "zone", "type": "string", "value": "apex" },
+            { "name": "label", "type": "string", "value": "Check banner" },
+            { "name": "actionTexture", "type": "string", "value": "actor-apex-helper-idle" },
+            { "name": "effect", "type": "string", "value": "helper" },
+            { "name": "helperOnly", "type": "bool", "value": true }
+          ]
+        }
+      ]
+    }
+  ]
+}
