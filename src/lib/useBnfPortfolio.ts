@@ -41,10 +41,16 @@ export function useBnfPortfolio(): UseBnfPortfolioResult {
         const { data: rows, error: err } = await supabase!
           .from('v_bnf_portfolio')
           .select(COLUMNS)
-          .order('captured_at', { ascending: true });
+          .order('captured_at', { ascending: false })
+          .limit(1000);
         if (err) throw err;
         if (cancelled) return;
-        const points = (rows ?? []) as BnfPortfolioPoint[];
+        // Newest-first + bounded: once the series exceeds the API row cap
+        // (~1000 rows ≈ 41 days at hourly), an ascending unbounded query would
+        // silently return only the OLDEST slice and freeze `latest`. Fetch
+        // newest-first, then reverse to oldest→newest for the curve. A >1000
+        // point history needs a downsampled/aggregate view (future).
+        const points = ((rows ?? []) as BnfPortfolioPoint[]).slice().reverse();
         setData({
           points,
           updated_at: points.length

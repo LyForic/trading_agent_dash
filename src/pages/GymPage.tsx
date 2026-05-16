@@ -136,7 +136,7 @@ export function GymPage() {
         </div>
 
         <main className="px-4 pt-6 pb-10 space-y-4">
-          <BnfPortfolioCard data={bnf.data} />
+          <BnfPortfolioCard data={bnf.data} failed={bnf.error?.kind === 'fetch-failed'} />
 
           {/* Communal /gym exit lives in normal flow so it never covers
               the TrustStrip's liveness signal on narrow screens. Focus

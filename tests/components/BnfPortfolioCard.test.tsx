@@ -57,4 +57,10 @@ describe('BnfPortfolioCard', () => {
     expect(screen.getByText(/Brandon \+ Justin/)).toBeInTheDocument();
     expect(screen.queryByTestId('bnf-curve-path')).not.toBeInTheDocument();
   });
+
+  it('shows a load-failed message instead of warming-up when failed', () => {
+    render(<BnfPortfolioCard data={{ points: [], updated_at: '' }} failed />);
+    expect(screen.getByText(/couldn’t load/i)).toBeInTheDocument();
+    expect(screen.queryByText(/warming up/i)).not.toBeInTheDocument();
+  });
 });

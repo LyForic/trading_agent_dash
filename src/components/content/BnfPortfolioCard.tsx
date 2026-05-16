@@ -5,7 +5,7 @@ function usd(cents: number): string {
   return `$${Math.round(cents / 100).toLocaleString('en-US')}`;
 }
 
-export function BnfPortfolioCard({ data }: { data: BnfPortfolioSeries }) {
+export function BnfPortfolioCard({ data, failed = false }: { data: BnfPortfolioSeries; failed?: boolean }) {
   const pts = data.points;
   const latest = pts[pts.length - 1];
 
@@ -32,7 +32,9 @@ export function BnfPortfolioCard({ data }: { data: BnfPortfolioSeries }) {
           Combined portfolio
         </h2>
         <p className="mt-2 text-sm" style={{ color: 'var(--color-ink-muted)' }}>
-          Curve is warming up — first hourly snapshot lands soon.
+          {failed
+            ? 'Couldn’t load the latest numbers — retrying shortly.'
+            : 'Curve is warming up — first hourly snapshot lands soon.'}
         </p>
       </section>
     );
