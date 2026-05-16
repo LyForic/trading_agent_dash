@@ -1,6 +1,8 @@
 import type {
   AgentId,
   AgentLifetimeStats,
+  BnfPortfolioPoint,
+  BnfPortfolioSeries,
   LeaderboardResponse,
   PerformanceWindow,
   TradeLogEntry,
@@ -221,3 +223,25 @@ export const mockLifetimeStats: Record<AgentId, AgentLifetimeStats> = {
   gale: buildLifetimeStats('gale'),
   metheus: buildLifetimeStats('metheus'),
 };
+
+function generateBnfSeries(): BnfPortfolioSeries {
+  const points: BnfPortfolioPoint[] = [];
+  const baseline = 680000; // $6,800 combined (accounts.yaml today)
+  for (let i = 47; i >= 0; i--) {
+    const t = new Date(now - i * 3600 * 1000 - 35 * 60 * 1000); // each ≥30-min delayed
+    const drift = Math.round(Math.sin((47 - i) / 6) * 4000) + (47 - i) * 250;
+    const combined = baseline + drift;
+    points.push({
+      captured_at: t.toISOString(),
+      combined_cleared_cents: combined,
+      combined_baseline_cents: baseline,
+      brandon_source: 'kalshi',
+      justin_source: 'reconstructed',
+      is_partial: false,
+      pct_vs_baseline: Math.round((combined / baseline - 1) * 10000) / 100,
+    });
+  }
+  return { points, updated_at: points[points.length - 1].captured_at };
+}
+
+export const mockBnfPortfolioSeries: BnfPortfolioSeries = generateBnfSeries();
