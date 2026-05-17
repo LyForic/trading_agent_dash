@@ -29,8 +29,9 @@ create index bnf_portfolio_snapshots_captured_at_idx
   on public.bnf_portfolio_snapshots (captured_at desc);
 
 alter table public.bnf_portfolio_snapshots enable row level security;
-revoke all on table public.bnf_portfolio_snapshots from anon, authenticated;
--- No anon/authenticated RLS policy ⇒ no access. service_role bypasses RLS.
+-- Include the PUBLIC role: Supabase default-privilege grants land on PUBLIC,
+-- not just anon/authenticated. RLS + zero grants ⇒ no access. service_role bypasses RLS.
+revoke all on table public.bnf_portfolio_snapshots from anon, authenticated, public;
 
 create view public.v_bnf_portfolio as
   select captured_at,
@@ -45,6 +46,11 @@ create view public.v_bnf_portfolio as
   where captured_at <= now() - interval '30 minutes'
   order by captured_at;
 
+-- The view runs as owner (security_invoker=false) so base-table RLS does NOT
+-- gate it, and a simple view can be auto-updatable. Clear all default-privilege
+-- grants on the view (incl. PUBLIC) BEFORE granting, so anon/authenticated/public
+-- cannot UPDATE/DELETE through it — only anon SELECT.
+revoke all on table public.v_bnf_portfolio from anon, authenticated, public;
 grant select on public.v_bnf_portfolio to anon;
 
 commit;
