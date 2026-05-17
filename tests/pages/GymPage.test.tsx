@@ -26,6 +26,11 @@ function renderGym(initialPath = '/gym') {
 }
 
 describe('GymPage Battle Arena V1.1', () => {
+  it('leads the gym roster with the combined BNF portfolio card', () => {
+    renderGym('/gym');
+    expect(screen.getByText(/Brandon \+ Justin/i)).toBeInTheDocument();
+  });
+
   it('opens and closes the Battle Arena from an InBattlePill', async () => {
     const user = userEvent.setup();
     renderGym('/gym');

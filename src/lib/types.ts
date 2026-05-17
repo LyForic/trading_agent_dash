@@ -89,3 +89,18 @@ export interface Snapshot {
   probability_yes: number;
   pnl_unrealized: number;
 }
+
+export interface BnfPortfolioPoint {
+  captured_at: string;            // ISO timestamp (already 30-min delayed by the view)
+  combined_cleared_cents: number;
+  combined_baseline_cents: number;
+  brandon_source: 'kalshi' | 'reconstructed';
+  justin_source: 'kalshi' | 'reconstructed';
+  is_partial: boolean;
+  pct_vs_baseline: number;        // percent, 2dp, from the view
+}
+
+export interface BnfPortfolioSeries {
+  points: BnfPortfolioPoint[];
+  updated_at: string;             // ISO; latest point's captured_at or fetch time
+}

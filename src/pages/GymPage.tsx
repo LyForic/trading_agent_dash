@@ -6,11 +6,13 @@ import { AgentCard } from '@/components/content/AgentCard';
 import { TrustStrip } from '@/components/content/TrustStrip';
 import { FooterTicker } from '@/components/content/FooterTicker';
 import { VisitDeltaStrip } from '@/components/content/VisitDeltaStrip';
+import { BnfPortfolioCard } from '@/components/content/BnfPortfolioCard';
 import { BattleArena } from '@/components/battle/BattleArena';
 import { BottomSheet } from '@/components/battle/BottomSheet';
 import { useAgentData } from '@/lib/useAgentData';
 import { useAgentWindow } from '@/lib/useAgentWindow';
 import { useVisitDelta } from '@/lib/useVisitDelta';
+import { useBnfPortfolio } from '@/lib/useBnfPortfolio';
 import { AGENT_IDS } from '@/lib/agentMeta';
 import type { AgentId, PerformanceWindow } from '@/lib/types';
 import type { RoomAgentState } from '@/components/world/RoomAgentLayer';
@@ -63,6 +65,7 @@ export function GymPage() {
   };
 
   const { data, cardViewModels, source, error, loading } = useAgentData(windowsByAgent);
+  const bnf = useBnfPortfolio();
   const { delta, dismiss } = useVisitDelta(data, source);
   const roomAgents = useMemo<RoomAgentState[]>(
     () => data.agents.map((agent) => ({
@@ -133,6 +136,8 @@ export function GymPage() {
         </div>
 
         <main className="px-4 pt-6 pb-10 space-y-4">
+          <BnfPortfolioCard data={bnf.data} failed={bnf.error?.kind === 'fetch-failed'} />
+
           {/* Communal /gym exit lives in normal flow so it never covers
               the TrustStrip's liveness signal on narrow screens. Focus
               routes keep the fixed top-left back button below. */}
