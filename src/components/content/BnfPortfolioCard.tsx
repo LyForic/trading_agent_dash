@@ -29,7 +29,7 @@ export function BnfPortfolioCard({ data, failed = false }: { data: BnfPortfolioS
       <section className="gym-chrome rounded-2xl px-4 py-5"
                style={{ color: 'var(--color-ink)', background: 'var(--color-paper)' }}>
         <h2 className="text-sm" style={{ color: 'var(--color-ink-muted)' }}>
-          Combined portfolio
+          Brandon + Justin · combined
         </h2>
         <p className="mt-2 text-sm" style={{ color: 'var(--color-ink-muted)' }}>
           {failed

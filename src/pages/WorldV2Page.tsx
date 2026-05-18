@@ -8,10 +8,12 @@ import {
   Sparkles,
   X,
 } from 'lucide-react';
+import { BnfPortfolioCard } from '@/components/content/BnfPortfolioCard';
 import { TimeFilterPill } from '@/components/content/TimeFilterPill';
 import { TradeLog } from '@/components/content/TradeLog';
 import { useAgentData } from '@/lib/useAgentData';
 import { useAgentWindow } from '@/lib/useAgentWindow';
+import { useBnfPortfolio } from '@/lib/useBnfPortfolio';
 import { AGENT_META } from '@/lib/agentMeta';
 import { formatPnl, formatWinRate } from '@/lib/formatting';
 import type { Agent, AgentId, PerformanceWindow } from '@/lib/types';
@@ -140,6 +142,7 @@ export function WorldV2Page() {
   );
 
   const { data, cardViewModels, source, error, loading } = useAgentData(windowsByAgent);
+  const bnf = useBnfPortfolio();
   const agentsById = useMemo(() => agentMap(data.agents), [data.agents]);
   const selectedAgent = selectedAgentId ? agentsById[selectedAgentId] : undefined;
   const selectedVm = selectedAgentId ? cardViewModels[selectedAgentId] : undefined;
@@ -202,6 +205,15 @@ export function WorldV2Page() {
         >
           <Menu size={18} aria-hidden />
         </button>
+      )}
+
+      {!isolatedTestMode && (
+        <div
+          className={`world-v2-bnf-panel${selectedAgentId ? ' world-v2-bnf-panel--muted' : ''}`}
+          aria-label="Combined portfolio snapshot"
+        >
+          <BnfPortfolioCard data={bnf.data} failed={bnf.error?.kind === 'fetch-failed'} />
+        </div>
       )}
 
       {!isolatedTestMode && (
