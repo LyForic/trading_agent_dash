@@ -8,7 +8,6 @@ import {
   Sparkles,
   X,
 } from 'lucide-react';
-import { BnfPortfolioCard } from '@/components/content/BnfPortfolioCard';
 import { TimeFilterPill } from '@/components/content/TimeFilterPill';
 import { TradeLog } from '@/components/content/TradeLog';
 import { useAgentData } from '@/lib/useAgentData';
@@ -117,6 +116,10 @@ function statusCopy(agent: Agent | undefined, loading: boolean) {
   return 'Roaming';
 }
 
+function formatTotalBalance(cents: number) {
+  return `$${Math.round(cents / 100).toLocaleString('en-US')}`;
+}
+
 function isMobileViewport() {
   return window.matchMedia('(max-width: 760px)').matches;
 }
@@ -146,6 +149,14 @@ export function WorldV2Page() {
   const agentsById = useMemo(() => agentMap(data.agents), [data.agents]);
   const selectedAgent = selectedAgentId ? agentsById[selectedAgentId] : undefined;
   const selectedVm = selectedAgentId ? cardViewModels[selectedAgentId] : undefined;
+  const latestBnfPoint = bnf.data.points[bnf.data.points.length - 1];
+  const totalBalanceCopy = latestBnfPoint
+    ? formatTotalBalance(latestBnfPoint.combined_cleared_cents)
+    : bnf.loading
+      ? 'Loading'
+      : bnf.error?.kind === 'fetch-failed'
+        ? 'Offline'
+        : 'Pending';
 
   const setWindowForAgent = (id: AgentId): ((w: PerformanceWindow) => void) => {
     if (id === 'apex') return setApexWindow;
@@ -208,15 +219,6 @@ export function WorldV2Page() {
       )}
 
       {!isolatedTestMode && (
-        <div
-          className={`world-v2-bnf-panel${selectedAgentId ? ' world-v2-bnf-panel--muted' : ''}`}
-          aria-label="Combined portfolio snapshot"
-        >
-          <BnfPortfolioCard data={bnf.data} failed={bnf.error?.kind === 'fetch-failed'} />
-        </div>
-      )}
-
-      {!isolatedTestMode && (
       <aside
         className={`world-v2-menu${menuHidden ? ' world-v2-menu--hidden' : ''}`}
         onPointerDown={handlePointerDown}
@@ -224,9 +226,13 @@ export function WorldV2Page() {
       >
         <div className="world-v2-sheet-handle" aria-hidden />
         <div className="world-v2-menu-head">
-          <div>
+          <div className="world-v2-menu-title">
             <p>Trading Gym V2</p>
             <h1>Living World</h1>
+          </div>
+          <div className="world-v2-total-bal" aria-label="Total balance" aria-live="polite">
+            <span>Total Bal.</span>
+            <strong>{totalBalanceCopy}</strong>
           </div>
           <button
             type="button"
