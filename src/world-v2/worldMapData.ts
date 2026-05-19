@@ -1,6 +1,6 @@
 import type { AgentId } from '@/lib/types';
 
-export type ZoneId = AgentId;
+export type ZoneId = AgentId | 'bacon';
 
 export interface WorldPoint {
   x: number;
@@ -20,7 +20,16 @@ export interface Poi {
   y: number;
   label: string;
   actionTexture?: string;
-  effect: 'apex-meditate' | 'apex-strike' | 'metheus-read' | 'metheus-telescope' | 'gale-cast' | 'gale-globe' | 'helper';
+  effect:
+    | 'apex-meditate'
+    | 'apex-strike'
+    | 'metheus-read'
+    | 'metheus-telescope'
+    | 'gale-cast'
+    | 'gale-globe'
+    | 'bacon-cook'
+    | 'bacon-harvest'
+    | 'helper';
   effectX?: number;
   effectY?: number;
   helperOnly?: boolean;
@@ -180,6 +189,11 @@ export const ZONES: Record<ZoneId, ZoneBounds> = {
     center: { x: 332, y: 735 },
     rect: { x: 24, y: 492, width: 640, height: 470 },
   },
+  bacon: {
+    id: 'bacon',
+    center: { x: -260, y: 462 },
+    rect: { x: -512, y: 32, width: 512, height: 930 },
+  },
 };
 
 export const NAV_MESH_POLYGONS: Record<ZoneId, WorldPoint[][]> = {
@@ -198,6 +212,20 @@ export const NAV_MESH_POLYGONS: Record<ZoneId, WorldPoint[][]> = {
     rectPoly(42, 526, 650, 938),
     rectPoly(138, 494, 558, 640),
     rectPoly(470, 638, 656, 940),
+  ],
+  bacon: [
+    [
+      { x: -486, y: 92 },
+      { x: -268, y: 76 },
+      { x: -78, y: 146 },
+      { x: -30, y: 330 },
+      { x: -50, y: 738 },
+      { x: -146, y: 920 },
+      { x: -414, y: 912 },
+      { x: -512, y: 716 },
+      { x: -512, y: 214 },
+    ],
+    rectPoly(-512, 506, -36, 742),
   ],
 };
 
@@ -219,17 +247,59 @@ export const POIS: Poi[] = [
   { id: 'rain-jars', zone: 'gale', x: 176, y: 870, label: 'Carry jars', actionTexture: 'actor-gale-helper-jar', effect: 'helper', helperOnly: true },
   { id: 'crystal-tune', zone: 'gale', x: 262, y: 626, label: 'Tune crystal', actionTexture: 'actor-gale-helper-crystal', effect: 'helper', helperOnly: true },
   { id: 'tool-check', zone: 'gale', x: 592, y: 846, label: 'Adjust tools', actionTexture: 'actor-gale-helper-tool', effect: 'helper', helperOnly: true },
+
+  { id: 'bacon-oven', zone: 'bacon', x: -258, y: 506, label: 'Fire oven', actionTexture: 'actor-bacon-cook', effect: 'bacon-cook', effectX: -256, effectY: 454 },
+  { id: 'bacon-harvest', zone: 'bacon', x: -414, y: 512, label: 'Inspect produce', actionTexture: 'actor-bacon-idle', effect: 'bacon-harvest' },
+  { id: 'bacon-produce-bed', zone: 'bacon', x: -414, y: 214, label: 'Carry produce', actionTexture: 'actor-bacon-helper-basket', effect: 'helper', helperOnly: true },
+  { id: 'bacon-stir-pot', zone: 'bacon', x: -128, y: 622, label: 'Stir pot', actionTexture: 'actor-bacon-helper-stir', effect: 'helper', helperOnly: true },
+  { id: 'bacon-herb-bed', zone: 'bacon', x: -346, y: 826, label: 'Pick herbs', actionTexture: 'actor-bacon-helper-basket', effect: 'helper', helperOnly: true },
 ];
 
 export const WORLD_PROPS: WorldProp[] = [];
 
-export const WORLD_COLLIDERS: WorldCollider[] = WORLD_PROPS.flatMap((propItem) => (
-  propItem.colliders?.map((points, index) => ({
-    id: `${propItem.id}-${index}`,
-    zone: propItem.zone,
-    points,
-  })) ?? []
-));
+const BACON_DEV_COLLIDERS: WorldCollider[] = [
+  {
+    id: 'bacon-dev-oven',
+    zone: 'bacon',
+    points: [
+      { x: -376, y: 326 },
+      { x: -124, y: 332 },
+      { x: -136, y: 544 },
+      { x: -366, y: 544 },
+    ],
+  },
+  {
+    id: 'bacon-dev-upper-produce-bed',
+    zone: 'bacon',
+    points: [
+      { x: -486, y: 142 },
+      { x: -286, y: 120 },
+      { x: -276, y: 224 },
+      { x: -478, y: 228 },
+    ],
+  },
+  {
+    id: 'bacon-dev-lower-herb-bed',
+    zone: 'bacon',
+    points: [
+      { x: -476, y: 746 },
+      { x: -246, y: 724 },
+      { x: -214, y: 838 },
+      { x: -420, y: 868 },
+    ],
+  },
+];
+
+export const WORLD_COLLIDERS: WorldCollider[] = [
+  ...WORLD_PROPS.flatMap((propItem) => (
+    propItem.colliders?.map((points, index) => ({
+      id: `${propItem.id}-${index}`,
+      zone: propItem.zone,
+      points,
+    })) ?? []
+  )),
+  ...BACON_DEV_COLLIDERS,
+];
 
 export const PROP_TEXTURES = Array.from(new Map(WORLD_PROPS.map((propItem) => [propItem.key, propItem.src])).entries())
   .map(([key, src]) => ({ key, src }));

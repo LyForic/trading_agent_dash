@@ -22,6 +22,7 @@
   --color-apex: hsl(200 68% 54%);
   --color-gale: hsl(170 60% 45%);
   --color-metheus: hsl(35 75% 55%);
+  --color-bacon: hsl(18 72% 58%);
 }
 
 /* World-layer tokens + time-of-day lighting.

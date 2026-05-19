@@ -13,12 +13,13 @@ import { TradeLog } from '@/components/content/TradeLog';
 import { useAgentData } from '@/lib/useAgentData';
 import { useAgentWindow } from '@/lib/useAgentWindow';
 import { useBnfPortfolio } from '@/lib/useBnfPortfolio';
-import { AGENT_META } from '@/lib/agentMeta';
 import { formatPnl, formatWinRate } from '@/lib/formatting';
 import type { Agent, AgentId, BnfPortfolioPoint, PerformanceWindow } from '@/lib/types';
+import type { ZoneId } from '@/world-v2/worldMapData';
 
 type LivingWorldSceneInstance = InstanceType<typeof import('@/world-v2/LivingWorldScene').LivingWorldScene>;
 type PhaserModule = typeof import('phaser');
+type WorldMenuAgentId = AgentId | 'bacon';
 
 const PORTRAITS: Record<AgentId, string> = {
   apex: '/world-v2/actors/apex-idle.png',
@@ -30,6 +31,26 @@ const TAGLINES: Record<AgentId, string> = {
   apex: 'Dojo market tactician',
   metheus: 'Archive researcher',
   gale: 'Weather spellcaster',
+};
+
+interface WorldMenuAgent {
+  id: WorldMenuAgentId;
+  liveId?: AgentId;
+  name: string;
+  tagline: string;
+  portrait: string;
+}
+
+const WORLD_MENU_AGENTS: Record<WorldMenuAgentId, WorldMenuAgent> = {
+  apex: { id: 'apex', liveId: 'apex', name: 'Apex', tagline: TAGLINES.apex, portrait: PORTRAITS.apex },
+  metheus: { id: 'metheus', liveId: 'metheus', name: 'Metheus', tagline: TAGLINES.metheus, portrait: PORTRAITS.metheus },
+  gale: { id: 'gale', liveId: 'gale', name: 'Gale', tagline: TAGLINES.gale, portrait: PORTRAITS.gale },
+  bacon: {
+    id: 'bacon',
+    name: 'Bacon',
+    tagline: 'Chef pig',
+    portrait: '/world-v2/actors/bacon-idle.svg',
+  },
 };
 
 const WORLD_AGENT_ORDER: AgentId[] = ['apex', 'metheus', 'gale'];
@@ -58,7 +79,7 @@ interface BnfChange {
 }
 
 interface PhaserWorldProps {
-  selectedAgentId: AgentId | null;
+  selectedAgentId: ZoneId | null;
   focusRequestId: number;
 }
 
@@ -194,13 +215,18 @@ function isMobileViewport() {
   return window.matchMedia('(max-width: 760px)').matches;
 }
 
+function isLiveAgentId(id: WorldMenuAgentId | null): id is AgentId {
+  return id === 'apex' || id === 'gale' || id === 'metheus';
+}
+
 export function WorldV2Page() {
   const worldTestParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+  const baconChunkMode = worldTestParams?.has('baconChunkTest') === true;
   const isolatedTestMode = worldTestParams?.has('apexTest') === true
     || worldTestParams?.has('treeTest') === true
     || worldTestParams?.has('manifestWorld') === true
     || worldTestParams?.has('groundOnly') === true;
-  const [selectedAgentId, setSelectedAgentId] = useState<AgentId | null>(null);
+  const [selectedAgentId, setSelectedAgentId] = useState<WorldMenuAgentId | null>(null);
   const [focusRequestId, setFocusRequestId] = useState(0);
   const [menuHidden, setMenuHidden] = useState(false);
   const [balanceWindow, setBalanceWindow] = useState<BnfChangeWindow>('24h');
@@ -220,8 +246,13 @@ export function WorldV2Page() {
   const { data, cardViewModels, source, error, loading } = useAgentData(windowsByAgent);
   const bnf = useBnfPortfolio();
   const agentsById = useMemo(() => agentMap(data.agents), [data.agents]);
-  const selectedAgent = selectedAgentId ? agentsById[selectedAgentId] : undefined;
-  const selectedVm = selectedAgentId ? cardViewModels[selectedAgentId] : undefined;
+  const worldAgentOrder = useMemo<WorldMenuAgentId[]>(
+    () => (baconChunkMode ? [...WORLD_AGENT_ORDER, 'bacon'] : WORLD_AGENT_ORDER),
+    [baconChunkMode],
+  );
+  const selectedLiveAgentId = isLiveAgentId(selectedAgentId) ? selectedAgentId : null;
+  const selectedAgent = selectedLiveAgentId ? agentsById[selectedLiveAgentId] : undefined;
+  const selectedVm = selectedLiveAgentId ? cardViewModels[selectedLiveAgentId] : undefined;
   const latestBnfPoint = bnf.data.points[bnf.data.points.length - 1];
   const bnfChanges = useMemo(
     () => BNF_CHANGE_WINDOWS.reduce<Record<BnfChangeWindow, BnfChange | null>>((acc, window) => {
@@ -279,7 +310,7 @@ export function WorldV2Page() {
     if (isMobileViewport()) setMenuHidden(false);
   };
 
-  const selectAgent = (id: AgentId) => {
+  const selectAgent = (id: WorldMenuAgentId) => {
     setSelectedAgentId(id);
     setFocusRequestId((requestId) => requestId + 1);
     setBalanceMenuOpen(false);
@@ -394,11 +425,11 @@ export function WorldV2Page() {
         </div>
 
         <div className="world-v2-agent-list">
-          {WORLD_AGENT_ORDER.map((id) => {
-            const meta = AGENT_META[id];
-            const vm = cardViewModels[id];
+          {worldAgentOrder.map((id) => {
+            const menuAgent = WORLD_MENU_AGENTS[id];
+            const vm = menuAgent.liveId ? cardViewModels[menuAgent.liveId] : null;
             const active = selectedAgentId === id;
-            const gain = vm.total_pnl >= 0;
+            const gain = (vm?.total_pnl ?? 0) >= 0;
             return (
               <button
                 key={id}
@@ -408,17 +439,26 @@ export function WorldV2Page() {
                 style={{ '--agent-accent': `var(--color-${id})` } as React.CSSProperties}
               >
                 <span className="world-v2-agent-portrait">
-                  <img src={PORTRAITS[id]} alt="" draggable={false} />
+                  <img src={menuAgent.portrait} alt="" draggable={false} />
                 </span>
                 <span className="world-v2-agent-copy">
-                  <span className="world-v2-agent-name">{meta.name}</span>
-                  <span className="world-v2-agent-role">{TAGLINES[id]}</span>
+                  <span className="world-v2-agent-name">{menuAgent.name}</span>
+                  <span className="world-v2-agent-role">{menuAgent.tagline}</span>
                 </span>
                 <span className="world-v2-agent-metrics">
-                  <span className={gain ? 'world-v2-gain' : 'world-v2-loss'}>
-                    {formatPnl(vm.total_pnl)}
-                  </span>
-                  <span>{formatWinRate(vm.record.W, vm.record.settled)} WR</span>
+                  {vm ? (
+                    <>
+                      <span className={gain ? 'world-v2-gain' : 'world-v2-loss'}>
+                        {formatPnl(vm.total_pnl)}
+                      </span>
+                      <span>{formatWinRate(vm.record.W, vm.record.settled)} WR</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>Prep</span>
+                      <span>Soon</span>
+                    </>
+                  )}
                 </span>
               </button>
             );
@@ -432,11 +472,11 @@ export function WorldV2Page() {
       </aside>
       )}
 
-      {!isolatedTestMode && selectedAgentId && selectedAgent && selectedVm && (
+      {!isolatedTestMode && selectedLiveAgentId && selectedAgent && selectedVm && (
         <section
           className="world-v2-stats-panel"
           aria-label={`${selectedAgent.name} trade stats`}
-          style={{ '--agent-accent': `var(--color-${selectedAgentId})` } as React.CSSProperties}
+          style={{ '--agent-accent': `var(--color-${selectedLiveAgentId})` } as React.CSSProperties}
         >
           <div className="world-v2-stats-head">
             <button
@@ -449,7 +489,7 @@ export function WorldV2Page() {
             </button>
             <img
               className="world-v2-stats-portrait"
-              src={PORTRAITS[selectedAgentId]}
+              src={PORTRAITS[selectedLiveAgentId]}
               alt=""
               draggable={false}
             />
@@ -491,18 +531,76 @@ export function WorldV2Page() {
           </div>
 
           <TimeFilterPill
-            agentId={selectedAgentId}
+            agentId={selectedLiveAgentId}
             agentName={selectedAgent.name}
-            currentWindow={windowsByAgent[selectedAgentId]}
-            setWindow={setWindowForAgent(selectedAgentId)}
+            currentWindow={windowsByAgent[selectedLiveAgentId]}
+            setWindow={setWindowForAgent(selectedLiveAgentId)}
           />
 
           <TradeLog
             rows={selectedVm.tradeLog}
             windowSettledCount={selectedVm.windowSettledCount}
-            window={windowsByAgent[selectedAgentId]}
+            window={windowsByAgent[selectedLiveAgentId]}
             hasOpenPosition={selectedAgent.open_position !== null}
           />
+        </section>
+      )}
+
+      {!isolatedTestMode && selectedAgentId === 'bacon' && (
+        <section
+          className="world-v2-stats-panel"
+          aria-label="Bacon area preview"
+          style={{ '--agent-accent': 'var(--color-bacon)' } as React.CSSProperties}
+        >
+          <div className="world-v2-stats-head">
+            <button
+              type="button"
+              className="world-v2-back-button"
+              onClick={closeFocus}
+              aria-label="Back to full world"
+            >
+              <ArrowLeft size={18} aria-hidden />
+            </button>
+            <img
+              className="world-v2-stats-portrait"
+              src={WORLD_MENU_AGENTS.bacon.portrait}
+              alt=""
+              draggable={false}
+            />
+            <div className="world-v2-stats-title">
+              <p>Kitchen prep</p>
+              <h2>Bacon</h2>
+              <span>Chef Pig</span>
+            </div>
+            <button
+              type="button"
+              className="world-v2-icon-button world-v2-close-button"
+              onClick={closeFocus}
+              aria-label="Close stats panel"
+            >
+              <X size={18} aria-hidden />
+            </button>
+          </div>
+
+          <div className="world-v2-stat-grid">
+            <div>
+              <span>Area</span>
+              <strong>West</strong>
+            </div>
+            <div>
+              <span>Helpers</span>
+              <strong>5</strong>
+            </div>
+            <div>
+              <span>Status</span>
+              <strong>Blockout</strong>
+            </div>
+          </div>
+
+          <div className="world-v2-market-line">
+            <BarChart3 size={15} aria-hidden />
+            <span>Cooking and food expansion preview</span>
+          </div>
         </section>
       )}
     </main>

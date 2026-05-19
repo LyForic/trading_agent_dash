@@ -1,7 +1,6 @@
 import NavMeshRuntime from 'navmesh';
 import type { NavMesh as NavMeshInstance } from 'navmesh';
 import Phaser from 'phaser';
-import type { AgentId } from '@/lib/types';
 import {
   AUTHORED_PROP_TEXTURES,
   ACTOR_TEXTURES,
@@ -84,9 +83,11 @@ type ActorKind =
   | 'apex'
   | 'metheus'
   | 'gale'
+  | 'bacon'
   | 'apex-helper'
   | 'metheus-helper'
-  | 'gale-helper';
+  | 'gale-helper'
+  | 'bacon-helper';
 type WalkDirection = typeof WALK_DIRECTIONS[number];
 
 interface LivingActor {
@@ -266,6 +267,37 @@ const HELPER_CONFIG: Array<{ kind: ActorKind; zone: ZoneId; textures: string[]; 
   },
 ];
 
+const BACON_ACTOR_TEXTURES = [
+  { key: 'actor-bacon-idle', src: '/world-v2/actors/bacon-idle.svg' },
+  { key: 'actor-bacon-cook', src: '/world-v2/actors/bacon-cook.svg' },
+  { key: 'actor-bacon-helper-idle', src: '/world-v2/actors/bacon-helper-idle.svg' },
+  { key: 'actor-bacon-helper-basket', src: '/world-v2/actors/bacon-helper-basket.svg' },
+  { key: 'actor-bacon-helper-stir', src: '/world-v2/actors/bacon-helper-stir.svg' },
+] as const;
+
+const BACON_AGENT_ACTOR_CONFIG: (typeof AGENT_ACTOR_CONFIG)[number] = {
+  id: 'bacon',
+  zone: 'bacon',
+  kind: 'bacon',
+  idleTexture: 'actor-bacon-idle',
+  actionTextures: ['actor-bacon-cook'],
+  x: -258,
+  y: 604,
+  speed: 38,
+  scale: 0.58,
+};
+
+const BACON_HELPER_CONFIG: Array<{ kind: ActorKind; zone: ZoneId; textures: string[]; count: number; scale: number; speed: number }> = [
+  {
+    kind: 'bacon-helper',
+    zone: 'bacon',
+    textures: ['actor-bacon-helper-idle', 'actor-bacon-helper-basket', 'actor-bacon-helper-stir'],
+    count: 5,
+    scale: 0.39,
+    speed: 34,
+  },
+];
+
 const DEV_WORLD_TOOLS = import.meta.env.DEV;
 const queryParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
 const DEBUG_WORLD = DEV_WORLD_TOOLS && (queryParams?.has('debugWorld') ?? false);
@@ -393,7 +425,7 @@ export class LivingWorldScene extends Phaser.Scene {
   private readonly focusedZoomMobile = 0.92;
   private focusedZone: ZoneId | null = null;
   private sceneReady = false;
-  private pendingFocusAgent: AgentId | null | undefined;
+  private pendingFocusAgent: ZoneId | null | undefined;
   private cameraMode: 'home' | 'focused' | 'manual' = 'home';
   private activeCameraPointers = new Map<number, { x: number; y: number }>();
   private cameraDrag: {
@@ -430,6 +462,11 @@ export class LivingWorldScene extends Phaser.Scene {
     }
     for (const key of ACTOR_TEXTURES) {
       this.load.image(`actor-${key}`, `/world-v2/actors/${key}.png`);
+    }
+    if (DEV_BACON_CHUNK_TEST) {
+      for (const texture of BACON_ACTOR_TEXTURES) {
+        this.load.image(texture.key, texture.src);
+      }
     }
     for (const slug of ACTOR_WALK_SHEETS) {
       this.load.spritesheet(`actor-${slug}-walk`, `/world-v2/actors/walk/${slug}-walk.png`, {
@@ -534,7 +571,7 @@ export class LivingWorldScene extends Phaser.Scene {
     if (DEBUG_WORLD) this.updateDebugActorMarkers();
   }
 
-  focusAgent(agentId: AgentId | null) {
+  focusAgent(agentId: ZoneId | null) {
     if (!this.sceneReady) {
       this.pendingFocusAgent = agentId;
       return;
@@ -1028,9 +1065,12 @@ export class LivingWorldScene extends Phaser.Scene {
   }
 
   private createActors() {
+    const activeAgentConfigs = DEV_BACON_CHUNK_TEST
+      ? [...AGENT_ACTOR_CONFIG, BACON_AGENT_ACTOR_CONFIG]
+      : AGENT_ACTOR_CONFIG;
     const agentConfigs = DEBUG_ISOLATED_TEST
       ? AGENT_ACTOR_CONFIG.filter((config) => config.id === 'apex')
-      : AGENT_ACTOR_CONFIG;
+      : activeAgentConfigs;
     for (const config of agentConfigs) {
       this.actors.push(this.createActor(config));
     }
@@ -1040,7 +1080,10 @@ export class LivingWorldScene extends Phaser.Scene {
       return;
     }
 
-    for (const helper of HELPER_CONFIG) {
+    const helperConfigs = DEV_BACON_CHUNK_TEST
+      ? [...HELPER_CONFIG, ...BACON_HELPER_CONFIG]
+      : HELPER_CONFIG;
+    for (const helper of helperConfigs) {
       for (let i = 0; i < helper.count; i += 1) {
         const point = this.randomNavPoint(helper.zone);
         const texture = helper.textures[i % helper.textures.length];
@@ -1588,6 +1631,14 @@ export class LivingWorldScene extends Phaser.Scene {
       this.globePulse(x, y - 30);
       return;
     }
+    if (poi.effect === 'bacon-cook') {
+      this.ovenFlare(x, y);
+      return;
+    }
+    if (poi.effect === 'bacon-harvest') {
+      this.harvestPop(x, y);
+      return;
+    }
     this.helperSpark(x, y - 28);
   }
 
@@ -1795,6 +1846,51 @@ export class LivingWorldScene extends Phaser.Scene {
       ease: 'Sine.easeOut',
       onComplete: () => dot.destroy(),
     });
+  }
+
+  private ovenFlare(x: number, y: number) {
+    this.ringPulse(x, y - 20, 0xffb35c, 64);
+    for (let i = 0; i < 7; i += 1) {
+      const ember = this.add.circle(
+        x + Phaser.Math.Between(-28, 28),
+        y + Phaser.Math.Between(-30, 18),
+        Phaser.Math.Between(3, 6),
+        Phaser.Math.RND.pick([0xffd27a, 0xff8a4a, 0xffefae]),
+        0.82,
+      ).setDepth(DEPTH.effectBase + y);
+      this.tweens.add({
+        targets: ember,
+        y: ember.y - Phaser.Math.Between(24, 58),
+        x: ember.x + Phaser.Math.Between(-16, 16),
+        alpha: 0,
+        scale: 1.7,
+        duration: Phaser.Math.Between(560, 980),
+        ease: 'Sine.easeOut',
+        onComplete: () => ember.destroy(),
+      });
+    }
+  }
+
+  private harvestPop(x: number, y: number) {
+    for (let i = 0; i < 6; i += 1) {
+      const veggie = this.add.ellipse(
+        x + Phaser.Math.Between(-22, 22),
+        y - 18,
+        Phaser.Math.Between(8, 13),
+        Phaser.Math.Between(6, 10),
+        Phaser.Math.RND.pick([0x83c75d, 0xf0c34f, 0xe85a47, 0xf07b35]),
+        0.86,
+      ).setDepth(DEPTH.effectBase + y);
+      this.tweens.add({
+        targets: veggie,
+        y: y - Phaser.Math.Between(42, 72),
+        alpha: 0,
+        rotation: Phaser.Math.FloatBetween(-0.8, 0.8),
+        duration: Phaser.Math.Between(700, 1120),
+        ease: 'Sine.easeOut',
+        onComplete: () => veggie.destroy(),
+      });
+    }
   }
 
   private spawnPetalSpiral(x: number, y: number) {
@@ -2350,6 +2446,13 @@ function manifestPoiBehavior(zone: ZoneId, object: ManifestObject): Pick<Poi, 'a
     return { actionTexture: 'actor-gale-cast', effect: 'gale-cast' };
   }
 
+  if (zone === 'bacon') {
+    if (searchableText.includes('harvest') || searchableText.includes('produce') || searchableText.includes('herb')) {
+      return { actionTexture: 'actor-bacon-idle', effect: 'bacon-harvest' };
+    }
+    return { actionTexture: 'actor-bacon-cook', effect: 'bacon-cook' };
+  }
+
   if (searchableText.includes('scope') || searchableText.includes('observatory')) {
     return { actionTexture: 'actor-metheus-telescope', effect: 'metheus-telescope' };
   }
@@ -2357,7 +2460,7 @@ function manifestPoiBehavior(zone: ZoneId, object: ManifestObject): Pick<Poi, 'a
 }
 
 function agentZoneFromString(zone: string): ZoneId | null {
-  if (zone === 'apex' || zone === 'gale' || zone === 'metheus') return zone;
+  if (zone === 'apex' || zone === 'gale' || zone === 'metheus' || zone === 'bacon') return zone;
   return null;
 }
 
