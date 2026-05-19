@@ -229,6 +229,7 @@ export function WorldV2Page() {
   const [selectedAgentId, setSelectedAgentId] = useState<WorldMenuAgentId | null>(null);
   const [focusRequestId, setFocusRequestId] = useState(0);
   const [menuHidden, setMenuHidden] = useState(false);
+  const [menuExpanded, setMenuExpanded] = useState(false);
   const [balanceWindow, setBalanceWindow] = useState<BnfChangeWindow>('24h');
   const [balanceMenuOpen, setBalanceMenuOpen] = useState(false);
   const dragStartY = useRef<number | null>(null);
@@ -250,6 +251,8 @@ export function WorldV2Page() {
     () => (baconChunkMode ? [...WORLD_AGENT_ORDER, 'bacon'] : WORLD_AGENT_ORDER),
     [baconChunkMode],
   );
+  const primaryWorldAgentOrder = worldAgentOrder.slice(0, 3);
+  const extraWorldAgentOrder = worldAgentOrder.slice(3);
   const selectedLiveAgentId = isLiveAgentId(selectedAgentId) ? selectedAgentId : null;
   const selectedAgent = selectedLiveAgentId ? agentsById[selectedLiveAgentId] : undefined;
   const selectedVm = selectedLiveAgentId ? cardViewModels[selectedLiveAgentId] : undefined;
@@ -314,6 +317,7 @@ export function WorldV2Page() {
     setSelectedAgentId(id);
     setFocusRequestId((requestId) => requestId + 1);
     setBalanceMenuOpen(false);
+    setMenuExpanded(false);
     if (isMobileViewport()) setMenuHidden(true);
   };
 
@@ -326,10 +330,58 @@ export function WorldV2Page() {
     if (dragStartY.current === null) return;
     const dragged = event.clientY - dragStartY.current;
     dragStartY.current = null;
+    if (dragged < -42) {
+      setMenuExpanded(true);
+      setBalanceMenuOpen(false);
+      return;
+    }
     if (dragged > 42) {
       setBalanceMenuOpen(false);
-      setMenuHidden(true);
+      if (menuExpanded) {
+        setMenuExpanded(false);
+      } else {
+        setMenuHidden(true);
+      }
     }
+  };
+
+  const renderAgentButton = (id: WorldMenuAgentId) => {
+    const menuAgent = WORLD_MENU_AGENTS[id];
+    const vm = menuAgent.liveId ? cardViewModels[menuAgent.liveId] : null;
+    const active = selectedAgentId === id;
+    const gain = (vm?.total_pnl ?? 0) >= 0;
+    return (
+      <button
+        key={id}
+        type="button"
+        className={`world-v2-agent-button${active ? ' world-v2-agent-button--active' : ''}`}
+        onClick={() => selectAgent(id)}
+        style={{ '--agent-accent': `var(--color-${id})` } as React.CSSProperties}
+      >
+        <span className="world-v2-agent-portrait">
+          <img src={menuAgent.portrait} alt="" draggable={false} />
+        </span>
+        <span className="world-v2-agent-copy">
+          <span className="world-v2-agent-name">{menuAgent.name}</span>
+          <span className="world-v2-agent-role">{menuAgent.tagline}</span>
+        </span>
+        <span className="world-v2-agent-metrics">
+          {vm ? (
+            <>
+              <span className={gain ? 'world-v2-gain' : 'world-v2-loss'}>
+                {formatPnl(vm.total_pnl)}
+              </span>
+              <span>{formatWinRate(vm.record.W, vm.record.settled)} WR</span>
+            </>
+          ) : (
+            <>
+              <span>Prep</span>
+              <span>Soon</span>
+            </>
+          )}
+        </span>
+      </button>
+    );
   };
 
   const dataSourceLabel = source === 'live'
@@ -348,7 +400,10 @@ export function WorldV2Page() {
         <button
           type="button"
           className="world-v2-menu-peek"
-          onClick={() => setMenuHidden(false)}
+          onClick={() => {
+            setMenuHidden(false);
+            setMenuExpanded(false);
+          }}
           aria-label="Show agent menu"
         >
           <Menu size={18} aria-hidden />
@@ -357,7 +412,7 @@ export function WorldV2Page() {
 
       {!isolatedTestMode && (
       <aside
-        className={`world-v2-menu${menuHidden ? ' world-v2-menu--hidden' : ''}${balanceMenuOpen ? ' world-v2-menu--balance-open' : ''}`}
+        className={`world-v2-menu${menuHidden ? ' world-v2-menu--hidden' : ''}${menuExpanded ? ' world-v2-menu--expanded' : ''}${balanceMenuOpen ? ' world-v2-menu--balance-open' : ''}`}
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
       >
@@ -415,6 +470,7 @@ export function WorldV2Page() {
             className="world-v2-icon-button"
             onClick={() => {
               setBalanceMenuOpen(false);
+              setMenuExpanded(false);
               setMenuHidden(true);
             }}
             aria-label="Hide agent menu"
@@ -425,44 +481,14 @@ export function WorldV2Page() {
         </div>
 
         <div className="world-v2-agent-list">
-          {worldAgentOrder.map((id) => {
-            const menuAgent = WORLD_MENU_AGENTS[id];
-            const vm = menuAgent.liveId ? cardViewModels[menuAgent.liveId] : null;
-            const active = selectedAgentId === id;
-            const gain = (vm?.total_pnl ?? 0) >= 0;
-            return (
-              <button
-                key={id}
-                type="button"
-                className={`world-v2-agent-button${active ? ' world-v2-agent-button--active' : ''}`}
-                onClick={() => selectAgent(id)}
-                style={{ '--agent-accent': `var(--color-${id})` } as React.CSSProperties}
-              >
-                <span className="world-v2-agent-portrait">
-                  <img src={menuAgent.portrait} alt="" draggable={false} />
-                </span>
-                <span className="world-v2-agent-copy">
-                  <span className="world-v2-agent-name">{menuAgent.name}</span>
-                  <span className="world-v2-agent-role">{menuAgent.tagline}</span>
-                </span>
-                <span className="world-v2-agent-metrics">
-                  {vm ? (
-                    <>
-                      <span className={gain ? 'world-v2-gain' : 'world-v2-loss'}>
-                        {formatPnl(vm.total_pnl)}
-                      </span>
-                      <span>{formatWinRate(vm.record.W, vm.record.settled)} WR</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>Prep</span>
-                      <span>Soon</span>
-                    </>
-                  )}
-                </span>
-              </button>
-            );
-          })}
+          <div className="world-v2-agent-list-primary">
+            {primaryWorldAgentOrder.map(renderAgentButton)}
+          </div>
+          {extraWorldAgentOrder.length > 0 && (
+            <div className="world-v2-agent-list-extra">
+              {extraWorldAgentOrder.map(renderAgentButton)}
+            </div>
+          )}
         </div>
 
         <div className="world-v2-data-status">
