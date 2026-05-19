@@ -76,8 +76,16 @@ export interface WorldMapChunk extends WorldLayerAsset {
   height: number;
 }
 
+export interface WorldBounds {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 export interface WorldMapData {
   worldSize: typeof WORLD_SIZE;
+  worldBounds: WorldBounds;
   groundLayer: WorldLayerAsset;
   referenceLayer: WorldLayerAsset;
   groundChunks: WorldMapChunk[];
@@ -133,6 +141,16 @@ export const DEV_TEST_EAST_EXPANSION_CHUNK: WorldMapChunk = {
   x: WORLD_SIZE.width,
   y: 0,
   width: 384,
+  height: WORLD_SIZE.height,
+};
+
+export const DEV_TEST_BACON_WEST_EXPANSION_CHUNK: WorldMapChunk = {
+  id: 'dev-bacon-west-expansion-test',
+  key: 'world-v2-dev-bacon-west-expansion-test',
+  src: '/world-v2/layers/dev-bacon-west-expansion-test.svg',
+  x: -512,
+  y: 0,
+  width: 512,
   height: WORLD_SIZE.height,
 };
 
@@ -254,6 +272,7 @@ export const AUTHORED_PROP_TEXTURES: WorldTexture[] = AUTHORED_PROP_ASSETS.map((
 
 export const FALLBACK_WORLD_DATA: WorldMapData = {
   worldSize: worldSizeFromChunks([...GROUND_CHUNKS, ...REFERENCE_CHUNKS], WORLD_SIZE),
+  worldBounds: worldBoundsFromChunks([...GROUND_CHUNKS, ...REFERENCE_CHUNKS], boundsFromSize(WORLD_SIZE)),
   groundLayer: GROUND_LAYER,
   referenceLayer: REFERENCE_LAYER,
   groundChunks: GROUND_CHUNKS,
@@ -297,11 +316,38 @@ function rectPoly(x1: number, y1: number, x2: number, y2: number): WorldPoint[] 
 }
 
 export function worldSizeFromChunks(chunks: WorldMapChunk[], fallback: typeof WORLD_SIZE = WORLD_SIZE) {
-  return chunks.reduce(
-    (size, chunk) => ({
-      width: Math.max(size.width, chunk.x + chunk.width),
-      height: Math.max(size.height, chunk.y + chunk.height),
+  const bounds = worldBoundsFromChunks(chunks, boundsFromSize(fallback));
+  return {
+    width: bounds.width,
+    height: bounds.height,
+  };
+}
+
+export function worldBoundsFromChunks(chunks: WorldMapChunk[], fallback: WorldBounds = boundsFromSize(WORLD_SIZE)) {
+  if (chunks.length === 0) return { ...fallback };
+  const extents = chunks.reduce(
+    (bounds, chunk) => ({
+      minX: Math.min(bounds.minX, chunk.x),
+      minY: Math.min(bounds.minY, chunk.y),
+      maxX: Math.max(bounds.maxX, chunk.x + chunk.width),
+      maxY: Math.max(bounds.maxY, chunk.y + chunk.height),
     }),
-    { ...fallback },
+    {
+      minX: fallback.x,
+      minY: fallback.y,
+      maxX: fallback.x + fallback.width,
+      maxY: fallback.y + fallback.height,
+    },
   );
+
+  return {
+    x: extents.minX,
+    y: extents.minY,
+    width: extents.maxX - extents.minX,
+    height: extents.maxY - extents.minY,
+  };
+}
+
+export function boundsFromSize(size: typeof WORLD_SIZE): WorldBounds {
+  return { x: 0, y: 0, width: size.width, height: size.height };
 }

@@ -5,6 +5,7 @@ import type { AgentId } from '@/lib/types';
 import {
   AUTHORED_PROP_TEXTURES,
   ACTOR_TEXTURES,
+  DEV_TEST_BACON_WEST_EXPANSION_CHUNK,
   DEV_TEST_EAST_EXPANSION_CHUNK,
   FALLBACK_WORLD_DATA,
   TILED_WORLD_MAP,
@@ -15,6 +16,7 @@ import {
   type WorldMapData,
   type WorldPoint,
   type ZoneId,
+  worldBoundsFromChunks,
   worldSizeFromChunks,
 } from './worldMapData';
 import { buildWorldFromTiledMap } from './tiledMap';
@@ -273,6 +275,11 @@ const DEBUG_MANIFEST_WORLD = DEV_WORLD_TOOLS && (queryParams?.has('manifestWorld
 const MANIFEST_ROLE_FILTER = DEV_WORLD_TOOLS ? queryParams?.get('manifestRole') as ManifestRole | null : null;
 const MANIFEST_RUNTIME = manifestRuntimeFromQuery(queryParams);
 const DEV_CHUNK_TEST = DEV_WORLD_TOOLS && (queryParams?.has('chunkTest') ?? false);
+const DEV_BACON_CHUNK_TEST = DEV_WORLD_TOOLS && (queryParams?.has('baconChunkTest') ?? false);
+const ACTIVE_DEV_TEST_CHUNKS: WorldMapChunk[] = [
+  ...(DEV_CHUNK_TEST ? [DEV_TEST_EAST_EXPANSION_CHUNK] : []),
+  ...(DEV_BACON_CHUNK_TEST ? [DEV_TEST_BACON_WEST_EXPANSION_CHUNK] : []),
+];
 const ACTOR_TUNING = DEV_WORLD_TOOLS && (queryParams?.has('actorTuning') ?? false);
 const DEBUG_ISOLATED_TEST = DEBUG_APEX_TEST || DEBUG_TREE_TEST || DEBUG_MANIFEST_WORLD;
 const REFERENCE_WORLD = DEV_WORLD_TOOLS && (queryParams?.has('referenceWorld') ?? false);
@@ -437,7 +444,7 @@ export class LivingWorldScene extends Phaser.Scene {
     if (MANIFEST_RUNTIME) {
       this.worldData = this.applyManifestRuntimeData(this.worldData);
     }
-    if (DEV_CHUNK_TEST) {
+    if (ACTIVE_DEV_TEST_CHUNKS.length > 0) {
       this.worldData = this.applyDevChunkTestData(this.worldData);
     }
     this.zoneNavPolygons = new Map(
@@ -497,8 +504,8 @@ export class LivingWorldScene extends Phaser.Scene {
     for (const chunk of [...FALLBACK_WORLD_DATA.groundChunks, ...FALLBACK_WORLD_DATA.referenceChunks]) {
       chunkTextures.set(chunk.key, chunk.src);
     }
-    if (DEV_CHUNK_TEST) {
-      chunkTextures.set(DEV_TEST_EAST_EXPANSION_CHUNK.key, DEV_TEST_EAST_EXPANSION_CHUNK.src);
+    for (const chunk of ACTIVE_DEV_TEST_CHUNKS) {
+      chunkTextures.set(chunk.key, chunk.src);
     }
     for (const [key, src] of chunkTextures.entries()) {
       this.load.image(key, src);
@@ -612,19 +619,20 @@ export class LivingWorldScene extends Phaser.Scene {
     }
     this.homeZoom = this.cameraZoomBounds().min;
     const camera = this.cameras.main;
+    const homeCenter = this.worldBoundsCenter();
     if (instant) {
       this.applyCameraZoom(this.homeZoom);
-      this.centerCameraOn(this.worldData.worldSize.width / 2, this.worldData.worldSize.height / 2);
+      this.centerCameraOn(homeCenter.x, homeCenter.y);
       return;
     }
-    camera.pan(this.worldData.worldSize.width / 2, this.worldData.worldSize.height / 2, 850, 'Sine.easeInOut');
+    camera.pan(homeCenter.x, homeCenter.y, 850, 'Sine.easeInOut');
     camera.zoomTo(this.homeZoom, 850, 'Sine.easeInOut');
     this.time.delayedCall(875, () => this.clampCameraToWorld());
   }
 
   private cameraZoomBounds() {
     const { width, height } = this.cameraViewportSize();
-    const min = Math.max(width / this.worldData.worldSize.width, height / this.worldData.worldSize.height);
+    const min = Math.max(width / this.worldData.worldBounds.width, height / this.worldData.worldBounds.height);
     const mobile = width < 700;
     const maxBase = mobile ? MOBILE_MAX_ZOOM : DESKTOP_MAX_ZOOM;
     return {
@@ -660,41 +668,47 @@ export class LivingWorldScene extends Phaser.Scene {
   }
 
   private clampedCameraCenterFor(center: WorldPoint, zoom = this.cameras.main.zoom) {
-    const worldWidth = this.worldData.worldSize.width;
-    const worldHeight = this.worldData.worldSize.height;
+    const bounds = this.worldData.worldBounds;
     const { width, height } = this.cameraViewportSize();
     const viewWidth = width / zoom;
     const viewHeight = height / zoom;
-    const minX = viewWidth / 2;
-    const maxX = worldWidth - minX;
-    const minY = viewHeight / 2;
-    const maxY = worldHeight - minY;
+    const minX = bounds.x + (viewWidth / 2);
+    const maxX = bounds.x + bounds.width - (viewWidth / 2);
+    const minY = bounds.y + (viewHeight / 2);
+    const maxY = bounds.y + bounds.height - (viewHeight / 2);
 
     return {
-      x: maxX <= minX ? worldWidth / 2 : Phaser.Math.Clamp(center.x, minX, maxX),
-      y: maxY <= minY ? worldHeight / 2 : Phaser.Math.Clamp(center.y, minY, maxY),
+      x: maxX <= minX ? bounds.x + (bounds.width / 2) : Phaser.Math.Clamp(center.x, minX, maxX),
+      y: maxY <= minY ? bounds.y + (bounds.height / 2) : Phaser.Math.Clamp(center.y, minY, maxY),
     };
   }
 
   private clampCameraToWorld() {
     const camera = this.cameras.main;
-    const worldWidth = this.worldData.worldSize.width;
-    const worldHeight = this.worldData.worldSize.height;
+    const bounds = this.worldData.worldBounds;
     const { width, height } = this.cameraViewportSize();
     const originX = width * camera.originX;
     const originY = height * camera.originY;
-    const minScrollX = (originX / camera.zoom) - originX;
-    const minScrollY = (originY / camera.zoom) - originY;
-    const maxScrollX = worldWidth - originX - ((width - originX) / camera.zoom);
-    const maxScrollY = worldHeight - originY - ((height - originY) / camera.zoom);
+    const minScrollX = bounds.x + (originX / camera.zoom) - originX;
+    const minScrollY = bounds.y + (originY / camera.zoom) - originY;
+    const maxScrollX = bounds.x + bounds.width - originX - ((width - originX) / camera.zoom);
+    const maxScrollY = bounds.y + bounds.height - originY - ((height - originY) / camera.zoom);
     camera.setScroll(
       maxScrollX <= minScrollX
-        ? (worldWidth / 2) - originX
+        ? bounds.x + (bounds.width / 2) - originX
         : Phaser.Math.Clamp(camera.scrollX, minScrollX, maxScrollX),
       maxScrollY <= minScrollY
-        ? (worldHeight / 2) - originY
+        ? bounds.y + (bounds.height / 2) - originY
         : Phaser.Math.Clamp(camera.scrollY, minScrollY, maxScrollY),
     );
+  }
+
+  private worldBoundsCenter() {
+    const bounds = this.worldData.worldBounds;
+    return {
+      x: bounds.x + (bounds.width / 2),
+      y: bounds.y + (bounds.height / 2),
+    };
   }
 
   private syncCameraViewport() {
@@ -1353,7 +1367,7 @@ export class LivingWorldScene extends Phaser.Scene {
       return this.worldData.navMeshPolygons[zone].filter((polygon) => polygon.length >= 3);
     }
 
-    const rect = navBoundsForZone(this.worldData.navMeshPolygons[zone], this.worldData.zones[zone].rect, this.worldData.worldSize);
+    const rect = navBoundsForZone(this.worldData.navMeshPolygons[zone], this.worldData.zones[zone].rect, this.worldData.worldBounds);
     const cols = Math.ceil(rect.width / NAV_TILE_SIZE);
     const rows = Math.ceil(rect.height / NAV_TILE_SIZE);
     const grid = Array.from({ length: rows }, (_, row) => (
@@ -2005,9 +2019,14 @@ export class LivingWorldScene extends Phaser.Scene {
 
   private applyDevChunkTestData(worldData: WorldMapData): WorldMapData {
     const appendChunk = (chunks: WorldMapChunk[]) => (
-      chunks.some((chunk) => chunk.id === DEV_TEST_EAST_EXPANSION_CHUNK.id)
-        ? chunks
-        : [...chunks, DEV_TEST_EAST_EXPANSION_CHUNK]
+      ACTIVE_DEV_TEST_CHUNKS.reduce(
+        (nextChunks, devChunk) => (
+          nextChunks.some((chunk) => chunk.id === devChunk.id)
+            ? nextChunks
+            : [...nextChunks, devChunk]
+        ),
+        chunks,
+      )
     );
     const groundChunks = appendChunk(worldData.groundChunks);
     const referenceChunks = appendChunk(worldData.referenceChunks);
@@ -2017,6 +2036,7 @@ export class LivingWorldScene extends Phaser.Scene {
       groundChunks,
       referenceChunks,
       worldSize: worldSizeFromChunks([...groundChunks, ...referenceChunks], worldData.worldSize),
+      worldBounds: worldBoundsFromChunks([...groundChunks, ...referenceChunks], worldData.worldBounds),
     };
   }
 
@@ -2205,17 +2225,17 @@ function polygonBounds(polygon: WorldPoint[]) {
 function navBoundsForZone(
   polygons: WorldPoint[][],
   fallback: { x: number; y: number; width: number; height: number },
-  worldSize: { width: number; height: number },
+  worldBounds: { x: number; y: number; width: number; height: number },
 ) {
   const points = polygons.flat();
   if (points.length === 0) return fallback;
   const bounds = polygonBounds(points);
   if (!Number.isFinite(bounds.minX) || !Number.isFinite(bounds.minY)) return fallback;
 
-  const x = Math.max(0, Math.floor(bounds.minX / NAV_TILE_SIZE) * NAV_TILE_SIZE);
-  const y = Math.max(0, Math.floor(bounds.minY / NAV_TILE_SIZE) * NAV_TILE_SIZE);
-  const right = Math.min(worldSize.width, Math.ceil(bounds.maxX / NAV_TILE_SIZE) * NAV_TILE_SIZE);
-  const bottom = Math.min(worldSize.height, Math.ceil(bounds.maxY / NAV_TILE_SIZE) * NAV_TILE_SIZE);
+  const x = Math.max(worldBounds.x, Math.floor(bounds.minX / NAV_TILE_SIZE) * NAV_TILE_SIZE);
+  const y = Math.max(worldBounds.y, Math.floor(bounds.minY / NAV_TILE_SIZE) * NAV_TILE_SIZE);
+  const right = Math.min(worldBounds.x + worldBounds.width, Math.ceil(bounds.maxX / NAV_TILE_SIZE) * NAV_TILE_SIZE);
+  const bottom = Math.min(worldBounds.y + worldBounds.height, Math.ceil(bounds.maxY / NAV_TILE_SIZE) * NAV_TILE_SIZE);
   return {
     x,
     y,

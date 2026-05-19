@@ -9,6 +9,7 @@ import {
   type WorldPoint,
   type WorldProp,
   type ZoneId,
+  worldBoundsFromChunks,
   worldSizeFromChunks,
 } from './worldMapData';
 
@@ -83,6 +84,7 @@ export function buildWorldFromTiledMap(raw: unknown, fallback: WorldMapData): Wo
   return {
     ...fallback,
     worldSize: worldSizeFromChunks([...groundChunks, ...referenceChunks], fallback.worldSize),
+    worldBounds: worldBoundsFromChunks([...groundChunks, ...referenceChunks], fallback.worldBounds),
     groundLayer,
     referenceLayer,
     groundChunks,

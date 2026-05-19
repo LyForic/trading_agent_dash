@@ -1,0 +1,83 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="1024" viewBox="0 0 512 1024">
+  <defs>
+    <linearGradient id="grass" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#8bcf82"/>
+      <stop offset="0.48" stop-color="#7fbe76"/>
+      <stop offset="1" stop-color="#74ae68"/>
+    </linearGradient>
+    <radialGradient id="ovenGlow" cx="50%" cy="58%" r="56%">
+      <stop offset="0" stop-color="#ffd17c"/>
+      <stop offset="0.36" stop-color="#d86e3b"/>
+      <stop offset="1" stop-color="#6a4530"/>
+    </radialGradient>
+    <pattern id="softSpeckles" width="34" height="34" patternUnits="userSpaceOnUse">
+      <circle cx="7" cy="9" r="1.2" fill="#f7e8aa" opacity="0.25"/>
+      <circle cx="22" cy="20" r="1" fill="#ffffff" opacity="0.14"/>
+      <circle cx="29" cy="8" r="1.4" fill="#5d9a59" opacity="0.24"/>
+    </pattern>
+  </defs>
+
+  <rect width="512" height="1024" fill="url(#grass)"/>
+  <rect width="512" height="1024" fill="url(#softSpeckles)"/>
+
+  <!-- path continuation into Apex side -->
+  <path d="M0 584 C92 526 202 520 294 566 C380 609 424 670 512 682 L512 1024 L0 1024 Z" fill="#d8bd79" opacity="0.94"/>
+  <path d="M0 606 C102 548 202 544 284 586 C366 628 422 692 512 704" fill="none" stroke="#b58d55" stroke-width="20" opacity="0.2"/>
+
+  <!-- cherry continuation along the Apex seam -->
+  <g opacity="0.95">
+    <ellipse cx="492" cy="126" rx="60" ry="44" fill="#f4a9bf"/>
+    <ellipse cx="468" cy="92" rx="42" ry="31" fill="#ffc1d0"/>
+    <ellipse cx="520" cy="88" rx="48" ry="35" fill="#e98cab"/>
+    <ellipse cx="480" cy="156" rx="30" ry="17" fill="#704634" opacity="0.55"/>
+  </g>
+  <g opacity="0.88">
+    <ellipse cx="486" cy="310" rx="48" ry="35" fill="#f2a2b9"/>
+    <ellipse cx="456" cy="286" rx="34" ry="25" fill="#ffc0cf"/>
+    <ellipse cx="520" cy="282" rx="38" ry="27" fill="#e78aa9"/>
+    <ellipse cx="482" cy="336" rx="22" ry="12" fill="#704634" opacity="0.46"/>
+  </g>
+
+  <!-- growing beds and food piles -->
+  <g opacity="0.92">
+    <path d="M42 140 C112 112 182 112 242 148 L228 220 C164 252 92 244 32 206 Z" fill="#6b9b56"/>
+    <path d="M54 164 C118 142 168 140 224 164" fill="none" stroke="#3f6d42" stroke-width="7" opacity="0.55"/>
+    <circle cx="78" cy="174" r="9" fill="#e25642"/>
+    <circle cx="112" cy="160" r="8" fill="#f07735"/>
+    <circle cx="150" cy="171" r="9" fill="#f2d24a"/>
+    <circle cx="190" cy="158" r="8" fill="#d94b43"/>
+  </g>
+  <g opacity="0.9">
+    <path d="M66 742 C126 706 226 714 280 762 L250 842 C166 878 84 854 42 800 Z" fill="#6da05b"/>
+    <circle cx="96" cy="786" r="12" fill="#f1c24d"/>
+    <circle cx="132" cy="770" r="11" fill="#e56548"/>
+    <circle cx="170" cy="790" r="13" fill="#7bb95f"/>
+    <circle cx="212" cy="770" r="10" fill="#f07835"/>
+  </g>
+
+  <!-- central oven building blockout -->
+  <g>
+    <ellipse cx="254" cy="462" rx="126" ry="42" fill="#3a261c" opacity="0.24"/>
+    <path d="M142 324 C156 248 214 210 270 216 C338 224 390 286 386 368 L372 530 C334 568 182 568 146 528 Z" fill="#9d6846"/>
+    <path d="M168 334 C180 278 222 248 270 252 C322 258 354 304 356 360 L346 500 C314 524 206 526 176 502 Z" fill="#c98a5a"/>
+    <path d="M214 402 C222 362 248 342 276 344 C310 348 334 378 334 420 L330 484 C300 506 226 506 198 484 Z" fill="url(#ovenGlow)"/>
+    <path d="M222 248 C230 194 270 168 316 190 C350 206 368 246 358 300" fill="none" stroke="#734b36" stroke-width="28" stroke-linecap="round"/>
+    <circle cx="286" cy="450" r="28" fill="#ffd98e" opacity="0.28"/>
+  </g>
+
+  <!-- mini pig helper placeholders -->
+  <g opacity="0.78">
+    <ellipse cx="112" cy="486" rx="28" ry="18" fill="#f4a9ad"/>
+    <circle cx="92" cy="478" r="14" fill="#f7b8bd"/>
+    <circle cx="84" cy="468" r="5" fill="#ee8d9a"/>
+    <circle cx="99" cy="467" r="5" fill="#ee8d9a"/>
+    <ellipse cx="366" cy="610" rx="27" ry="17" fill="#f3a5aa"/>
+    <circle cx="346" cy="602" r="13" fill="#f8bcc0"/>
+    <circle cx="338" cy="592" r="5" fill="#ef909c"/>
+    <circle cx="352" cy="592" r="5" fill="#ef909c"/>
+  </g>
+
+  <path d="M511 0 L511 1024" stroke="#fff0bf" stroke-width="5" stroke-dasharray="16 14" opacity="0.9"/>
+  <text x="256" y="64" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800" fill="#385b36" opacity="0.72">BACON DEV CHUNK</text>
+  <text x="256" y="91" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="700" fill="#385b36" opacity="0.58">chef pig food garden blockout</text>
+</svg>

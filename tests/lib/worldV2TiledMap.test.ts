@@ -19,6 +19,7 @@ describe('world v2 Tiled importer', () => {
     expect(world.groundLayer.src).toBe('/world-v2/layers/ground.png');
     expect(world.referenceLayer.src).toBe('/world-v2/layers/reference.png');
     expect(world.worldSize).toEqual({ width: 1536, height: 1024 });
+    expect(world.worldBounds).toEqual({ x: 0, y: 0, width: 1536, height: 1024 });
     expect(world.groundChunks).toEqual([
       {
         id: 'core',
@@ -206,6 +207,35 @@ describe('world v2 Tiled importer', () => {
     });
     expect(world.groundChunks[1]).toEqual(eastChunk);
     expect(world.worldSize).toEqual({ width: 1856, height: 1024 });
+    expect(world.worldBounds).toEqual({ x: 0, y: 0, width: 1856, height: 1024 });
+  });
+
+  it('expands world bounds without shifting the authored core layer for west chunks', () => {
+    const westChunk = {
+      id: 'west-expansion-test',
+      key: 'world-v2-ground-west-expansion-test',
+      src: '/world-v2/layers/west-expansion-test.png',
+      x: -512,
+      y: 0,
+      width: 512,
+      height: 1024,
+    };
+    const world = buildWorldFromTiledMap(readMap(), {
+      ...FALLBACK_WORLD_DATA,
+      groundChunks: [...FALLBACK_WORLD_DATA.groundChunks, westChunk],
+    });
+
+    expect(world.groundChunks[0]).toMatchObject({
+      id: 'core',
+      src: '/world-v2/layers/ground.png',
+      x: 0,
+      y: 0,
+      width: 1536,
+      height: 1024,
+    });
+    expect(world.groundChunks[1]).toEqual(westChunk);
+    expect(world.worldSize).toEqual({ width: 2048, height: 1024 });
+    expect(world.worldBounds).toEqual({ x: -512, y: 0, width: 2048, height: 1024 });
   });
 
   it('fails loudly when a sorted prop omits its asset property', () => {
