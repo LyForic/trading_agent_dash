@@ -18,6 +18,29 @@ describe('world v2 Tiled importer', () => {
 
     expect(world.groundLayer.src).toBe('/world-v2/layers/ground.png');
     expect(world.referenceLayer.src).toBe('/world-v2/layers/reference.png');
+    expect(world.worldSize).toEqual({ width: 1536, height: 1024 });
+    expect(world.groundChunks).toEqual([
+      {
+        id: 'core',
+        key: 'world-v2-ground',
+        src: '/world-v2/layers/ground.png',
+        x: 0,
+        y: 0,
+        width: 1536,
+        height: 1024,
+      },
+    ]);
+    expect(world.referenceChunks).toEqual([
+      {
+        id: 'core',
+        key: 'world-v2-reference',
+        src: '/world-v2/layers/reference.png',
+        x: 0,
+        y: 0,
+        width: 1536,
+        height: 1024,
+      },
+    ]);
 
     const dojo = world.props.find((prop) => prop.id === 'apex-dojo');
     expect(dojo).toMatchObject({
@@ -156,6 +179,33 @@ describe('world v2 Tiled importer', () => {
         expect(prop.crop.y + prop.crop.height, `${prop.id} crop height`).toBeLessThanOrEqual(size.height);
       }
     }
+  });
+
+  it('preserves fallback expansion chunks while importing the authored core layer', () => {
+    const eastChunk = {
+      id: 'east-expansion-test',
+      key: 'world-v2-ground-east-expansion-test',
+      src: '/world-v2/layers/east-expansion-test.png',
+      x: 1536,
+      y: 0,
+      width: 320,
+      height: 512,
+    };
+    const world = buildWorldFromTiledMap(readMap(), {
+      ...FALLBACK_WORLD_DATA,
+      groundChunks: [...FALLBACK_WORLD_DATA.groundChunks, eastChunk],
+    });
+
+    expect(world.groundChunks[0]).toMatchObject({
+      id: 'core',
+      src: '/world-v2/layers/ground.png',
+      x: 0,
+      y: 0,
+      width: 1536,
+      height: 1024,
+    });
+    expect(world.groundChunks[1]).toEqual(eastChunk);
+    expect(world.worldSize).toEqual({ width: 1856, height: 1024 });
   });
 
   it('fails loudly when a sorted prop omits its asset property', () => {

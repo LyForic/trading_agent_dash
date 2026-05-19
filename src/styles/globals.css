@@ -2842,6 +2842,10 @@ body[data-route="world-v2"] {
   -webkit-user-drag: none;
 }
 
+.manifest-editor-stage img.manifest-editor-stage-chunk {
+  inset: auto;
+}
+
 .manifest-editor-stage svg {
   cursor: crosshair;
 }

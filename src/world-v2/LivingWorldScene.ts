@@ -8,9 +8,9 @@ import {
   FALLBACK_WORLD_DATA,
   TILED_WORLD_MAP,
   WORLD_OBJECT_MANIFEST,
-  WORLD_SIZE,
   type Poi,
   type WorldCollider,
+  type WorldMapChunk,
   type WorldMapData,
   type WorldPoint,
   type ZoneId,
@@ -409,14 +409,9 @@ export class LivingWorldScene extends Phaser.Scene {
     if (DEBUG_MANIFEST_WORLD || MANIFEST_RUNTIME) this.load.json(WORLD_OBJECT_MANIFEST.key, WORLD_OBJECT_MANIFEST.src);
     if (FOREGROUND_WORKSPACE_PREVIEW) this.load.json(FOREGROUND_WORKSPACE_INDEX_ASSET.key, FOREGROUND_WORKSPACE_INDEX_ASSET.src);
     if (MANIFEST_RUNTIME) this.load.json(MANIFEST_RUNTIME_INDEX_ASSET.key, MANIFEST_RUNTIME_INDEX_ASSET.src);
-    if (!MANIFEST_RUNTIME) {
-      this.load.image(FALLBACK_WORLD_DATA.groundLayer.key, FALLBACK_WORLD_DATA.groundLayer.src);
-    }
+    this.preloadWorldLayerChunks();
     if (GROUND_PREVIEW_VARIANT) {
       this.load.image(GENERATED_GROUND_PREVIEW_ASSET.key, GENERATED_GROUND_PREVIEW_ASSET.src);
-    }
-    if (REFERENCE_WORLD || DEBUG_MANIFEST_WORLD || MANIFEST_RUNTIME) {
-      this.load.image(FALLBACK_WORLD_DATA.referenceLayer.key, FALLBACK_WORLD_DATA.referenceLayer.src);
     }
     if (!MANIFEST_RUNTIME) {
       for (const texture of AUTHORED_PROP_TEXTURES) {
@@ -448,12 +443,7 @@ export class LivingWorldScene extends Phaser.Scene {
     );
 
     this.cameras.main.removeBounds();
-    const baseLayerKey = DEBUG_MANIFEST_WORLD || MANIFEST_RUNTIME
-      ? this.worldData.referenceLayer.key
-      : GROUND_PREVIEW_VARIANT
-        ? GENERATED_GROUND_PREVIEW_ASSET.key
-        : this.worldData.groundLayer.key;
-    this.add.image(0, 0, baseLayerKey).setOrigin(0, 0).setDepth(DEPTH.ground);
+    this.createBaseLayer();
     if (DEBUG_MANIFEST_WORLD) {
       this.createManifestOverlay();
     } else {
@@ -494,6 +484,16 @@ export class LivingWorldScene extends Phaser.Scene {
       this.input.keyboard?.off('keydown', this.handleActorTuningKey, this);
       for (const mesh of this.zoneNavMeshes.values()) mesh.destroy();
     });
+  }
+
+  private preloadWorldLayerChunks() {
+    const chunkTextures = new Map<string, string>();
+    for (const chunk of [...FALLBACK_WORLD_DATA.groundChunks, ...FALLBACK_WORLD_DATA.referenceChunks]) {
+      chunkTextures.set(chunk.key, chunk.src);
+    }
+    for (const [key, src] of chunkTextures.entries()) {
+      this.load.image(key, src);
+    }
   }
 
   update(time: number) {
@@ -969,6 +969,41 @@ export class LivingWorldScene extends Phaser.Scene {
     this.applyFocusVisibility();
   }
 
+  private createBaseLayer() {
+    if (DEBUG_MANIFEST_WORLD || MANIFEST_RUNTIME) {
+      this.createWorldLayerChunks(this.worldData.referenceChunks, DEPTH.ground);
+      return;
+    }
+
+    if (GROUND_PREVIEW_VARIANT) {
+      this.add.image(0, 0, GENERATED_GROUND_PREVIEW_ASSET.key)
+        .setOrigin(0, 0)
+        .setDepth(DEPTH.ground);
+      return;
+    }
+
+    this.createWorldLayerChunks(this.worldData.groundChunks, DEPTH.ground);
+  }
+
+  private createWorldLayerChunks(chunks: WorldMapChunk[], depth: number, alpha = 1) {
+    for (const chunk of chunks) {
+      if (!this.textures.exists(chunk.key)) {
+        console.warn(`[LivingWorldScene] Missing world chunk texture "${chunk.key}" (${chunk.src})`);
+        continue;
+      }
+
+      const image = this.add.image(chunk.x, chunk.y, chunk.key)
+        .setOrigin(0, 0)
+        .setDepth(depth)
+        .setAlpha(alpha)
+        .setData('chunkId', chunk.id);
+
+      if (chunk.width > 0 && chunk.height > 0) {
+        image.setDisplaySize(chunk.width, chunk.height);
+      }
+    }
+  }
+
   private createActors() {
     const agentConfigs = DEBUG_ISOLATED_TEST
       ? AGENT_ACTOR_CONFIG.filter((config) => config.id === 'apex')
@@ -1003,11 +1038,7 @@ export class LivingWorldScene extends Phaser.Scene {
   }
 
   private createReferenceOverlay() {
-    this.add.image(0, 0, this.worldData.referenceLayer.key)
-      .setOrigin(0, 0)
-      .setAlpha(REFERENCE_OPACITY)
-      .setDepth(DEPTH.reference)
-      .setBlendMode(Phaser.BlendModes.NORMAL);
+    this.createWorldLayerChunks(this.worldData.referenceChunks, DEPTH.reference, REFERENCE_OPACITY);
   }
 
   private applyFocusVisibility() {
@@ -1313,7 +1344,7 @@ export class LivingWorldScene extends Phaser.Scene {
       return this.worldData.navMeshPolygons[zone].filter((polygon) => polygon.length >= 3);
     }
 
-    const rect = navBoundsForZone(this.worldData.navMeshPolygons[zone], this.worldData.zones[zone].rect);
+    const rect = navBoundsForZone(this.worldData.navMeshPolygons[zone], this.worldData.zones[zone].rect, this.worldData.worldSize);
     const cols = Math.ceil(rect.width / NAV_TILE_SIZE);
     const rows = Math.ceil(rect.height / NAV_TILE_SIZE);
     const grid = Array.from({ length: rows }, (_, row) => (
@@ -2145,7 +2176,11 @@ function polygonBounds(polygon: WorldPoint[]) {
   );
 }
 
-function navBoundsForZone(polygons: WorldPoint[][], fallback: { x: number; y: number; width: number; height: number }) {
+function navBoundsForZone(
+  polygons: WorldPoint[][],
+  fallback: { x: number; y: number; width: number; height: number },
+  worldSize: { width: number; height: number },
+) {
   const points = polygons.flat();
   if (points.length === 0) return fallback;
   const bounds = polygonBounds(points);
@@ -2153,8 +2188,8 @@ function navBoundsForZone(polygons: WorldPoint[][], fallback: { x: number; y: nu
 
   const x = Math.max(0, Math.floor(bounds.minX / NAV_TILE_SIZE) * NAV_TILE_SIZE);
   const y = Math.max(0, Math.floor(bounds.minY / NAV_TILE_SIZE) * NAV_TILE_SIZE);
-  const right = Math.min(WORLD_SIZE.width, Math.ceil(bounds.maxX / NAV_TILE_SIZE) * NAV_TILE_SIZE);
-  const bottom = Math.min(WORLD_SIZE.height, Math.ceil(bounds.maxY / NAV_TILE_SIZE) * NAV_TILE_SIZE);
+  const right = Math.min(worldSize.width, Math.ceil(bounds.maxX / NAV_TILE_SIZE) * NAV_TILE_SIZE);
+  const bottom = Math.min(worldSize.height, Math.ceil(bounds.maxY / NAV_TILE_SIZE) * NAV_TILE_SIZE);
   return {
     x,
     y,

@@ -68,10 +68,20 @@ export interface WorldLayerAsset {
   src: string;
 }
 
+export interface WorldMapChunk extends WorldLayerAsset {
+  id: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 export interface WorldMapData {
   worldSize: typeof WORLD_SIZE;
   groundLayer: WorldLayerAsset;
   referenceLayer: WorldLayerAsset;
+  groundChunks: WorldMapChunk[];
+  referenceChunks: WorldMapChunk[];
   zones: Record<ZoneId, ZoneBounds>;
   navMeshPolygons: Record<ZoneId, WorldPoint[][]>;
   pois: Poi[];
@@ -91,6 +101,30 @@ export const REFERENCE_LAYER = {
   key: 'world-v2-reference',
   src: '/world-v2/layers/reference.png',
 };
+
+export const GROUND_CHUNKS: WorldMapChunk[] = [
+  {
+    id: 'core',
+    key: GROUND_LAYER.key,
+    src: GROUND_LAYER.src,
+    x: 0,
+    y: 0,
+    width: WORLD_SIZE.width,
+    height: WORLD_SIZE.height,
+  },
+];
+
+export const REFERENCE_CHUNKS: WorldMapChunk[] = [
+  {
+    id: 'core',
+    key: REFERENCE_LAYER.key,
+    src: REFERENCE_LAYER.src,
+    x: 0,
+    y: 0,
+    width: WORLD_SIZE.width,
+    height: WORLD_SIZE.height,
+  },
+];
 
 export const TILED_WORLD_MAP = {
   key: 'world-v2-authored-map',
@@ -209,9 +243,11 @@ export const AUTHORED_PROP_TEXTURES: WorldTexture[] = AUTHORED_PROP_ASSETS.map((
 }));
 
 export const FALLBACK_WORLD_DATA: WorldMapData = {
-  worldSize: WORLD_SIZE,
+  worldSize: worldSizeFromChunks([...GROUND_CHUNKS, ...REFERENCE_CHUNKS], WORLD_SIZE),
   groundLayer: GROUND_LAYER,
   referenceLayer: REFERENCE_LAYER,
+  groundChunks: GROUND_CHUNKS,
+  referenceChunks: REFERENCE_CHUNKS,
   zones: ZONES,
   navMeshPolygons: NAV_MESH_POLYGONS,
   pois: POIS,
@@ -248,4 +284,14 @@ function rectPoly(x1: number, y1: number, x2: number, y2: number): WorldPoint[] 
     { x: x2, y: y2 },
     { x: x1, y: y2 },
   ];
+}
+
+export function worldSizeFromChunks(chunks: WorldMapChunk[], fallback: typeof WORLD_SIZE = WORLD_SIZE) {
+  return chunks.reduce(
+    (size, chunk) => ({
+      width: Math.max(size.width, chunk.x + chunk.width),
+      height: Math.max(size.height, chunk.y + chunk.height),
+    }),
+    { ...fallback },
+  );
 }

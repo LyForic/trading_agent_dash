@@ -3,10 +3,13 @@ import {
   propTextureKey,
   type Poi,
   type WorldCollider,
+  type WorldLayerAsset,
   type WorldMapData,
+  type WorldMapChunk,
   type WorldPoint,
   type WorldProp,
   type ZoneId,
+  worldSizeFromChunks,
 } from './worldMapData';
 
 type TiledPropertyValue = string | number | boolean;
@@ -35,6 +38,8 @@ interface TiledLayer {
   name: string;
   type: 'imagelayer' | 'objectgroup';
   image?: string;
+  x?: number;
+  y?: number;
   visible?: boolean;
   objects?: TiledObject[];
 }
@@ -53,6 +58,8 @@ export function buildWorldFromTiledMap(raw: unknown, fallback: WorldMapData): Wo
   const map = assertTiledMap(raw);
   const groundLayer = imageLayerToAsset(map, 'Ground', fallback.groundLayer);
   const referenceLayer = imageLayerToAsset(map, 'Reference', fallback.referenceLayer);
+  const groundChunks = imageLayerToChunks(map, 'Ground', fallback.groundChunks, groundLayer);
+  const referenceChunks = imageLayerToChunks(map, 'Reference', fallback.referenceChunks, referenceLayer);
   const props = parseProps(map);
   const propColliders = props.flatMap(propToColliders);
   const layerColliders = parseCollisionLayer(map);
@@ -75,8 +82,11 @@ export function buildWorldFromTiledMap(raw: unknown, fallback: WorldMapData): Wo
 
   return {
     ...fallback,
+    worldSize: worldSizeFromChunks([...groundChunks, ...referenceChunks], fallback.worldSize),
     groundLayer,
     referenceLayer,
+    groundChunks,
+    referenceChunks,
     navMeshPolygons,
     pois: [
       ...fallback.pois.filter((poi) => !authoredPoiZones.has(poi.zone)),
@@ -116,6 +126,28 @@ function imageLayerToAsset(map: TiledMap, layerName: string, fallback: WorldMapD
     key: fallback.key,
     src: publicPathFromMapImage(layer.image),
   };
+}
+
+function imageLayerToChunks(
+  map: TiledMap,
+  layerName: string,
+  fallback: WorldMapChunk[],
+  layerAsset: WorldLayerAsset,
+) {
+  const layer = map.layers.find((candidate) => candidate.name === layerName);
+  if (!layer || layer.type !== 'imagelayer' || !layer.image) return fallback;
+
+  const [coreFallback, ...expansionChunks] = fallback;
+  const coreChunk: WorldMapChunk = {
+    id: coreFallback?.id ?? 'core',
+    key: layerAsset.key,
+    src: layerAsset.src,
+    x: layer.x ?? coreFallback?.x ?? 0,
+    y: layer.y ?? coreFallback?.y ?? 0,
+    width: coreFallback?.width ?? map.width * map.tilewidth,
+    height: coreFallback?.height ?? map.height * map.tileheight,
+  };
+  return [coreChunk, ...expansionChunks];
 }
 
 function parseProps(map: TiledMap): WorldProp[] {

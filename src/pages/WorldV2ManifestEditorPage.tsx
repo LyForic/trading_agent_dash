@@ -29,6 +29,15 @@ interface WalkableArea {
   points: WorldPoint[];
 }
 
+interface ManifestImageChunk {
+  id?: string;
+  src: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 interface ManifestObject {
   id: string;
   zone: string;
@@ -59,6 +68,8 @@ interface Manifest {
   source: {
     referenceImage: string;
     groundImage: string;
+    referenceChunks?: ManifestImageChunk[];
+    groundChunks?: ManifestImageChunk[];
     coordinateSpace: string;
     imageSize: { width: number; height: number };
   };
@@ -187,6 +198,18 @@ export function WorldV2ManifestEditorPage() {
 
   const selectedObject = manifest?.objects.find((object) => object.id === selectedId) ?? null;
   const imageSize = manifest?.source.imageSize ?? { width: 1536, height: 1024 };
+  const referenceChunks = useMemo(() => {
+    if (!manifest) return [];
+    if (manifest.source.referenceChunks?.length) return manifest.source.referenceChunks;
+    return [{
+      id: 'reference',
+      src: manifest.source.referenceImage,
+      x: 0,
+      y: 0,
+      width: imageSize.width,
+      height: imageSize.height,
+    }];
+  }, [imageSize.height, imageSize.width, manifest]);
   const selectedPointEditTarget = selectedObject ? pointEditTarget(selectedObject) : null;
   const canEditSelectedPointPolygon = selectedPointEditTarget !== null;
   const selectedPointCount = selectedObject && selectedPointEditTarget
@@ -837,7 +860,21 @@ export function WorldV2ManifestEditorPage() {
             className="manifest-editor-stage"
             style={{ width: imageSize.width * zoom, height: imageSize.height * zoom }}
           >
-            <img src={manifest.source.referenceImage} alt="" draggable={false} />
+            {referenceChunks.map((chunk) => (
+              <img
+                key={`${chunk.id ?? chunk.src}-${chunk.x}-${chunk.y}`}
+                className="manifest-editor-stage-chunk"
+                src={chunk.src}
+                alt=""
+                draggable={false}
+                style={{
+                  left: chunk.x * zoom,
+                  top: chunk.y * zoom,
+                  width: chunk.width * zoom,
+                  height: chunk.height * zoom,
+                }}
+              />
+            ))}
             <svg
               ref={svgRef}
               viewBox={`0 0 ${imageSize.width} ${imageSize.height}`}
