@@ -156,7 +156,7 @@ export const DEV_TEST_EAST_EXPANSION_CHUNK: WorldMapChunk = {
 export const DEV_TEST_BACON_WEST_EXPANSION_CHUNK: WorldMapChunk = {
   id: 'dev-bacon-west-expansion-test',
   key: 'world-v2-dev-bacon-west-expansion-test',
-  src: '/world-v2/layers/dev-bacon-west-expansion-test.svg',
+  src: '/world-v2/layers/bacon-west-expansion-v1.png',
   x: -512,
   y: 0,
   width: 512,
@@ -191,7 +191,7 @@ export const ZONES: Record<ZoneId, ZoneBounds> = {
   },
   bacon: {
     id: 'bacon',
-    center: { x: -260, y: 462 },
+    center: { x: -304, y: 532 },
     rect: { x: -512, y: 32, width: 512, height: 930 },
   },
 };
@@ -215,17 +215,18 @@ export const NAV_MESH_POLYGONS: Record<ZoneId, WorldPoint[][]> = {
   ],
   bacon: [
     [
-      { x: -486, y: 92 },
-      { x: -268, y: 76 },
-      { x: -78, y: 146 },
-      { x: -30, y: 330 },
-      { x: -50, y: 738 },
-      { x: -146, y: 920 },
-      { x: -414, y: 912 },
-      { x: -512, y: 716 },
-      { x: -512, y: 214 },
+      { x: -504, y: 44 },
+      { x: -296, y: 36 },
+      { x: -88, y: 92 },
+      { x: -20, y: 244 },
+      { x: -22, y: 780 },
+      { x: -116, y: 944 },
+      { x: -398, y: 942 },
+      { x: -504, y: 826 },
+      { x: -508, y: 596 },
+      { x: -468, y: 472 },
+      { x: -508, y: 318 },
     ],
-    rectPoly(-512, 506, -36, 742),
   ],
 };
 
@@ -248,44 +249,78 @@ export const POIS: Poi[] = [
   { id: 'crystal-tune', zone: 'gale', x: 262, y: 626, label: 'Tune crystal', actionTexture: 'actor-gale-helper-crystal', effect: 'helper', helperOnly: true },
   { id: 'tool-check', zone: 'gale', x: 592, y: 846, label: 'Adjust tools', actionTexture: 'actor-gale-helper-tool', effect: 'helper', helperOnly: true },
 
-  { id: 'bacon-oven', zone: 'bacon', x: -258, y: 506, label: 'Fire oven', actionTexture: 'actor-bacon-cook', effect: 'bacon-cook', effectX: -256, effectY: 454 },
-  { id: 'bacon-harvest', zone: 'bacon', x: -414, y: 512, label: 'Inspect produce', actionTexture: 'actor-bacon-idle', effect: 'bacon-harvest' },
-  { id: 'bacon-produce-bed', zone: 'bacon', x: -414, y: 214, label: 'Carry produce', actionTexture: 'actor-bacon-helper-basket', effect: 'helper', helperOnly: true },
-  { id: 'bacon-stir-pot', zone: 'bacon', x: -128, y: 622, label: 'Stir pot', actionTexture: 'actor-bacon-helper-stir', effect: 'helper', helperOnly: true },
-  { id: 'bacon-herb-bed', zone: 'bacon', x: -346, y: 826, label: 'Pick herbs', actionTexture: 'actor-bacon-helper-basket', effect: 'helper', helperOnly: true },
+  { id: 'bacon-oven', zone: 'bacon', x: -384, y: 646, label: 'Fire oven', actionTexture: 'actor-bacon-cook', effect: 'bacon-cook', effectX: -374, effectY: 560 },
+  { id: 'bacon-harvest', zone: 'bacon', x: -438, y: 298, label: 'Inspect produce', actionTexture: 'actor-bacon-idle', effect: 'bacon-harvest' },
+  { id: 'bacon-produce-bed', zone: 'bacon', x: -408, y: 166, label: 'Carry produce', actionTexture: 'actor-bacon-helper-basket', effect: 'helper', helperOnly: true },
+  { id: 'bacon-stir-pot', zone: 'bacon', x: -496, y: 576, label: 'Stir pot', actionTexture: 'actor-bacon-helper-stir', effect: 'helper', helperOnly: true },
+  { id: 'bacon-herb-bed', zone: 'bacon', x: -318, y: 842, label: 'Pick herbs', actionTexture: 'actor-bacon-helper-basket', effect: 'helper', helperOnly: true },
 ];
 
 export const WORLD_PROPS: WorldProp[] = [];
 
 const BACON_DEV_COLLIDERS: WorldCollider[] = [
   {
-    id: 'bacon-dev-oven',
+    id: 'bacon-dev-oven-house',
     zone: 'bacon',
     points: [
-      { x: -376, y: 326 },
-      { x: -124, y: 332 },
-      { x: -136, y: 544 },
-      { x: -366, y: 544 },
+      { x: -448, y: 400 },
+      { x: -342, y: 348 },
+      { x: -254, y: 388 },
+      { x: -240, y: 626 },
+      { x: -294, y: 704 },
+      { x: -442, y: 704 },
+      { x: -494, y: 612 },
+      { x: -486, y: 468 },
     ],
   },
   {
     id: 'bacon-dev-upper-produce-bed',
     zone: 'bacon',
     points: [
-      { x: -486, y: 142 },
-      { x: -286, y: 120 },
-      { x: -276, y: 224 },
-      { x: -478, y: 228 },
+      { x: -506, y: 38 },
+      { x: -320, y: 22 },
+      { x: -292, y: 164 },
+      { x: -488, y: 196 },
     ],
   },
   {
-    id: 'bacon-dev-lower-herb-bed',
+    id: 'bacon-dev-mid-produce-bed',
     zone: 'bacon',
     points: [
-      { x: -476, y: 746 },
-      { x: -246, y: 724 },
-      { x: -214, y: 838 },
-      { x: -420, y: 868 },
+      { x: -506, y: 188 },
+      { x: -328, y: 184 },
+      { x: -300, y: 292 },
+      { x: -488, y: 332 },
+    ],
+  },
+  {
+    id: 'bacon-dev-bottom-left-produce-bed',
+    zone: 'bacon',
+    points: [
+      { x: -508, y: 760 },
+      { x: -334, y: 730 },
+      { x: -294, y: 880 },
+      { x: -468, y: 928 },
+    ],
+  },
+  {
+    id: 'bacon-dev-bottom-center-herb-bed',
+    zone: 'bacon',
+    points: [
+      { x: -368, y: 718 },
+      { x: -150, y: 690 },
+      { x: -112, y: 796 },
+      { x: -336, y: 850 },
+    ],
+  },
+  {
+    id: 'bacon-dev-picnic-table',
+    zone: 'bacon',
+    points: [
+      { x: -190, y: 758 },
+      { x: -54, y: 742 },
+      { x: -42, y: 820 },
+      { x: -176, y: 850 },
     ],
   },
 ];

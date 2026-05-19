@@ -281,8 +281,8 @@ const BACON_AGENT_ACTOR_CONFIG: (typeof AGENT_ACTOR_CONFIG)[number] = {
   kind: 'bacon',
   idleTexture: 'actor-bacon-idle',
   actionTextures: ['actor-bacon-cook'],
-  x: -258,
-  y: 604,
+  x: -336,
+  y: 724,
   speed: 38,
   scale: 0.58,
 };
