@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="384" height="1024" viewBox="0 0 384 1024">
+  <defs>
+    <linearGradient id="grass" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0" stop-color="#8fcf86"/>
+      <stop offset="0.5" stop-color="#7fc17c"/>
+      <stop offset="1" stop-color="#72b36f"/>
+    </linearGradient>
+    <pattern id="speckles" width="32" height="32" patternUnits="userSpaceOnUse">
+      <circle cx="6" cy="8" r="1.4" fill="#f3e3a0" opacity="0.28"/>
+      <circle cx="20" cy="18" r="1.1" fill="#ffffff" opacity="0.18"/>
+      <circle cx="28" cy="7" r="1.2" fill="#5c9c62" opacity="0.28"/>
+    </pattern>
+  </defs>
+  <rect width="384" height="1024" fill="url(#grass)"/>
+  <rect width="384" height="1024" fill="url(#speckles)"/>
+  <path d="M0 382 C88 354 156 368 216 425 C277 485 319 574 384 610 L384 1024 L0 1024 Z" fill="#d6bd7b" opacity="0.92"/>
+  <path d="M0 405 C88 380 146 392 196 444 C251 500 300 588 384 638" fill="none" stroke="#b9945d" stroke-width="18" opacity="0.22"/>
+  <path d="M0 0 L0 1024" stroke="#fff0bf" stroke-width="5" stroke-dasharray="16 14" opacity="0.9"/>
+  <g opacity="0.42">
+    <ellipse cx="276" cy="164" rx="34" ry="22" fill="#4d8957"/>
+    <ellipse cx="312" cy="177" rx="26" ry="18" fill="#5a9a62"/>
+    <ellipse cx="254" cy="184" rx="24" ry="16" fill="#6aab6f"/>
+    <ellipse cx="286" cy="188" rx="42" ry="13" fill="#315d3e"/>
+  </g>
+  <g opacity="0.38">
+    <ellipse cx="274" cy="790" rx="30" ry="20" fill="#4f8959"/>
+    <ellipse cx="310" cy="805" rx="28" ry="19" fill="#68a96c"/>
+    <ellipse cx="248" cy="810" rx="22" ry="14" fill="#5b9961"/>
+  </g>
+  <text x="192" y="64" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="18" font-weight="800" fill="#355c3e" opacity="0.72">DEV CHUNK TEST</text>
+  <text x="192" y="91" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="12" font-weight="700" fill="#355c3e" opacity="0.58">east expansion placeholder</text>
+</svg>

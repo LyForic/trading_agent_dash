@@ -126,6 +126,16 @@ export const REFERENCE_CHUNKS: WorldMapChunk[] = [
   },
 ];
 
+export const DEV_TEST_EAST_EXPANSION_CHUNK: WorldMapChunk = {
+  id: 'dev-east-expansion-test',
+  key: 'world-v2-dev-east-expansion-test',
+  src: '/world-v2/layers/dev-east-expansion-test.svg',
+  x: WORLD_SIZE.width,
+  y: 0,
+  width: 384,
+  height: WORLD_SIZE.height,
+};
+
 export const TILED_WORLD_MAP = {
   key: 'world-v2-authored-map',
   src: '/world-v2/maps/world-v2-apex-slice.tmj',

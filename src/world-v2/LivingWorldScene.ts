@@ -5,6 +5,7 @@ import type { AgentId } from '@/lib/types';
 import {
   AUTHORED_PROP_TEXTURES,
   ACTOR_TEXTURES,
+  DEV_TEST_EAST_EXPANSION_CHUNK,
   FALLBACK_WORLD_DATA,
   TILED_WORLD_MAP,
   WORLD_OBJECT_MANIFEST,
@@ -14,6 +15,7 @@ import {
   type WorldMapData,
   type WorldPoint,
   type ZoneId,
+  worldSizeFromChunks,
 } from './worldMapData';
 import { buildWorldFromTiledMap } from './tiledMap';
 
@@ -270,6 +272,7 @@ const DEBUG_TREE_TEST = DEV_WORLD_TOOLS && (queryParams?.has('treeTest') ?? fals
 const DEBUG_MANIFEST_WORLD = DEV_WORLD_TOOLS && (queryParams?.has('manifestWorld') ?? false);
 const MANIFEST_ROLE_FILTER = DEV_WORLD_TOOLS ? queryParams?.get('manifestRole') as ManifestRole | null : null;
 const MANIFEST_RUNTIME = manifestRuntimeFromQuery(queryParams);
+const DEV_CHUNK_TEST = DEV_WORLD_TOOLS && (queryParams?.has('chunkTest') ?? false);
 const ACTOR_TUNING = DEV_WORLD_TOOLS && (queryParams?.has('actorTuning') ?? false);
 const DEBUG_ISOLATED_TEST = DEBUG_APEX_TEST || DEBUG_TREE_TEST || DEBUG_MANIFEST_WORLD;
 const REFERENCE_WORLD = DEV_WORLD_TOOLS && (queryParams?.has('referenceWorld') ?? false);
@@ -434,6 +437,9 @@ export class LivingWorldScene extends Phaser.Scene {
     if (MANIFEST_RUNTIME) {
       this.worldData = this.applyManifestRuntimeData(this.worldData);
     }
+    if (DEV_CHUNK_TEST) {
+      this.worldData = this.applyDevChunkTestData(this.worldData);
+    }
     this.zoneNavPolygons = new Map(
       (Object.keys(this.worldData.zones) as ZoneId[]).map((zone) => [zone, this.buildZoneNavPolygons(zone)]),
     );
@@ -490,6 +496,9 @@ export class LivingWorldScene extends Phaser.Scene {
     const chunkTextures = new Map<string, string>();
     for (const chunk of [...FALLBACK_WORLD_DATA.groundChunks, ...FALLBACK_WORLD_DATA.referenceChunks]) {
       chunkTextures.set(chunk.key, chunk.src);
+    }
+    if (DEV_CHUNK_TEST) {
+      chunkTextures.set(DEV_TEST_EAST_EXPANSION_CHUNK.key, DEV_TEST_EAST_EXPANSION_CHUNK.src);
     }
     for (const [key, src] of chunkTextures.entries()) {
       this.load.image(key, src);
@@ -1991,6 +2000,23 @@ export class LivingWorldScene extends Phaser.Scene {
         ...worldData.pois.filter((poi) => !manifestPoiIds.has(poi.id)),
         ...manifestPois,
       ],
+    };
+  }
+
+  private applyDevChunkTestData(worldData: WorldMapData): WorldMapData {
+    const appendChunk = (chunks: WorldMapChunk[]) => (
+      chunks.some((chunk) => chunk.id === DEV_TEST_EAST_EXPANSION_CHUNK.id)
+        ? chunks
+        : [...chunks, DEV_TEST_EAST_EXPANSION_CHUNK]
+    );
+    const groundChunks = appendChunk(worldData.groundChunks);
+    const referenceChunks = appendChunk(worldData.referenceChunks);
+
+    return {
+      ...worldData,
+      groundChunks,
+      referenceChunks,
+      worldSize: worldSizeFromChunks([...groundChunks, ...referenceChunks], worldData.worldSize),
     };
   }
 
