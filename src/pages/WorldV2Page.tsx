@@ -15,7 +15,7 @@ import { useAgentWindow } from '@/lib/useAgentWindow';
 import { useBnfPortfolio } from '@/lib/useBnfPortfolio';
 import { AGENT_META } from '@/lib/agentMeta';
 import { formatPnl, formatWinRate } from '@/lib/formatting';
-import type { Agent, AgentId, PerformanceWindow } from '@/lib/types';
+import type { Agent, AgentId, BnfPortfolioPoint, PerformanceWindow } from '@/lib/types';
 
 type LivingWorldSceneInstance = InstanceType<typeof import('@/world-v2/LivingWorldScene').LivingWorldScene>;
 type PhaserModule = typeof import('phaser');
@@ -33,6 +33,29 @@ const TAGLINES: Record<AgentId, string> = {
 };
 
 const WORLD_AGENT_ORDER: AgentId[] = ['apex', 'metheus', 'gale'];
+const BNF_CHANGE_WINDOWS = ['24h', '7d', 'lifetime'] as const;
+type BnfChangeWindow = typeof BNF_CHANGE_WINDOWS[number];
+
+const BNF_CHANGE_WINDOW_LABELS: Record<BnfChangeWindow, string> = {
+  '24h': '24h',
+  '7d': '7d',
+  lifetime: 'Life',
+};
+
+const BNF_CHANGE_WINDOW_MENU_LABELS: Record<BnfChangeWindow, string> = {
+  '24h': '24h',
+  '7d': '7d',
+  lifetime: 'Lifetime',
+};
+
+const BNF_CHANGE_WINDOW_MS: Record<Exclude<BnfChangeWindow, 'lifetime'>, number> = {
+  '24h': 24 * 60 * 60 * 1000,
+  '7d': 7 * 24 * 60 * 60 * 1000,
+};
+
+interface BnfChange {
+  pct: number;
+}
 
 interface PhaserWorldProps {
   selectedAgentId: AgentId | null;
@@ -120,6 +143,53 @@ function formatTotalBalance(cents: number) {
   return `$${Math.round(cents / 100).toLocaleString('en-US')}`;
 }
 
+function formatPercent(value: number | null) {
+  if (value === null || !Number.isFinite(value)) return '—';
+  return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
+}
+
+function changeClassName(value: number | null) {
+  if (value === null || !Number.isFinite(value)) return 'world-v2-balance-change world-v2-balance-change--flat';
+  if (value > 0) return 'world-v2-balance-change world-v2-gain';
+  if (value < 0) return 'world-v2-balance-change world-v2-loss';
+  return 'world-v2-balance-change world-v2-balance-change--flat';
+}
+
+function closestWindowStart(points: BnfPortfolioPoint[], latest: BnfPortfolioPoint, window: Exclude<BnfChangeWindow, 'lifetime'>) {
+  const latestTime = Date.parse(latest.captured_at);
+  if (!Number.isFinite(latestTime)) return null;
+  const cutoff = latestTime - BNF_CHANGE_WINDOW_MS[window];
+  let start: BnfPortfolioPoint | null = null;
+
+  for (const point of points) {
+    const pointTime = Date.parse(point.captured_at);
+    if (!Number.isFinite(pointTime)) continue;
+    if (pointTime <= cutoff) {
+      start = point;
+    } else {
+      break;
+    }
+  }
+
+  return start && start !== latest ? start : null;
+}
+
+function calculateBnfChange(points: BnfPortfolioPoint[], window: BnfChangeWindow): BnfChange | null {
+  const latest = points[points.length - 1];
+  if (!latest) return null;
+
+  if (window === 'lifetime') {
+    return Number.isFinite(latest.pct_vs_baseline) ? { pct: latest.pct_vs_baseline } : null;
+  }
+
+  const start = closestWindowStart(points, latest, window);
+  if (!start || start.combined_cleared_cents === 0) return null;
+
+  return {
+    pct: ((latest.combined_cleared_cents - start.combined_cleared_cents) / start.combined_cleared_cents) * 100,
+  };
+}
+
 function isMobileViewport() {
   return window.matchMedia('(max-width: 760px)').matches;
 }
@@ -133,7 +203,10 @@ export function WorldV2Page() {
   const [selectedAgentId, setSelectedAgentId] = useState<AgentId | null>(null);
   const [focusRequestId, setFocusRequestId] = useState(0);
   const [menuHidden, setMenuHidden] = useState(false);
+  const [balanceWindow, setBalanceWindow] = useState<BnfChangeWindow>('24h');
+  const [balanceMenuOpen, setBalanceMenuOpen] = useState(false);
   const dragStartY = useRef<number | null>(null);
+  const balanceWrapRef = useRef<HTMLDivElement | null>(null);
 
   const [apexWindow, setApexWindow] = useAgentWindow('apex');
   const [galeWindow, setGaleWindow] = useAgentWindow('gale');
@@ -150,6 +223,14 @@ export function WorldV2Page() {
   const selectedAgent = selectedAgentId ? agentsById[selectedAgentId] : undefined;
   const selectedVm = selectedAgentId ? cardViewModels[selectedAgentId] : undefined;
   const latestBnfPoint = bnf.data.points[bnf.data.points.length - 1];
+  const bnfChanges = useMemo(
+    () => BNF_CHANGE_WINDOWS.reduce<Record<BnfChangeWindow, BnfChange | null>>((acc, window) => {
+      acc[window] = calculateBnfChange(bnf.data.points, window);
+      return acc;
+    }, { '24h': null, '7d': null, lifetime: null }),
+    [bnf.data.points],
+  );
+  const selectedBnfChange = bnfChanges[balanceWindow];
   const totalBalanceCopy = latestBnfPoint
     ? formatTotalBalance(latestBnfPoint.combined_cleared_cents)
     : bnf.loading
@@ -171,6 +252,27 @@ export function WorldV2Page() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!balanceMenuOpen) return;
+
+    const closeOnOutsidePointer = (event: Event) => {
+      const target = event.target;
+      if (target instanceof Node && balanceWrapRef.current?.contains(target)) return;
+      setBalanceMenuOpen(false);
+    };
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setBalanceMenuOpen(false);
+    };
+
+    window.addEventListener('pointerdown', closeOnOutsidePointer);
+    window.addEventListener('keydown', closeOnEscape);
+    return () => {
+      window.removeEventListener('pointerdown', closeOnOutsidePointer);
+      window.removeEventListener('keydown', closeOnEscape);
+    };
+  }, [balanceMenuOpen]);
+
   const closeFocus = () => {
     setSelectedAgentId(null);
     setFocusRequestId((requestId) => requestId + 1);
@@ -180,6 +282,7 @@ export function WorldV2Page() {
   const selectAgent = (id: AgentId) => {
     setSelectedAgentId(id);
     setFocusRequestId((requestId) => requestId + 1);
+    setBalanceMenuOpen(false);
     if (isMobileViewport()) setMenuHidden(true);
   };
 
@@ -192,7 +295,10 @@ export function WorldV2Page() {
     if (dragStartY.current === null) return;
     const dragged = event.clientY - dragStartY.current;
     dragStartY.current = null;
-    if (dragged > 42) setMenuHidden(true);
+    if (dragged > 42) {
+      setBalanceMenuOpen(false);
+      setMenuHidden(true);
+    }
   };
 
   const dataSourceLabel = source === 'live'
@@ -220,7 +326,7 @@ export function WorldV2Page() {
 
       {!isolatedTestMode && (
       <aside
-        className={`world-v2-menu${menuHidden ? ' world-v2-menu--hidden' : ''}`}
+        className={`world-v2-menu${menuHidden ? ' world-v2-menu--hidden' : ''}${balanceMenuOpen ? ' world-v2-menu--balance-open' : ''}`}
         onPointerDown={handlePointerDown}
         onPointerUp={handlePointerUp}
       >
@@ -230,14 +336,56 @@ export function WorldV2Page() {
             <p>Trading Gym V2</p>
             <h1>Living World</h1>
           </div>
-          <div className="world-v2-total-bal" aria-label="Total balance" aria-live="polite">
-            <span>Total Bal.</span>
-            <strong>{totalBalanceCopy}</strong>
+          <div ref={balanceWrapRef} className="world-v2-balance-wrap">
+            <button
+              type="button"
+              className="world-v2-total-bal"
+              aria-label="Total balance"
+              aria-live="polite"
+              aria-expanded={balanceMenuOpen}
+              aria-controls="world-v2-balance-menu"
+              onClick={() => setBalanceMenuOpen((open) => !open)}
+            >
+              <span>Total Bal.</span>
+              <strong>{totalBalanceCopy}</strong>
+              <em className={changeClassName(selectedBnfChange?.pct ?? null)}>
+                {BNF_CHANGE_WINDOW_LABELS[balanceWindow]} {formatPercent(selectedBnfChange?.pct ?? null)}
+              </em>
+            </button>
+            {balanceMenuOpen && (
+              <div id="world-v2-balance-menu" className="world-v2-balance-menu" role="menu" aria-label="Balance change window">
+                {BNF_CHANGE_WINDOWS.map((changeWindow) => {
+                  const change = bnfChanges[changeWindow];
+                  const active = balanceWindow === changeWindow;
+                  return (
+                    <button
+                      key={changeWindow}
+                      type="button"
+                      className={`world-v2-balance-option${active ? ' world-v2-balance-option--active' : ''}`}
+                      role="menuitemradio"
+                      aria-checked={active}
+                      onClick={() => {
+                        setBalanceWindow(changeWindow);
+                        setBalanceMenuOpen(false);
+                      }}
+                    >
+                      <span>{BNF_CHANGE_WINDOW_MENU_LABELS[changeWindow]}</span>
+                      <strong className={changeClassName(change?.pct ?? null)}>
+                        {formatPercent(change?.pct ?? null)}
+                      </strong>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
           <button
             type="button"
             className="world-v2-icon-button"
-            onClick={() => setMenuHidden(true)}
+            onClick={() => {
+              setBalanceMenuOpen(false);
+              setMenuHidden(true);
+            }}
             aria-label="Hide agent menu"
           >
             <PanelLeftClose className="world-v2-hide-desktop" size={18} aria-hidden />
