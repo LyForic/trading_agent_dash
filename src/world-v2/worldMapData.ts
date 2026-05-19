@@ -156,10 +156,10 @@ export const DEV_TEST_EAST_EXPANSION_CHUNK: WorldMapChunk = {
 export const DEV_TEST_BACON_WEST_EXPANSION_CHUNK: WorldMapChunk = {
   id: 'dev-bacon-west-expansion-test',
   key: 'world-v2-dev-bacon-west-expansion-test',
-  src: '/world-v2/layers/bacon-west-expansion-v4.png',
+  src: '/world-v2/layers/bacon-west-expansion-v5.png',
   x: -512,
   y: 0,
-  width: 576,
+  width: 512,
   height: WORLD_SIZE.height,
 };
 
