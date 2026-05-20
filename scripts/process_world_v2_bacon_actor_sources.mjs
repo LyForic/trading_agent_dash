@@ -17,6 +17,7 @@ const SOURCES = [
     walk: 'public/world-v2/actors/walk/bacon-idle-walk.png',
     targetWidth: 76,
     targetHeight: 100,
+    sideTargetWidth: 58,
     bottomPadding: 6,
   },
   {
@@ -26,6 +27,7 @@ const SOURCES = [
     walk: 'public/world-v2/actors/walk/bacon-helper-idle-walk.png',
     targetWidth: 74,
     targetHeight: 96,
+    sideTargetWidth: 58,
     bottomPadding: 6,
   },
   {
@@ -35,6 +37,7 @@ const SOURCES = [
     walk: 'public/world-v2/actors/walk/bacon-helper-basket-walk.png',
     targetWidth: 78,
     targetHeight: 96,
+    sideTargetWidth: 60,
     bottomPadding: 6,
   },
   {
@@ -44,6 +47,7 @@ const SOURCES = [
     walk: 'public/world-v2/actors/walk/bacon-helper-stir-walk.png',
     targetWidth: 76,
     targetHeight: 96,
+    sideTargetWidth: 60,
     bottomPadding: 6,
   },
 ];
@@ -70,6 +74,11 @@ for (const source of SOURCES) {
   for (let row = 0; row < ROWS; row += 1) {
     for (let column = 0; column < COLUMNS; column += 1) {
       const frame = fitSourceCellToFrame(image, source, detectedFrames[row][column]);
+      removeStrayEdgeComponents(frame);
+      if (row === 1 || row === 2) {
+        normalizeSideFrame(frame, source);
+        removeStrayEdgeComponents(frame);
+      }
       pasteImage(walkSheet, frame, column * FRAME_WIDTH, row * FRAME_HEIGHT);
       if (row === 0 && column === 0) firstFrame = frame;
     }
@@ -105,6 +114,123 @@ function fitSourceCellToFrame(image, profile, bounds) {
   drawScaledCrop(frame, image, crop, destX, destY, scale);
   trimEdgeKeyPixels(frame);
   return frame;
+}
+
+function normalizeSideFrame(frame, profile) {
+  const bounds = imageAlphaBounds(frame);
+  if (!bounds) return;
+
+  const targetSideHeight = profile.targetHeight;
+  const scaleY = Math.min(1.26, targetSideHeight / bounds.height);
+  const scaleX = profile.sideTargetWidth / bounds.width;
+  const target = {
+    width: frame.width,
+    height: frame.height,
+    data: Buffer.alloc(frame.width * frame.height * 4),
+  };
+  const drawWidth = Math.round(bounds.width * scaleX);
+  const drawHeight = Math.round(bounds.height * scaleY);
+  const drawX = Math.round((FRAME_WIDTH - drawWidth) / 2);
+  const drawY = Math.max(4, Math.round(FRAME_HEIGHT - profile.bottomPadding - drawHeight));
+
+  for (let y = 0; y < drawHeight; y += 1) {
+    const sourceY = bounds.y + ((y + 0.5) / scaleY) - 0.5;
+    const targetY = drawY + y;
+    if (targetY < 0 || targetY >= target.height) continue;
+
+    for (let x = 0; x < drawWidth; x += 1) {
+      const sourceX = bounds.x + ((x + 0.5) / scaleX) - 0.5;
+      const targetX = drawX + x;
+      if (targetX < 0 || targetX >= target.width) continue;
+      const pixel = sampleBilinear(frame, sourceX, sourceY);
+      if (pixel.a <= 2) continue;
+      blendPixel(target, targetX, targetY, pixel);
+    }
+  }
+
+  target.data.copy(frame.data);
+}
+
+function imageAlphaBounds(image) {
+  let minX = image.width;
+  let minY = image.height;
+  let maxX = -1;
+  let maxY = -1;
+
+  for (let y = 0; y < image.height; y += 1) {
+    for (let x = 0; x < image.width; x += 1) {
+      const alpha = image.data[((y * image.width) + x) * 4 + 3];
+      if (alpha <= 0) continue;
+      minX = Math.min(minX, x);
+      minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x);
+      maxY = Math.max(maxY, y);
+    }
+  }
+
+  return maxX >= minX
+    ? { x: minX, y: minY, width: maxX - minX + 1, height: maxY - minY + 1 }
+    : null;
+}
+
+function removeStrayEdgeComponents(image) {
+  const components = alphaComponents(image);
+  if (components.length <= 1) return;
+
+  const largest = components[0];
+  for (const component of components.slice(1)) {
+    const separatedVertically = component.maxY < largest.minY - 2 || component.minY > largest.maxY + 2;
+    if (component.pixels.length < largest.pixels.length * 0.08 && separatedVertically) {
+      for (const pixel of component.pixels) {
+        image.data[((pixel.y * image.width) + pixel.x) * 4 + 3] = 0;
+      }
+    }
+  }
+}
+
+function alphaComponents(image) {
+  const visited = new Uint8Array(image.width * image.height);
+  const components = [];
+  const queue = [];
+
+  for (let y = 0; y < image.height; y += 1) {
+    for (let x = 0; x < image.width; x += 1) {
+      const start = (y * image.width) + x;
+      if (visited[start] || image.data[start * 4 + 3] <= 0) continue;
+
+      visited[start] = 1;
+      queue.length = 0;
+      queue.push({ x, y });
+      const pixels = [];
+      let minX = x;
+      let minY = y;
+      let maxX = x;
+      let maxY = y;
+
+      for (let cursor = 0; cursor < queue.length; cursor += 1) {
+        const point = queue[cursor];
+        pixels.push(point);
+        minX = Math.min(minX, point.x);
+        minY = Math.min(minY, point.y);
+        maxX = Math.max(maxX, point.x);
+        maxY = Math.max(maxY, point.y);
+
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const nx = point.x + dx;
+          const ny = point.y + dy;
+          if (nx < 0 || nx >= image.width || ny < 0 || ny >= image.height) continue;
+          const next = (ny * image.width) + nx;
+          if (visited[next] || image.data[next * 4 + 3] <= 0) continue;
+          visited[next] = 1;
+          queue.push({ x: nx, y: ny });
+        }
+      }
+
+      components.push({ pixels, minX, minY, maxX, maxY });
+    }
+  }
+
+  return components.sort((left, right) => right.pixels.length - left.pixels.length);
 }
 
 function detectFrameBounds(image) {
