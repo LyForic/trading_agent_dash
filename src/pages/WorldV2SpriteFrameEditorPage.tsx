@@ -42,6 +42,10 @@ const ACTORS = [
   { slug: 'gale-helper-crystal', label: 'Penguin crystal' },
   { slug: 'gale-helper-jar', label: 'Penguin jar' },
   { slug: 'gale-helper-tool', label: 'Penguin tool' },
+  { slug: 'bacon-idle', label: 'Bacon' },
+  { slug: 'bacon-helper-idle', label: 'Pig helper' },
+  { slug: 'bacon-helper-basket', label: 'Pig basket' },
+  { slug: 'bacon-helper-stir', label: 'Pig stir' },
 ] as const;
 
 const DIRECTIONS = [

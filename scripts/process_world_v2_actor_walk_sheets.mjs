@@ -26,6 +26,10 @@ const slugs = requestedSlugs.length > 0
       'gale-helper-crystal',
       'gale-helper-jar',
       'gale-helper-tool',
+      'bacon-idle',
+      'bacon-helper-idle',
+      'bacon-helper-basket',
+      'bacon-helper-stir',
     ];
 
 const browser = await chromium.launch();

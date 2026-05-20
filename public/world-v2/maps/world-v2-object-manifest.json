@@ -11583,12 +11583,12 @@
             "y": 586
           },
           {
-            "x": 254,
-            "y": 557
+            "x": 349,
+            "y": 513
           },
           {
-            "x": 256,
-            "y": 532
+            "x": 325,
+            "y": 490
           },
           {
             "x": 255,
@@ -12748,8 +12748,24 @@
             "y": 619
           },
           {
-            "x": -461,
-            "y": 526
+            "x": -297,
+            "y": 558
+          },
+          {
+            "x": -310,
+            "y": 514
+          },
+          {
+            "x": -382,
+            "y": 500
+          },
+          {
+            "x": -445,
+            "y": 438
+          },
+          {
+            "x": -438,
+            "y": 405
           }
         ]
       },
@@ -16686,6 +16702,32 @@
           }
         ]
       }
+    },
+    {
+      "id": "apex-new-blocking-ground-7",
+      "zone": "apex",
+      "label": "apex-new-blocking-ground-7",
+      "category": "terrain",
+      "role": "blocking-ground",
+      "layerTarget": "base-ground",
+      "bbox": {
+        "x": 385,
+        "y": 359,
+        "width": 132,
+        "height": 25
+      },
+      "collision": {
+        "kind": "rect",
+        "notes": "Authored in manifest editor."
+      },
+      "occlusion": {
+        "required": false
+      },
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
     }
   ]
 }

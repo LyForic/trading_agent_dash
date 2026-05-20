@@ -20,6 +20,7 @@
     "visual:rooms": "playwright test -c playwright.visual.config.ts --grep @rooms",
     "visual:report": "playwright show-report artifacts/visual/html-report",
     "world-v2:actor-walk-sheets": "node scripts/process_world_v2_actor_walk_sheets.mjs",
+    "world-v2:bacon-actor-sources": "node scripts/process_world_v2_bacon_actor_sources.mjs",
     "world-v2:actor-walk-row": "node scripts/process_world_v2_walk_direction_row.mjs",
     "world-v2:compose-walk-markers": "node scripts/compose_world_v2_walk_from_markers.mjs",
     "world-v2:ground-workspace": "node scripts/build_world_v2_ground_workspace.mjs",

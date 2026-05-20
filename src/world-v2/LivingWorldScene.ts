@@ -70,6 +70,10 @@ const ACTOR_WALK_SHEETS = [
   'gale-helper-crystal',
   'gale-helper-jar',
   'gale-helper-tool',
+  'bacon-idle',
+  'bacon-helper-idle',
+  'bacon-helper-basket',
+  'bacon-helper-stir',
 ] as const;
 const ACTOR_WALK_SHEET_SLUGS = new Set<string>(ACTOR_WALK_SHEETS);
 const NavMeshModule = NavMeshRuntime as unknown as NavMeshRuntimeShape;
@@ -294,7 +298,7 @@ const BACON_HELPER_CONFIG: Array<{ kind: ActorKind; zone: ZoneId; textures: stri
     zone: 'bacon',
     textures: ['actor-bacon-helper-idle', 'actor-bacon-helper-basket', 'actor-bacon-helper-stir'],
     count: 5,
-    scale: 0.39,
+    scale: 0.41,
     speed: 34,
   },
 ];
@@ -1093,7 +1097,7 @@ export class LivingWorldScene extends Phaser.Scene {
       : HELPER_CONFIG;
     for (const helper of helperConfigs) {
       for (let i = 0; i < helper.count; i += 1) {
-        const point = this.randomNavPoint(helper.zone);
+        const point = this.randomHelperSpawnPoint(helper.zone, helper.kind);
         const texture = helper.textures[i % helper.textures.length];
         this.actors.push(this.createActor({
           id: `${helper.kind}-${i}`,
@@ -1176,7 +1180,7 @@ export class LivingWorldScene extends Phaser.Scene {
     });
     const usePoi = zonePois.length > 0 && Math.random() < (isHelper ? 0.62 : 0.76);
     const poi = usePoi ? Phaser.Utils.Array.GetRandom(zonePois) : null;
-    const desiredPoint = poi ? { x: poi.x, y: poi.y } : this.randomNavPoint(actor.zone);
+    const desiredPoint = poi ? { x: poi.x, y: poi.y } : this.randomNavPointForActor(actor);
     const point = this.spreadDestinationForActor(actor, desiredPoint);
     this.reserveDestination(actor, point);
     const path = this.pathTo(actor.zone, { x: actor.container.x, y: actor.container.y }, point);
@@ -1267,8 +1271,47 @@ export class LivingWorldScene extends Phaser.Scene {
       : this.nearestWalkablePoint(zone, fallback) ?? fallback;
   }
 
+  private randomHelperSpawnPoint(zone: ZoneId, kind: ActorKind): WorldPoint {
+    if (kind === 'bacon-helper') {
+      return this.randomNavPointInsideZoneRect(zone) ?? this.randomNavPoint(zone);
+    }
+    return this.randomNavPoint(zone);
+  }
+
+  private randomNavPointForActor(actor: Pick<LivingActor, 'kind' | 'zone'>): WorldPoint {
+    if (actor.kind === 'bacon-helper') {
+      return this.randomNavPointInsideZoneRect(actor.zone) ?? this.randomNavPoint(actor.zone);
+    }
+    return this.randomNavPoint(actor.zone);
+  }
+
+  private randomNavPointInsideZoneRect(zone: ZoneId): WorldPoint | null {
+    const rect = this.worldData.zones[zone]?.rect;
+    if (!rect) return null;
+
+    const padding = 18;
+    const minX = rect.x + padding;
+    const maxX = rect.x + rect.width - padding;
+    const minY = rect.y + padding;
+    const maxY = rect.y + rect.height - padding;
+    if (maxX <= minX || maxY <= minY) return null;
+
+    for (let attempt = 0; attempt < 160; attempt += 1) {
+      const point = {
+        x: Phaser.Math.Between(minX, maxX),
+        y: Phaser.Math.Between(minY, maxY),
+      };
+      if (this.isActorPointWalkable(zone, point)) return point;
+    }
+
+    const center = { x: rect.x + rect.width / 2, y: rect.y + rect.height / 2 };
+    const nearest = this.nearestWalkablePoint(zone, center);
+    if (nearest && pointInBounds(nearest, rect)) return nearest;
+    return null;
+  }
+
   private spreadDestinationForActor(actor: LivingActor, desiredPoint: WorldPoint) {
-    const fallback = this.nearestWalkablePoint(actor.zone, desiredPoint) ?? this.randomNavPoint(actor.zone);
+    const fallback = this.nearestWalkablePoint(actor.zone, desiredPoint) ?? this.randomNavPointForActor(actor);
     let bestWalkablePoint = fallback;
     const angleOffset = actor.walkSeed;
 
@@ -1295,7 +1338,7 @@ export class LivingWorldScene extends Phaser.Scene {
 
   private randomSpacedNavPoint(actor: LivingActor) {
     for (let attempt = 0; attempt < 32; attempt += 1) {
-      const point = this.randomNavPoint(actor.zone);
+      const point = this.randomNavPointForActor(actor);
       if (this.isDestinationAvailableForActor(actor, point)) return point;
     }
     return null;
@@ -2643,6 +2686,13 @@ function pointInPolygon(point: WorldPoint, polygon: WorldPoint[]) {
     if (intersects) inside = !inside;
   }
   return inside;
+}
+
+function pointInBounds(point: WorldPoint, bounds: { x: number; y: number; width: number; height: number }) {
+  return point.x >= bounds.x
+    && point.x <= bounds.x + bounds.width
+    && point.y >= bounds.y
+    && point.y <= bounds.y + bounds.height;
 }
 
 function pointNearPolygon(point: WorldPoint, polygon: WorldPoint[], padding: number) {
