@@ -163,6 +163,45 @@ export const DEV_TEST_BACON_WEST_EXPANSION_CHUNK: WorldMapChunk = {
   height: WORLD_SIZE.height,
 };
 
+export const DEV_TEST_BACON_FULL_MAP_REPLACEMENT_CHUNKS: WorldMapChunk[] = [
+  {
+    id: 'dev-bacon-full-map-west',
+    key: 'world-v2-dev-bacon-full-map-west',
+    src: '/world-v2/layers/bacon-fullmap-west-v1.png',
+    x: -512,
+    y: 0,
+    width: 512,
+    height: WORLD_SIZE.height,
+  },
+  {
+    id: 'dev-bacon-full-map-core-0',
+    key: 'world-v2-dev-bacon-full-map-core-0',
+    src: '/world-v2/layers/bacon-fullmap-core-0-v1.png',
+    x: 0,
+    y: 0,
+    width: 512,
+    height: WORLD_SIZE.height,
+  },
+  {
+    id: 'dev-bacon-full-map-core-1',
+    key: 'world-v2-dev-bacon-full-map-core-1',
+    src: '/world-v2/layers/bacon-fullmap-core-1-v1.png',
+    x: 512,
+    y: 0,
+    width: 512,
+    height: WORLD_SIZE.height,
+  },
+  {
+    id: 'dev-bacon-full-map-core-2',
+    key: 'world-v2-dev-bacon-full-map-core-2',
+    src: '/world-v2/layers/bacon-fullmap-core-2-v1.png',
+    x: 1024,
+    y: 0,
+    width: 512,
+    height: WORLD_SIZE.height,
+  },
+];
+
 export const TILED_WORLD_MAP = {
   key: 'world-v2-authored-map',
   src: '/world-v2/maps/world-v2-apex-slice.tmj',

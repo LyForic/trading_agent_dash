@@ -221,7 +221,8 @@ function isLiveAgentId(id: WorldMenuAgentId | null): id is AgentId {
 
 export function WorldV2Page() {
   const worldTestParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-  const baconChunkMode = worldTestParams?.has('baconChunkTest') === true;
+  const baconExpansionMode = worldTestParams?.has('baconChunkTest') === true
+    || worldTestParams?.has('baconFullMapTest') === true;
   const isolatedTestMode = worldTestParams?.has('apexTest') === true
     || worldTestParams?.has('treeTest') === true
     || worldTestParams?.has('manifestWorld') === true
@@ -248,8 +249,8 @@ export function WorldV2Page() {
   const bnf = useBnfPortfolio();
   const agentsById = useMemo(() => agentMap(data.agents), [data.agents]);
   const worldAgentOrder = useMemo<WorldMenuAgentId[]>(
-    () => (baconChunkMode ? [...WORLD_AGENT_ORDER, 'bacon'] : WORLD_AGENT_ORDER),
-    [baconChunkMode],
+    () => (baconExpansionMode ? [...WORLD_AGENT_ORDER, 'bacon'] : WORLD_AGENT_ORDER),
+    [baconExpansionMode],
   );
   const primaryWorldAgentOrder = worldAgentOrder.slice(0, 3);
   const extraWorldAgentOrder = worldAgentOrder.slice(3);

@@ -4,6 +4,7 @@ import Phaser from 'phaser';
 import {
   AUTHORED_PROP_TEXTURES,
   ACTOR_TEXTURES,
+  DEV_TEST_BACON_FULL_MAP_REPLACEMENT_CHUNKS,
   DEV_TEST_BACON_WEST_EXPANSION_CHUNK,
   DEV_TEST_EAST_EXPANSION_CHUNK,
   FALLBACK_WORLD_DATA,
@@ -308,9 +309,12 @@ const MANIFEST_ROLE_FILTER = DEV_WORLD_TOOLS ? queryParams?.get('manifestRole') 
 const MANIFEST_RUNTIME = manifestRuntimeFromQuery(queryParams);
 const DEV_CHUNK_TEST = DEV_WORLD_TOOLS && (queryParams?.has('chunkTest') ?? false);
 const DEV_BACON_CHUNK_TEST = DEV_WORLD_TOOLS && (queryParams?.has('baconChunkTest') ?? false);
+const DEV_BACON_FULL_MAP_TEST = DEV_WORLD_TOOLS && (queryParams?.has('baconFullMapTest') ?? false);
+const DEV_BACON_WORLD_TEST = DEV_BACON_CHUNK_TEST || DEV_BACON_FULL_MAP_TEST;
 const ACTIVE_DEV_TEST_CHUNKS: WorldMapChunk[] = [
   ...(DEV_CHUNK_TEST ? [DEV_TEST_EAST_EXPANSION_CHUNK] : []),
-  ...(DEV_BACON_CHUNK_TEST ? [DEV_TEST_BACON_WEST_EXPANSION_CHUNK] : []),
+  ...(DEV_BACON_CHUNK_TEST && !DEV_BACON_FULL_MAP_TEST ? [DEV_TEST_BACON_WEST_EXPANSION_CHUNK] : []),
+  ...(DEV_BACON_FULL_MAP_TEST ? DEV_TEST_BACON_FULL_MAP_REPLACEMENT_CHUNKS : []),
 ];
 const ACTOR_TUNING = DEV_WORLD_TOOLS && (queryParams?.has('actorTuning') ?? false);
 const DEBUG_ISOLATED_TEST = DEBUG_APEX_TEST || DEBUG_TREE_TEST || DEBUG_MANIFEST_WORLD;
@@ -463,7 +467,7 @@ export class LivingWorldScene extends Phaser.Scene {
     for (const key of ACTOR_TEXTURES) {
       this.load.image(`actor-${key}`, `/world-v2/actors/${key}.png`);
     }
-    if (DEV_BACON_CHUNK_TEST) {
+    if (DEV_BACON_WORLD_TEST) {
       for (const texture of BACON_ACTOR_TEXTURES) {
         this.load.image(texture.key, texture.src);
       }
@@ -1065,7 +1069,7 @@ export class LivingWorldScene extends Phaser.Scene {
   }
 
   private createActors() {
-    const activeAgentConfigs = DEV_BACON_CHUNK_TEST
+    const activeAgentConfigs = DEV_BACON_WORLD_TEST
       ? [...AGENT_ACTOR_CONFIG, BACON_AGENT_ACTOR_CONFIG]
       : AGENT_ACTOR_CONFIG;
     const agentConfigs = DEBUG_ISOLATED_TEST
@@ -1080,7 +1084,7 @@ export class LivingWorldScene extends Phaser.Scene {
       return;
     }
 
-    const helperConfigs = DEV_BACON_CHUNK_TEST
+    const helperConfigs = DEV_BACON_WORLD_TEST
       ? [...HELPER_CONFIG, ...BACON_HELPER_CONFIG]
       : HELPER_CONFIG;
     for (const helper of helperConfigs) {
