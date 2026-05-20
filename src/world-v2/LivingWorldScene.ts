@@ -269,11 +269,11 @@ const HELPER_CONFIG: Array<{ kind: ActorKind; zone: ZoneId; textures: string[]; 
 ];
 
 const BACON_ACTOR_TEXTURES = [
-  { key: 'actor-bacon-idle', src: '/world-v2/actors/bacon-idle.svg' },
-  { key: 'actor-bacon-cook', src: '/world-v2/actors/bacon-cook.svg' },
-  { key: 'actor-bacon-helper-idle', src: '/world-v2/actors/bacon-helper-idle.svg' },
-  { key: 'actor-bacon-helper-basket', src: '/world-v2/actors/bacon-helper-basket.svg' },
-  { key: 'actor-bacon-helper-stir', src: '/world-v2/actors/bacon-helper-stir.svg' },
+  { key: 'actor-bacon-idle', src: '/world-v2/actors/bacon-idle.png' },
+  { key: 'actor-bacon-cook', src: '/world-v2/actors/bacon-cook.png' },
+  { key: 'actor-bacon-helper-idle', src: '/world-v2/actors/bacon-helper-idle.png' },
+  { key: 'actor-bacon-helper-basket', src: '/world-v2/actors/bacon-helper-basket.png' },
+  { key: 'actor-bacon-helper-stir', src: '/world-v2/actors/bacon-helper-stir.png' },
 ] as const;
 
 const BACON_AGENT_ACTOR_CONFIG: (typeof AGENT_ACTOR_CONFIG)[number] = {

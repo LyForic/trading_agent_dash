@@ -1,5 +1,20 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent, type PointerEvent } from 'react';
-import { BoxSelect, Copy, Eraser, PenLine, Plus, Save, Trash2, Undo2, ZoomIn, ZoomOut } from 'lucide-react';
+import {
+  BoxSelect,
+  CheckSquare,
+  Copy,
+  Eraser,
+  MousePointer2,
+  PenLine,
+  Plus,
+  Save,
+  Trash2,
+  Undo2,
+  XSquare,
+  ZoomIn,
+  ZoomOut,
+} from 'lucide-react';
+import { DEV_TEST_BACON_FULL_MAP_REPLACEMENT_CHUNKS } from '@/world-v2/worldMapData';
 
 type ManifestRole = 'ground-baked' | 'walkable-ground' | 'blocking-ground' | 'occluder' | 'decor-cluster' | 'interactive';
 type CollisionKind = 'none' | 'rect' | 'rects' | 'polygon';
@@ -113,14 +128,18 @@ interface DraftBox {
   current: { x: number; y: number };
 }
 
-interface BoxDrag {
+interface ObjectDragStart {
   id: string;
-  pointerStart: { x: number; y: number };
   bboxStart: Bounds;
   depthYStart?: number;
   collisionBboxStart?: Bounds;
   collisionPointsStart?: WorldPoint[];
   walkablePointsStart?: WorldPoint[];
+}
+
+interface BoxDrag {
+  pointerStart: { x: number; y: number };
+  objectStarts: ObjectDragStart[];
 }
 
 interface BoxResize {
@@ -142,8 +161,11 @@ interface DepthDrag {
 }
 
 export function WorldV2ManifestEditorPage() {
+  const editorParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+  const baconFullMapMode = editorParams?.has('baconFullMapTest') === true;
   const [manifest, setManifest] = useState<Manifest | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [zoneFilter, setZoneFilter] = useState<string>('apex');
   const [roleFilter, setRoleFilter] = useState<ManifestRole | 'all'>('all');
   const [zoom, setZoom] = useState(1);
@@ -177,8 +199,10 @@ export function WorldV2ManifestEditorPage() {
         if (cancelled) return;
         setManifest(nextManifest);
         const firstZone = nextManifest.zones[0]?.id ?? 'apex';
+        const firstId = nextManifest.objects.find((object) => object.zone === firstZone)?.id ?? nextManifest.objects[0]?.id ?? null;
         setZoneFilter(firstZone);
-        setSelectedId(nextManifest.objects.find((object) => object.zone === firstZone)?.id ?? nextManifest.objects[0]?.id ?? null);
+        setSelectedId(firstId);
+        setSelectedIds(firstId ? [firstId] : []);
       })
       .catch(() => {
         if (!cancelled) setSaveState('error');
@@ -191,14 +215,17 @@ export function WorldV2ManifestEditorPage() {
   const filteredObjects = useMemo(() => {
     if (!manifest) return [];
     return manifest.objects.filter((object) => (
-      object.zone === zoneFilter
+      (zoneFilter === 'all' || object.zone === zoneFilter)
       && (roleFilter === 'all' || object.role === roleFilter)
     ));
   }, [manifest, roleFilter, zoneFilter]);
 
   const selectedObject = manifest?.objects.find((object) => object.id === selectedId) ?? null;
-  const imageSize = manifest?.source.imageSize ?? { width: 1536, height: 1024 };
+  const imageWidth = manifest?.source.imageSize.width ?? 1536;
+  const imageHeight = manifest?.source.imageSize.height ?? 1024;
+  const imageSize = useMemo(() => ({ width: imageWidth, height: imageHeight }), [imageHeight, imageWidth]);
   const referenceChunks = useMemo(() => {
+    if (baconFullMapMode) return DEV_TEST_BACON_FULL_MAP_REPLACEMENT_CHUNKS;
     if (!manifest) return [];
     if (manifest.source.referenceChunks?.length) return manifest.source.referenceChunks;
     return [{
@@ -209,12 +236,54 @@ export function WorldV2ManifestEditorPage() {
       width: imageSize.width,
       height: imageSize.height,
     }];
-  }, [imageSize.height, imageSize.width, manifest]);
+  }, [baconFullMapMode, imageSize.height, imageSize.width, manifest]);
+  const coordinateBounds = useMemo(
+    () => boundsFromChunks(referenceChunks, imageSize),
+    [imageSize, referenceChunks],
+  );
+  const visibleObjectIds = useMemo(() => filteredObjects.map((object) => object.id), [filteredObjects]);
+  const activeSelectedIds = useMemo(
+    () => selectedIds.filter((id) => manifest?.objects.some((object) => object.id === id)),
+    [manifest, selectedIds],
+  );
+  const selectedCount = activeSelectedIds.length;
   const selectedPointEditTarget = selectedObject ? pointEditTarget(selectedObject) : null;
   const canEditSelectedPointPolygon = selectedPointEditTarget !== null;
   const selectedPointCount = selectedObject && selectedPointEditTarget
     ? pointsForTarget(selectedObject, selectedPointEditTarget).length
     : 0;
+
+  const selectSingleObject = (id: string | null) => {
+    setSelectedId(id);
+    setSelectedIds(id ? [id] : []);
+  };
+
+  const selectObject = (id: string, additive: boolean) => {
+    if (!additive) {
+      setSelectedId(id);
+      setSelectedIds([id]);
+      return;
+    }
+    setSelectedIds((currentIds) => {
+      const nextIds = currentIds.includes(id)
+        ? currentIds.filter((currentId) => currentId !== id)
+        : [...currentIds, id];
+      setSelectedId(nextIds.includes(id) ? id : nextIds[0] ?? null);
+      return nextIds;
+    });
+  };
+
+  const selectVisibleObjects = () => {
+    setSelectedIds(visibleObjectIds);
+    setSelectedId(visibleObjectIds[0] ?? null);
+  };
+
+  const clearObjectSelection = () => {
+    setSelectedId(null);
+    setSelectedIds([]);
+  };
+
+  const isObjectSelected = (object: ManifestObject) => activeSelectedIds.includes(object.id);
 
   const updateSelected = (updater: (object: ManifestObject) => ManifestObject) => {
     if (!manifest || !selectedId) return;
@@ -234,7 +303,11 @@ export function WorldV2ManifestEditorPage() {
       }
       return nextObject;
     });
-    if (field === 'id') setSelectedId(String(value || currentId));
+    if (field === 'id') {
+      const nextId = String(value || currentId);
+      setSelectedId(nextId);
+      setSelectedIds((currentIds) => currentIds.map((id) => (id === currentId ? nextId : id)));
+    }
     if (field === 'zone' && typeof value === 'string') setZoneFilter(value);
     if (field === 'role' && typeof value === 'string' && !pointEditTarget({ ...(selectedObject ?? {}), role: value } as ManifestObject)) {
       setEditorMode('box');
@@ -247,16 +320,16 @@ export function WorldV2ManifestEditorPage() {
 
     const selectedObjectStillVisible = manifest.objects.some(
       (object) => object.id === selectedId
-        && object.zone === zoneFilter
+        && (zoneFilter === 'all' || object.zone === zoneFilter)
         && (nextFilter === 'all' || object.role === nextFilter),
     );
     if (selectedObjectStillVisible) return;
 
     const firstVisibleObject = manifest.objects.find((object) => (
-      object.zone === zoneFilter
+      (zoneFilter === 'all' || object.zone === zoneFilter)
       && (nextFilter === 'all' || object.role === nextFilter)
     ));
-    setSelectedId(firstVisibleObject?.id ?? null);
+    selectSingleObject(firstVisibleObject?.id ?? null);
   };
 
   const handleZoneFilterChange = (nextZone: string) => {
@@ -265,25 +338,22 @@ export function WorldV2ManifestEditorPage() {
 
     const selectedObjectStillVisible = manifest.objects.some(
       (object) => object.id === selectedId
-        && object.zone === nextZone
+        && (nextZone === 'all' || object.zone === nextZone)
         && (roleFilter === 'all' || object.role === roleFilter),
     );
     if (selectedObjectStillVisible) return;
 
     const firstVisibleObject = manifest.objects.find((object) => (
-      object.zone === nextZone
+      (nextZone === 'all' || object.zone === nextZone)
       && (roleFilter === 'all' || object.role === roleFilter)
     ));
-    setSelectedId(firstVisibleObject?.id ?? null);
+    selectSingleObject(firstVisibleObject?.id ?? null);
   };
 
   const setSelectedBboxField = (field: keyof Bounds, value: number) => {
     updateSelected((object) => ({
       ...object,
-      bbox: {
-        ...object.bbox,
-        [field]: Math.max(0, Math.round(value)),
-      },
+      bbox: clampBoundsField(object.bbox, field, value, coordinateBounds),
     }));
   };
 
@@ -383,9 +453,9 @@ export function WorldV2ManifestEditorPage() {
   const imagePointFromPointer = (event: PointerEvent<SVGElement>) => {
     const rect = (svgRef.current ?? event.currentTarget).getBoundingClientRect();
     return clampPoint({
-      x: ((event.clientX - rect.left) / rect.width) * imageSize.width,
-      y: ((event.clientY - rect.top) / rect.height) * imageSize.height,
-    }, imageSize);
+      x: coordinateBounds.x + (((event.clientX - rect.left) / rect.width) * coordinateBounds.width),
+      y: coordinateBounds.y + (((event.clientY - rect.top) / rect.height) * coordinateBounds.height),
+    }, coordinateBounds);
   };
 
   const handlePointerDown = (event: PointerEvent<SVGSVGElement>) => {
@@ -445,21 +515,31 @@ export function WorldV2ManifestEditorPage() {
   const handleObjectPointerDown = (object: ManifestObject, event: PointerEvent<SVGRectElement>) => {
     if (event.button !== 0) return;
     event.stopPropagation();
-    setSelectedId(object.id);
+    const additive = event.shiftKey || event.metaKey || event.ctrlKey;
+    const selectedBeforePointerDown = activeSelectedIds.includes(object.id);
+    selectObject(object.id, additive);
 
     if (editorMode === 'mask') return;
-    if (object.id !== selectedId) return;
+    if (additive) return;
 
     setDraftBox(null);
     setBoxResize(null);
+    const dragIds = selectedBeforePointerDown
+      ? activeSelectedIds.filter((id) => visibleObjectIds.includes(id))
+      : [object.id];
+    const objectStarts = (manifest?.objects ?? [])
+      .filter((candidate) => dragIds.includes(candidate.id))
+      .map((candidate) => ({
+        id: candidate.id,
+        bboxStart: candidate.bbox,
+        depthYStart: candidate.depthY,
+        collisionBboxStart: candidate.collision.bbox,
+        collisionPointsStart: candidate.collision.points,
+        walkablePointsStart: candidate.walkable?.points,
+      }));
     setBoxDrag({
-      id: object.id,
       pointerStart: imagePointFromPointer(event),
-      bboxStart: object.bbox,
-      depthYStart: object.depthY,
-      collisionBboxStart: object.collision.bbox,
-      collisionPointsStart: object.collision.points,
-      walkablePointsStart: object.walkable?.points,
+      objectStarts,
     });
     event.currentTarget.setPointerCapture(event.pointerId);
   };
@@ -470,45 +550,17 @@ export function WorldV2ManifestEditorPage() {
     const point = imagePointFromPointer(event);
     const deltaX = Math.round(point.x - boxDrag.pointerStart.x);
     const deltaY = Math.round(point.y - boxDrag.pointerStart.y);
-    const nextBox = offsetBounds(boxDrag.bboxStart, deltaX, deltaY, imageSize);
-    const boundedDeltaX = nextBox.x - boxDrag.bboxStart.x;
-    const boundedDeltaY = nextBox.y - boxDrag.bboxStart.y;
+    const boundedDelta = constrainedGroupDelta(boxDrag.objectStarts, deltaX, deltaY, coordinateBounds);
 
     setManifest((currentManifest) => {
       if (!currentManifest) return currentManifest;
+      const startsById = new Map(boxDrag.objectStarts.map((start) => [start.id, start]));
 
       return {
         ...currentManifest,
         objects: currentManifest.objects.map((object) => {
-          if (object.id !== boxDrag.id) return object;
-
-          const nextCollisionBbox = boxDrag.collisionBboxStart
-            ? offsetBounds(boxDrag.collisionBboxStart, boundedDeltaX, boundedDeltaY, imageSize)
-            : undefined;
-
-          return {
-            ...object,
-            bbox: nextBox,
-            depthY: boxDrag.depthYStart === undefined ? undefined : boxDrag.depthYStart + boundedDeltaY,
-            collision: {
-              ...object.collision,
-              ...(nextCollisionBbox ? { bbox: nextCollisionBbox } : {}),
-              ...(boxDrag.collisionPointsStart
-                ? { points: offsetPoints(boxDrag.collisionPointsStart, boundedDeltaX, boundedDeltaY, imageSize) }
-                : {}),
-            },
-            ...(object.removalMask
-              ? { removalMask: offsetRemovalMask(object.removalMask, boundedDeltaX, boundedDeltaY, imageSize) }
-              : {}),
-            ...(boxDrag.walkablePointsStart
-              ? {
-                  walkable: {
-                    kind: 'polygon',
-                    points: offsetPoints(boxDrag.walkablePointsStart, boundedDeltaX, boundedDeltaY, imageSize),
-                  },
-                }
-              : {}),
-          };
+          const start = startsById.get(object.id);
+          return start ? offsetManifestObject(object, start, boundedDelta.x, boundedDelta.y, coordinateBounds) : object;
         }),
       };
     });
@@ -546,7 +598,7 @@ export function WorldV2ManifestEditorPage() {
     const point = imagePointFromPointer(event);
     const deltaX = Math.round(point.x - boxResize.pointerStart.x);
     const deltaY = Math.round(point.y - boxResize.pointerStart.y);
-    const nextBox = resizeBounds(boxResize.bboxStart, boxResize.handle, deltaX, deltaY, imageSize);
+    const nextBox = resizeBounds(boxResize.bboxStart, boxResize.handle, deltaX, deltaY, coordinateBounds);
 
     setManifest((currentManifest) => {
       if (!currentManifest) return currentManifest;
@@ -668,26 +720,23 @@ export function WorldV2ManifestEditorPage() {
     const zone = manifest.zones.find((candidate) => candidate.id === zoneFilter);
     const bbox = zone
       ? {
-          x: Math.min(imageSize.width - 80, zone.bbox.x + 24),
-          y: Math.min(imageSize.height - 80, zone.bbox.y + 24),
+          x: Math.min(coordinateBounds.x + coordinateBounds.width - 80, zone.bbox.x + 24),
+          y: Math.min(coordinateBounds.y + coordinateBounds.height - 80, zone.bbox.y + 24),
           width: 80,
           height: 80,
         }
-      : { x: 40, y: 40, width: 80, height: 80 };
-    const nextObject = createDefaultObject(bbox, role, zoneFilter, manifest);
+      : { x: coordinateBounds.x + 40, y: coordinateBounds.y + 40, width: 80, height: 80 };
+    const targetZone = zoneFilter === 'all' ? manifest.zones[0]?.id ?? 'apex' : zoneFilter;
+    const nextObject = createDefaultObject(offsetBounds(bbox, 0, 0, coordinateBounds), role, targetZone, manifest);
     setManifest({ ...manifest, objects: [...manifest.objects, nextObject] });
-    setSelectedId(nextObject.id);
+    selectSingleObject(nextObject.id);
     setSaveState('idle');
   };
 
   const duplicateObject = () => {
     if (!manifest || !selectedObject) return;
     const id = uniqueObjectId(`${selectedObject.id}-copy`, manifest);
-    const bbox = {
-      ...selectedObject.bbox,
-      x: Math.min(imageSize.width - selectedObject.bbox.width, selectedObject.bbox.x + 12),
-      y: Math.min(imageSize.height - selectedObject.bbox.height, selectedObject.bbox.y + 12),
-    };
+    const bbox = offsetBounds(selectedObject.bbox, 12, 12, coordinateBounds);
     const deltaX = bbox.x - selectedObject.bbox.x;
     const deltaY = bbox.y - selectedObject.bbox.y;
     const nextObject = {
@@ -698,31 +747,32 @@ export function WorldV2ManifestEditorPage() {
       collision: {
         ...selectedObject.collision,
         ...(selectedObject.collision.points
-          ? { points: offsetPoints(selectedObject.collision.points, deltaX, deltaY, imageSize) }
+          ? { points: offsetPoints(selectedObject.collision.points, deltaX, deltaY, coordinateBounds) }
           : {}),
       },
       ...(selectedObject.removalMask
-        ? { removalMask: offsetRemovalMask(selectedObject.removalMask, deltaX, deltaY, imageSize) }
+        ? { removalMask: offsetRemovalMask(selectedObject.removalMask, deltaX, deltaY, coordinateBounds) }
         : {}),
       ...(selectedObject.walkable
         ? {
             walkable: {
               kind: 'polygon' as const,
-              points: offsetPoints(selectedObject.walkable.points, deltaX, deltaY, imageSize),
+              points: offsetPoints(selectedObject.walkable.points, deltaX, deltaY, coordinateBounds),
             },
           }
         : {}),
     };
     setManifest({ ...manifest, objects: [...manifest.objects, nextObject] });
-    setSelectedId(id);
+    selectSingleObject(id);
     setSaveState('idle');
   };
 
   const deleteObject = () => {
     if (!manifest || !selectedId) return;
-    const nextObjects = manifest.objects.filter((object) => object.id !== selectedId);
+    const idsToDelete = activeSelectedIds.length > 0 ? activeSelectedIds : [selectedId];
+    const nextObjects = manifest.objects.filter((object) => !idsToDelete.includes(object.id));
     setManifest({ ...manifest, objects: nextObjects });
-    setSelectedId(nextObjects.find((object) => object.zone === zoneFilter)?.id ?? null);
+    selectSingleObject(nextObjects.find((object) => zoneFilter === 'all' || object.zone === zoneFilter)?.id ?? null);
     setSaveState('idle');
   };
 
@@ -773,6 +823,7 @@ export function WorldV2ManifestEditorPage() {
           <label>
             Zone
             <select value={zoneFilter} onChange={(event) => handleZoneFilterChange(event.target.value)}>
+              <option value="all">all zones</option>
               {manifest.zones.map((zone) => <option key={zone.id} value={zone.id}>{zone.label}</option>)}
             </select>
           </label>
@@ -834,7 +885,22 @@ export function WorldV2ManifestEditorPage() {
           </button>
           <button type="button" onClick={deleteObject} disabled={!selectedObject}>
             <Trash2 size={15} aria-hidden />
-            Delete
+            {selectedCount > 1 ? 'Delete Sel.' : 'Delete'}
+          </button>
+        </div>
+
+        <div className="manifest-editor-selection-actions">
+          <span>
+            <MousePointer2 size={14} aria-hidden />
+            {selectedCount} selected
+          </span>
+          <button type="button" onClick={selectVisibleObjects} disabled={visibleObjectIds.length === 0}>
+            <CheckSquare size={14} aria-hidden />
+            Select visible
+          </button>
+          <button type="button" onClick={clearObjectSelection} disabled={selectedCount === 0}>
+            <XSquare size={14} aria-hidden />
+            Clear
           </button>
         </div>
 
@@ -843,8 +909,8 @@ export function WorldV2ManifestEditorPage() {
             <button
               key={object.id}
               type="button"
-              className={object.id === selectedId ? 'manifest-editor-object manifest-editor-object--active' : 'manifest-editor-object'}
-              onClick={() => setSelectedId(object.id)}
+              className={isObjectSelected(object) ? 'manifest-editor-object manifest-editor-object--active' : 'manifest-editor-object'}
+              onClick={(event) => selectObject(object.id, event.shiftKey || event.metaKey || event.ctrlKey)}
             >
               <span style={{ backgroundColor: ROLE_COLORS[object.role] }} />
               <strong>{object.id}</strong>
@@ -858,7 +924,7 @@ export function WorldV2ManifestEditorPage() {
         <div ref={stageRef} className="manifest-editor-stage-scroll">
           <div
             className="manifest-editor-stage"
-            style={{ width: imageSize.width * zoom, height: imageSize.height * zoom }}
+            style={{ width: coordinateBounds.width * zoom, height: coordinateBounds.height * zoom }}
           >
             {referenceChunks.map((chunk) => (
               <img
@@ -868,8 +934,8 @@ export function WorldV2ManifestEditorPage() {
                 alt=""
                 draggable={false}
                 style={{
-                  left: chunk.x * zoom,
-                  top: chunk.y * zoom,
+                  left: (chunk.x - coordinateBounds.x) * zoom,
+                  top: (chunk.y - coordinateBounds.y) * zoom,
                   width: chunk.width * zoom,
                   height: chunk.height * zoom,
                 }}
@@ -877,12 +943,14 @@ export function WorldV2ManifestEditorPage() {
             ))}
             <svg
               ref={svgRef}
-              viewBox={`0 0 ${imageSize.width} ${imageSize.height}`}
+              viewBox={`${coordinateBounds.x} ${coordinateBounds.y} ${coordinateBounds.width} ${coordinateBounds.height}`}
               onPointerDown={handlePointerDown}
               onPointerMove={handlePointerMove}
               onPointerUp={handlePointerUp}
               onPointerCancel={() => {
                 setDraftBox(null);
+                setBoxDrag(null);
+                setBoxResize(null);
                 setMaskPointDrag(null);
                 setDepthDrag(null);
               }}
@@ -892,7 +960,7 @@ export function WorldV2ManifestEditorPage() {
                   {object.collision.points?.length ? (
                     <>
                       <polygon
-                        className={object.id === selectedId ? 'manifest-editor-collision-polygon manifest-editor-collision-polygon--active' : 'manifest-editor-collision-polygon'}
+                        className={isObjectSelected(object) ? 'manifest-editor-collision-polygon manifest-editor-collision-polygon--active' : 'manifest-editor-collision-polygon'}
                         points={object.collision.points.map((point) => `${point.x},${point.y}`).join(' ')}
                       />
                       {object.id === selectedId && object.collision.points.map((point, pointIndex) => (
@@ -913,7 +981,7 @@ export function WorldV2ManifestEditorPage() {
                   {object.walkable?.points.length ? (
                     <>
                       <polygon
-                        className={object.id === selectedId ? 'manifest-editor-walkable-polygon manifest-editor-walkable-polygon--active' : 'manifest-editor-walkable-polygon'}
+                        className={isObjectSelected(object) ? 'manifest-editor-walkable-polygon manifest-editor-walkable-polygon--active' : 'manifest-editor-walkable-polygon'}
                         points={object.walkable.points.map((point) => `${point.x},${point.y}`).join(' ')}
                       />
                       {object.id === selectedId && object.walkable.points.map((point, pointIndex) => (
@@ -934,7 +1002,7 @@ export function WorldV2ManifestEditorPage() {
                   {object.removalMask?.points.length ? (
                     <>
                       <polygon
-                        className={object.id === selectedId ? 'manifest-editor-removal-mask manifest-editor-removal-mask--active' : 'manifest-editor-removal-mask'}
+                        className={isObjectSelected(object) ? 'manifest-editor-removal-mask manifest-editor-removal-mask--active' : 'manifest-editor-removal-mask'}
                         points={object.removalMask.points.map((point) => `${point.x},${point.y}`).join(' ')}
                       />
                       {object.id === selectedId && object.removalMask.points.map((point, pointIndex) => (
@@ -954,14 +1022,14 @@ export function WorldV2ManifestEditorPage() {
                   ) : null}
                   {showBoxes && (
                     <rect
-                      className={object.id === selectedId ? 'manifest-editor-rect manifest-editor-rect--active' : 'manifest-editor-rect'}
+                      className={isObjectSelected(object) ? 'manifest-editor-rect manifest-editor-rect--active' : 'manifest-editor-rect'}
                       x={object.bbox.x}
                       y={object.bbox.y}
                       width={object.bbox.width}
                       height={object.bbox.height}
                       fill={ROLE_COLORS[object.role]}
                       stroke={ROLE_COLORS[object.role]}
-                      pointerEvents={editorMode === 'mask' ? 'none' : object.id === selectedId ? 'all' : 'stroke'}
+                      pointerEvents={editorMode === 'mask' ? 'none' : isObjectSelected(object) ? 'all' : 'stroke'}
                       onPointerDown={(event) => handleObjectPointerDown(object, event)}
                       onPointerMove={handleObjectPointerMove}
                       onPointerUp={handleObjectPointerUp}
@@ -976,7 +1044,7 @@ export function WorldV2ManifestEditorPage() {
                   {object.depthY !== undefined && (
                     <>
                       <line
-                        className={object.id === selectedId ? 'manifest-editor-depth-line manifest-editor-depth-line--active' : 'manifest-editor-depth-line'}
+                        className={isObjectSelected(object) ? 'manifest-editor-depth-line manifest-editor-depth-line--active' : 'manifest-editor-depth-line'}
                         x1={object.bbox.x}
                         y1={object.depthY}
                         x2={object.bbox.x + object.bbox.width}
@@ -1226,10 +1294,24 @@ function ObjectInspector({
   );
 }
 
-function clampPoint(point: { x: number; y: number }, imageSize: { width: number; height: number }) {
+function boundsFromChunks(chunks: ManifestImageChunk[], fallbackSize: { width: number; height: number }): Bounds {
+  if (chunks.length === 0) return { x: 0, y: 0, width: fallbackSize.width, height: fallbackSize.height };
+  const minX = Math.min(...chunks.map((chunk) => chunk.x));
+  const minY = Math.min(...chunks.map((chunk) => chunk.y));
+  const maxX = Math.max(...chunks.map((chunk) => chunk.x + chunk.width));
+  const maxY = Math.max(...chunks.map((chunk) => chunk.y + chunk.height));
   return {
-    x: Math.max(0, Math.min(imageSize.width, Math.round(point.x))),
-    y: Math.max(0, Math.min(imageSize.height, Math.round(point.y))),
+    x: minX,
+    y: minY,
+    width: maxX - minX,
+    height: maxY - minY,
+  };
+}
+
+function clampPoint(point: { x: number; y: number }, bounds: Bounds) {
+  return {
+    x: clamp(Math.round(point.x), bounds.x, bounds.x + bounds.width),
+    y: clamp(Math.round(point.y), bounds.y, bounds.y + bounds.height),
   };
 }
 
@@ -1244,15 +1326,78 @@ function normalizedBox(start: { x: number; y: number }, current: { x: number; y:
   };
 }
 
-function offsetBounds(bounds: Bounds, deltaX: number, deltaY: number, imageSize: { width: number; height: number }): Bounds {
-  const width = Math.min(Math.max(1, Math.round(bounds.width)), imageSize.width);
-  const height = Math.min(Math.max(1, Math.round(bounds.height)), imageSize.height);
+function offsetBounds(bounds: Bounds, deltaX: number, deltaY: number, worldBounds: Bounds): Bounds {
+  const width = Math.min(Math.max(1, Math.round(bounds.width)), worldBounds.width);
+  const height = Math.min(Math.max(1, Math.round(bounds.height)), worldBounds.height);
 
   return {
-    x: Math.max(0, Math.min(imageSize.width - width, Math.round(bounds.x + deltaX))),
-    y: Math.max(0, Math.min(imageSize.height - height, Math.round(bounds.y + deltaY))),
+    x: clamp(Math.round(bounds.x + deltaX), worldBounds.x, worldBounds.x + worldBounds.width - width),
+    y: clamp(Math.round(bounds.y + deltaY), worldBounds.y, worldBounds.y + worldBounds.height - height),
     width,
     height,
+  };
+}
+
+function clampBoundsField(bounds: Bounds, field: keyof Bounds, value: number, worldBounds: Bounds): Bounds {
+  const next = {
+    ...bounds,
+    [field]: Math.max(field === 'width' || field === 'height' ? 1 : -Infinity, Math.round(value)),
+  };
+  const width = Math.min(Math.max(1, next.width), worldBounds.width);
+  const height = Math.min(Math.max(1, next.height), worldBounds.height);
+  return {
+    x: clamp(next.x, worldBounds.x, worldBounds.x + worldBounds.width - width),
+    y: clamp(next.y, worldBounds.y, worldBounds.y + worldBounds.height - height),
+    width,
+    height,
+  };
+}
+
+function constrainedGroupDelta(starts: ObjectDragStart[], deltaX: number, deltaY: number, worldBounds: Bounds) {
+  if (starts.length === 0) return { x: 0, y: 0 };
+  const minDeltaX = Math.max(...starts.map((start) => worldBounds.x - start.bboxStart.x));
+  const maxDeltaX = Math.min(...starts.map((start) => worldBounds.x + worldBounds.width - (start.bboxStart.x + start.bboxStart.width)));
+  const minDeltaY = Math.max(...starts.map((start) => worldBounds.y - start.bboxStart.y));
+  const maxDeltaY = Math.min(...starts.map((start) => worldBounds.y + worldBounds.height - (start.bboxStart.y + start.bboxStart.height)));
+  return {
+    x: clamp(deltaX, minDeltaX, maxDeltaX),
+    y: clamp(deltaY, minDeltaY, maxDeltaY),
+  };
+}
+
+function offsetManifestObject(
+  object: ManifestObject,
+  start: ObjectDragStart,
+  deltaX: number,
+  deltaY: number,
+  worldBounds: Bounds,
+): ManifestObject {
+  const nextCollisionBbox = start.collisionBboxStart
+    ? offsetBounds(start.collisionBboxStart, deltaX, deltaY, worldBounds)
+    : undefined;
+
+  return {
+    ...object,
+    bbox: offsetBounds(start.bboxStart, deltaX, deltaY, worldBounds),
+    depthY: start.depthYStart === undefined ? undefined : start.depthYStart + deltaY,
+    collision: {
+      ...object.collision,
+      ...(nextCollisionBbox ? { bbox: nextCollisionBbox } : {}),
+      ...(start.collisionPointsStart
+        ? { points: offsetPoints(start.collisionPointsStart, deltaX, deltaY, worldBounds) }
+        : {}),
+    },
+    ...(object.removalMask
+      ? { removalMask: offsetRemovalMask(object.removalMask, deltaX, deltaY, worldBounds) }
+      : {}),
+    ...(start.walkablePointsStart
+      ? {
+          walkable: {
+            kind: 'polygon',
+            points: offsetPoints(start.walkablePointsStart, deltaX, deltaY, worldBounds),
+          },
+        }
+      : {}),
   };
 }
 
@@ -1261,7 +1406,7 @@ function resizeBounds(
   handle: ResizeHandle,
   deltaX: number,
   deltaY: number,
-  imageSize: { width: number; height: number },
+  worldBounds: Bounds,
 ): Bounds {
   const minSize = 4;
   let left = bounds.x;
@@ -1274,10 +1419,10 @@ function resizeBounds(
   if (handle.includes('n')) top += deltaY;
   if (handle.includes('s')) bottom += deltaY;
 
-  if (handle.includes('w')) left = clamp(left, 0, right - minSize);
-  if (handle.includes('e')) right = clamp(right, left + minSize, imageSize.width);
-  if (handle.includes('n')) top = clamp(top, 0, bottom - minSize);
-  if (handle.includes('s')) bottom = clamp(bottom, top + minSize, imageSize.height);
+  if (handle.includes('w')) left = clamp(left, worldBounds.x, right - minSize);
+  if (handle.includes('e')) right = clamp(right, left + minSize, worldBounds.x + worldBounds.width);
+  if (handle.includes('n')) top = clamp(top, worldBounds.y, bottom - minSize);
+  if (handle.includes('s')) bottom = clamp(bottom, top + minSize, worldBounds.y + worldBounds.height);
 
   return {
     x: Math.round(left),
@@ -1441,14 +1586,14 @@ function offsetRemovalMask(
   removalMask: RemovalMask,
   deltaX: number,
   deltaY: number,
-  imageSize: { width: number; height: number },
+  worldBounds: Bounds,
 ): RemovalMask {
   return {
     kind: 'polygon',
     points: removalMask.points.map((point) => clampPoint({
       x: point.x + deltaX,
       y: point.y + deltaY,
-    }, imageSize)),
+    }, worldBounds)),
   };
 }
 
@@ -1456,12 +1601,12 @@ function offsetPoints(
   points: WorldPoint[],
   deltaX: number,
   deltaY: number,
-  imageSize: { width: number; height: number },
+  worldBounds: Bounds,
 ) {
   return points.map((point) => clampPoint({
     x: point.x + deltaX,
     y: point.y + deltaY,
-  }, imageSize));
+  }, worldBounds));
 }
 
 function createDefaultObject(bbox: Bounds, role: ManifestRole, zone: string, manifest: Manifest): ManifestObject {

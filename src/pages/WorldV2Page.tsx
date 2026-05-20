@@ -49,7 +49,7 @@ const WORLD_MENU_AGENTS: Record<WorldMenuAgentId, WorldMenuAgent> = {
     id: 'bacon',
     name: 'Bacon',
     tagline: 'Chef pig',
-    portrait: '/world-v2/actors/bacon-idle.svg',
+    portrait: '/world-v2/actors/bacon-idle.png',
   },
 };
 

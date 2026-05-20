@@ -2709,6 +2709,7 @@ body[data-route="world-v2"] {
 
 .manifest-editor-save,
 .manifest-editor-actions button,
+.manifest-editor-selection-actions button,
 .manifest-editor-mode-button,
 .manifest-editor-mask-actions button,
 .manifest-editor-zoom-row button {
@@ -2727,6 +2728,7 @@ body[data-route="world-v2"] {
 
 .manifest-editor-save:hover,
 .manifest-editor-actions button:hover:not(:disabled),
+.manifest-editor-selection-actions button:hover:not(:disabled),
 .manifest-editor-mode-button:hover:not(:disabled),
 .manifest-editor-mask-actions button:hover:not(:disabled),
 .manifest-editor-zoom-row button:hover:not(:disabled) {
@@ -2734,6 +2736,7 @@ body[data-route="world-v2"] {
 }
 
 .manifest-editor-actions button:disabled,
+.manifest-editor-selection-actions button:disabled,
 .manifest-editor-mode-button:disabled,
 .manifest-editor-mask-actions button:disabled,
 .manifest-editor-zoom-row button:disabled {
@@ -2804,6 +2807,33 @@ body[data-route="world-v2"] {
 
 .manifest-editor-actions button:first-child {
   grid-column: 1 / -1;
+}
+
+.manifest-editor-selection-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 8px;
+}
+
+.manifest-editor-selection-actions span {
+  display: inline-flex;
+  grid-column: 1 / -1;
+  align-items: center;
+  gap: 7px;
+  color: rgba(247, 234, 211, 0.68);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.manifest-editor-selection-actions button {
+  min-height: 30px;
+  font-size: 11px;
 }
 
 .manifest-editor-object-list {
