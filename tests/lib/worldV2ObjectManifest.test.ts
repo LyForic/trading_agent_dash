@@ -68,6 +68,21 @@ function requiresForegroundOcclusion(object: ManifestObject) {
   return object.role === 'occluder' || (object.role === 'interactive' && object.occlusion.required);
 }
 
+function manifestCoordinateBounds(manifest: Manifest) {
+  const left = Math.min(0, ...manifest.zones.map((zone) => zone.bbox.x ?? 0));
+  const top = Math.min(0, ...manifest.zones.map((zone) => zone.bbox.y ?? 0));
+  const right = Math.max(
+    manifest.source.imageSize.width,
+    ...manifest.zones.map((zone) => (zone.bbox.x ?? 0) + zone.bbox.width),
+  );
+  const bottom = Math.max(
+    manifest.source.imageSize.height,
+    ...manifest.zones.map((zone) => (zone.bbox.y ?? 0) + zone.bbox.height),
+  );
+
+  return { left, top, right, bottom };
+}
+
 describe('world v2 object manifest', () => {
   it('keeps the Apex reference inventory valid and explicit', () => {
     const manifest = readManifest();
@@ -75,6 +90,7 @@ describe('world v2 object manifest', () => {
     const statusNames = new Set(Object.keys(manifest.statusDefinitions));
     const zoneIds = new Set(manifest.zones.map((zone) => zone.id));
     const objectIds = new Set<string>();
+    const coordinateBounds = manifestCoordinateBounds(manifest);
 
     expect(manifest.schemaVersion).toBe(1);
     expect(manifest.source.referenceImage).toBe('/world-v2/layers/reference.png');
@@ -97,12 +113,12 @@ describe('world v2 object manifest', () => {
         expect(statusNames.has(status), `${object.id} unknown status ${status}`).toBe(true);
       }
 
-      expect(object.bbox.x, `${object.id} bbox x`).toBeGreaterThanOrEqual(0);
-      expect(object.bbox.y, `${object.id} bbox y`).toBeGreaterThanOrEqual(0);
+      expect(object.bbox.x, `${object.id} bbox x`).toBeGreaterThanOrEqual(coordinateBounds.left);
+      expect(object.bbox.y, `${object.id} bbox y`).toBeGreaterThanOrEqual(coordinateBounds.top);
       expect(object.bbox.width, `${object.id} bbox width`).toBeGreaterThan(0);
       expect(object.bbox.height, `${object.id} bbox height`).toBeGreaterThan(0);
-      expect(object.bbox.x + object.bbox.width, `${object.id} bbox right`).toBeLessThanOrEqual(manifest.source.imageSize.width);
-      expect(object.bbox.y + object.bbox.height, `${object.id} bbox bottom`).toBeLessThanOrEqual(manifest.source.imageSize.height);
+      expect(object.bbox.x + object.bbox.width, `${object.id} bbox right`).toBeLessThanOrEqual(coordinateBounds.right);
+      expect(object.bbox.y + object.bbox.height, `${object.id} bbox bottom`).toBeLessThanOrEqual(coordinateBounds.bottom);
 
       if (object.role === 'blocking-ground') {
         expect(object.collision.kind, `${object.id} blocking object needs collision`).not.toBe('none');
@@ -118,10 +134,10 @@ describe('world v2 object manifest', () => {
         for (const point of object.collision.points) {
           expect(point.x, `${object.id} collision point x`).toEqual(expect.any(Number));
           expect(point.y, `${object.id} collision point y`).toEqual(expect.any(Number));
-          expect(point.x, `${object.id} collision point x bounds`).toBeGreaterThanOrEqual(0);
-          expect(point.y, `${object.id} collision point y bounds`).toBeGreaterThanOrEqual(0);
-          expect(point.x, `${object.id} collision point x max`).toBeLessThanOrEqual(manifest.source.imageSize.width);
-          expect(point.y, `${object.id} collision point y max`).toBeLessThanOrEqual(manifest.source.imageSize.height);
+          expect(point.x, `${object.id} collision point x bounds`).toBeGreaterThanOrEqual(coordinateBounds.left);
+          expect(point.y, `${object.id} collision point y bounds`).toBeGreaterThanOrEqual(coordinateBounds.top);
+          expect(point.x, `${object.id} collision point x max`).toBeLessThanOrEqual(coordinateBounds.right);
+          expect(point.y, `${object.id} collision point y max`).toBeLessThanOrEqual(coordinateBounds.bottom);
         }
       }
       if (requiresForegroundOcclusion(object)) {
@@ -137,10 +153,10 @@ describe('world v2 object manifest', () => {
         for (const point of object.removalMask.points) {
           expect(point.x, `${object.id} removal mask point x`).toEqual(expect.any(Number));
           expect(point.y, `${object.id} removal mask point y`).toEqual(expect.any(Number));
-          expect(point.x, `${object.id} removal mask point x bounds`).toBeGreaterThanOrEqual(0);
-          expect(point.y, `${object.id} removal mask point y bounds`).toBeGreaterThanOrEqual(0);
-          expect(point.x, `${object.id} removal mask point x max`).toBeLessThanOrEqual(manifest.source.imageSize.width);
-          expect(point.y, `${object.id} removal mask point y max`).toBeLessThanOrEqual(manifest.source.imageSize.height);
+          expect(point.x, `${object.id} removal mask point x bounds`).toBeGreaterThanOrEqual(coordinateBounds.left);
+          expect(point.y, `${object.id} removal mask point y bounds`).toBeGreaterThanOrEqual(coordinateBounds.top);
+          expect(point.x, `${object.id} removal mask point x max`).toBeLessThanOrEqual(coordinateBounds.right);
+          expect(point.y, `${object.id} removal mask point y max`).toBeLessThanOrEqual(coordinateBounds.bottom);
         }
       }
       if (object.walkable) {
@@ -150,10 +166,10 @@ describe('world v2 object manifest', () => {
         for (const point of object.walkable.points) {
           expect(point.x, `${object.id} walkable point x`).toEqual(expect.any(Number));
           expect(point.y, `${object.id} walkable point y`).toEqual(expect.any(Number));
-          expect(point.x, `${object.id} walkable point x bounds`).toBeGreaterThanOrEqual(0);
-          expect(point.y, `${object.id} walkable point y bounds`).toBeGreaterThanOrEqual(0);
-          expect(point.x, `${object.id} walkable point x max`).toBeLessThanOrEqual(manifest.source.imageSize.width);
-          expect(point.y, `${object.id} walkable point y max`).toBeLessThanOrEqual(manifest.source.imageSize.height);
+          expect(point.x, `${object.id} walkable point x bounds`).toBeGreaterThanOrEqual(coordinateBounds.left);
+          expect(point.y, `${object.id} walkable point y bounds`).toBeGreaterThanOrEqual(coordinateBounds.top);
+          expect(point.x, `${object.id} walkable point x max`).toBeLessThanOrEqual(coordinateBounds.right);
+          expect(point.y, `${object.id} walkable point y max`).toBeLessThanOrEqual(coordinateBounds.bottom);
         }
       }
     }

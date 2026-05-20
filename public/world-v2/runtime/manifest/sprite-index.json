@@ -4,6 +4,8 @@
     "id": "all",
     "label": "All manifest zones",
     "bbox": {
+      "x": 0,
+      "y": 0,
       "width": 1536,
       "height": 1024
     }
@@ -56,18 +58,6 @@
       },
       "status": "needs-layer-generation",
       "notes": "Right-side observatory/library area. Use for Metheus-specific terrain, props, blockers, and occluders."
-    },
-    {
-      "id": "bacon",
-      "label": "Bacon kitchen garden",
-      "bbox": {
-        "x": -512,
-        "y": 0,
-        "width": 512,
-        "height": 1024
-      },
-      "status": "needs-layer-generation",
-      "notes": "West cooking and food area. Use with the baconFullMapTest editor/runtime route so labels stay in world coordinates from x=-512 to x=0."
     }
   ],
   "sourceImages": {

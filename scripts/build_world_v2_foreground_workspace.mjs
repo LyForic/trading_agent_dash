@@ -7,14 +7,19 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const manifestPath = path.join(root, 'public/world-v2/maps/world-v2-object-manifest.json');
 const referencePath = path.join(root, 'public/world-v2/layers/reference.png');
 const targetId = process.argv[2] ?? 'gale';
-const referenceOnly = process.argv.includes('--reference-only') || targetId === 'manifest-runtime';
-const allZones = targetId === 'all' || targetId === 'manifest-runtime';
+const baconFullMapRuntime = targetId === 'manifest-runtime-bacon-fullmap';
+const referenceOnly = process.argv.includes('--reference-only') || targetId === 'manifest-runtime' || baconFullMapRuntime;
+const allZones = targetId === 'all' || targetId === 'manifest-runtime' || baconFullMapRuntime;
 const zoneId = allZones ? null : targetId;
 const workspacePublicRoot = targetId === 'manifest-runtime'
   ? '/world-v2/runtime/manifest'
+  : baconFullMapRuntime
+    ? '/world-v2/runtime/manifest-bacon-fullmap'
   : `/world-v2/source/${targetId}-foreground-workspace`;
 const outDir = targetId === 'manifest-runtime'
   ? path.join(root, 'public/world-v2/runtime/manifest')
+  : baconFullMapRuntime
+    ? path.join(root, 'public/world-v2/runtime/manifest-bacon-fullmap')
   : path.join(root, `private/world-v2/source/${targetId}-foreground-workspace`);
 const spritesDir = path.join(outDir, 'sprites');
 const groundWorkspaceDir = zoneId ? path.join(root, `private/world-v2/source/${zoneId}-ground-workspace`) : null;
@@ -24,6 +29,12 @@ const approvedGroundPreviewPath = groundWorkspaceDir
 const preservedGroundPreviewPath = groundWorkspaceDir
   ? path.join(groundWorkspaceDir, 'reference-preserved-current-ground-preview-full.png')
   : null;
+const BACON_FULL_MAP_CHUNKS = [
+  { src: '/world-v2/layers/bacon-fullmap-west-v1.png', x: -512, y: 0, width: 512, height: 1024 },
+  { src: '/world-v2/layers/bacon-fullmap-core-0-v1.png', x: 0, y: 0, width: 512, height: 1024 },
+  { src: '/world-v2/layers/bacon-fullmap-core-1-v1.png', x: 512, y: 0, width: 512, height: 1024 },
+  { src: '/world-v2/layers/bacon-fullmap-core-2-v1.png', x: 1024, y: 0, width: 512, height: 1024 },
+];
 
 const pngSignature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
 const crcTable = new Uint32Array(256).map((_, index) => {
@@ -36,10 +47,11 @@ const crcTable = new Uint32Array(256).map((_, index) => {
 
 function main() {
   const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-  const reference = readPng(referencePath);
+  const reference = readReferenceImage();
+  const coordinateSpace = imageCoordinateSpace(reference);
   const cleanGround = readCleanGround(reference);
   const zones = allZones
-    ? manifest.zones
+    ? manifest.zones.filter((zone) => baconFullMapRuntime || zone.id !== 'bacon')
     : manifest.zones.filter((candidate) => candidate.id === zoneId);
   if (zones.length === 0) throw new Error(`Manifest has no zone "${zoneId}"`);
   const zoneIds = new Set(zones.map((zone) => zone.id));
@@ -60,14 +72,15 @@ function main() {
   const spriteIndex = [];
 
   for (const object of objects) {
-    const alphaResult = buildObjectAlpha(reference, cleanGround, object, manifest.source.imageSize, { referenceOnly });
-    const crop = cropBoundsFromAlpha(alphaResult.alpha, manifest.source.imageSize, object.bbox, 4);
-    const sprite = cropWithAlpha(reference, alphaResult.alpha, crop);
+    const alphaResult = buildObjectAlpha(reference, cleanGround, object, coordinateSpace, { referenceOnly });
+    const imageCrop = cropBoundsFromAlpha(alphaResult.alpha, coordinateSpace, object.bbox, 4);
+    const worldCrop = imageCropToWorldBounds(imageCrop, coordinateSpace);
+    const sprite = cropWithAlpha(reference, alphaResult.alpha, imageCrop);
     const fileName = `${slugify(object.id)}.png`;
     const spritePath = path.join(spritesDir, fileName);
 
     writePng(spritePath, sprite);
-    compositeImage(preview, sprite, crop.x, crop.y);
+    compositeImage(preview, sprite, imageCrop.x, imageCrop.y);
     paintAlphaMask(alphaMask, alphaResult.alpha);
 
     spriteIndex.push({
@@ -78,13 +91,13 @@ function main() {
       category: object.category,
       sprite: `${workspacePublicRoot}/sprites/${fileName}`,
       sourceBbox: object.bbox,
-      spriteCrop: crop,
-      x: crop.x,
-      y: crop.y,
+      spriteCrop: worldCrop,
+      x: worldCrop.x,
+      y: worldCrop.y,
       depthY: object.depthY ?? object.bbox.y + object.bbox.height,
       maskSource: alphaResult.source,
       alphaPixels: alphaResult.alphaPixels,
-      spriteAlphaCoverage: Number((alphaResult.alphaPixels / (crop.width * crop.height)).toFixed(3)),
+      spriteAlphaCoverage: Number((alphaResult.alphaPixels / (imageCrop.width * imageCrop.height)).toFixed(3)),
       removalMaskPoints: object.removalMask?.points?.length ?? 0,
       status: object.status,
       notes: object.notes,
@@ -96,11 +109,11 @@ function main() {
   fs.writeFileSync(path.join(outDir, 'sprite-index.json'), `${JSON.stringify({
     schemaVersion: 1,
     zone: allZones
-      ? { id: 'all', label: 'All manifest zones', bbox: manifest.source.imageSize }
+      ? { id: 'all', label: 'All manifest zones', bbox: coordinateSpace }
       : { id: zones[0].id, label: zones[0].label, bbox: zones[0].bbox },
     zones,
     sourceImages: {
-      reference: '/world-v2/layers/reference.png',
+      reference: reference.source,
       cleanGround: cleanGround.source,
     },
     outputs: {
@@ -136,15 +149,100 @@ function requiresForegroundOcclusion(object) {
   return object.role === 'occluder' || (object.role === 'interactive' && object.occlusion?.required === true);
 }
 
+function readReferenceImage() {
+  if (baconFullMapRuntime) {
+    return composeImageChunks(BACON_FULL_MAP_CHUNKS, '/world-v2/layers/bacon-fullmap-*.png');
+  }
+
+  return {
+    ...readPng(referencePath),
+    source: '/world-v2/layers/reference.png',
+    x: 0,
+    y: 0,
+  };
+}
+
+function composeImageChunks(chunks, sourceLabel) {
+  const minX = Math.min(...chunks.map((chunk) => chunk.x));
+  const minY = Math.min(...chunks.map((chunk) => chunk.y));
+  const maxX = Math.max(...chunks.map((chunk) => chunk.x + chunk.width));
+  const maxY = Math.max(...chunks.map((chunk) => chunk.y + chunk.height));
+  const composed = {
+    width: maxX - minX,
+    height: maxY - minY,
+    data: Buffer.alloc((maxX - minX) * (maxY - minY) * 4),
+    source: sourceLabel,
+    x: minX,
+    y: minY,
+  };
+
+  for (const chunk of chunks) {
+    const chunkImage = readPng(path.join(root, 'public', chunk.src));
+    if (chunkImage.width !== chunk.width || chunkImage.height !== chunk.height) {
+      throw new Error(`${chunk.src} must be ${chunk.width}x${chunk.height}`);
+    }
+    pasteImage(composed, chunkImage, chunk.x - minX, chunk.y - minY);
+  }
+
+  return composed;
+}
+
+function pasteImage(base, overlay, targetX, targetY) {
+  for (let y = 0; y < overlay.height; y += 1) {
+    for (let x = 0; x < overlay.width; x += 1) {
+      const sourceOffset = ((y * overlay.width) + x) * 4;
+      const targetOffset = (((targetY + y) * base.width) + targetX + x) * 4;
+      base.data[targetOffset] = overlay.data[sourceOffset];
+      base.data[targetOffset + 1] = overlay.data[sourceOffset + 1];
+      base.data[targetOffset + 2] = overlay.data[sourceOffset + 2];
+      base.data[targetOffset + 3] = overlay.data[sourceOffset + 3];
+    }
+  }
+}
+
+function imageCoordinateSpace(image) {
+  return {
+    x: image.x ?? 0,
+    y: image.y ?? 0,
+    width: image.width,
+    height: image.height,
+  };
+}
+
+function imageCropToWorldBounds(crop, coordinateSpace) {
+  return {
+    x: crop.x + coordinateSpace.x,
+    y: crop.y + coordinateSpace.y,
+    width: crop.width,
+    height: crop.height,
+  };
+}
+
+function worldPointToImagePoint(point, coordinateSpace) {
+  return {
+    x: point.x - coordinateSpace.x,
+    y: point.y - coordinateSpace.y,
+  };
+}
+
+function worldBoundsToImageBounds(bounds, coordinateSpace) {
+  return {
+    x: bounds.x - coordinateSpace.x,
+    y: bounds.y - coordinateSpace.y,
+    width: bounds.width,
+    height: bounds.height,
+  };
+}
+
 function readCleanGround(reference) {
   if (referenceOnly || !groundWorkspaceDir) {
-    return { ...cloneImage(reference), source: '/world-v2/layers/reference.png' };
+    return { ...cloneImage(reference), source: reference.source ?? '/world-v2/layers/reference.png' };
   }
 
   const source = fs.existsSync(approvedGroundPreviewPath)
     ? approvedGroundPreviewPath
     : preservedGroundPreviewPath;
-  if (!fs.existsSync(source)) return { ...cloneImage(reference), source: '/world-v2/layers/reference.png' };
+  if (!fs.existsSync(source)) return { ...cloneImage(reference), source: reference.source ?? '/world-v2/layers/reference.png' };
 
   const cleanGround = readPng(source);
   if (cleanGround.width !== reference.width || cleanGround.height !== reference.height) {
@@ -158,8 +256,8 @@ function readCleanGround(reference) {
   };
 }
 
-function buildObjectAlpha(reference, cleanGround, object, imageSize, options = {}) {
-  const manualAlpha = buildManualMaskAlpha(object, imageSize);
+function buildObjectAlpha(reference, cleanGround, object, coordinateSpace, options = {}) {
+  const manualAlpha = buildManualMaskAlpha(object, coordinateSpace);
   if (manualAlpha) {
     return {
       alpha: manualAlpha,
@@ -169,7 +267,7 @@ function buildObjectAlpha(reference, cleanGround, object, imageSize, options = {
   }
 
   if (!options.referenceOnly) {
-    const diffAlpha = buildDiffAlpha(reference, cleanGround, object.bbox, imageSize);
+    const diffAlpha = buildDiffAlpha(reference, cleanGround, object.bbox, coordinateSpace);
     const diffPixels = countAlphaPixels(diffAlpha);
     const minimumDiffPixels = Math.max(24, Math.floor(object.bbox.width * object.bbox.height * 0.03));
     if (diffPixels >= minimumDiffPixels) {
@@ -181,8 +279,8 @@ function buildObjectAlpha(reference, cleanGround, object, imageSize, options = {
     }
   }
 
-  const boxAlpha = new Uint8Array(imageSize.width * imageSize.height);
-  fillAlphaRect(boxAlpha, imageSize, object.bbox, 255, 0);
+  const boxAlpha = new Uint8Array(coordinateSpace.width * coordinateSpace.height);
+  fillAlphaRect(boxAlpha, coordinateSpace, object.bbox, 255, 0);
   return {
     alpha: boxAlpha,
     source: 'bbox-fallback',
@@ -190,7 +288,7 @@ function buildObjectAlpha(reference, cleanGround, object, imageSize, options = {
   };
 }
 
-function buildManualMaskAlpha(object, imageSize) {
+function buildManualMaskAlpha(object, coordinateSpace) {
   const removalMask = object.removalMask;
   if (
     removalMask?.kind !== 'polygon'
@@ -200,20 +298,20 @@ function buildManualMaskAlpha(object, imageSize) {
     return null;
   }
 
-  const alpha = new Uint8Array(imageSize.width * imageSize.height);
-  fillAlphaPolygon(alpha, imageSize, removalMask.points, 255);
+  const alpha = new Uint8Array(coordinateSpace.width * coordinateSpace.height);
+  fillAlphaPolygon(alpha, coordinateSpace, removalMask.points, 255);
   return alpha;
 }
 
-function buildDiffAlpha(reference, cleanGround, bounds, imageSize) {
-  const rawAlpha = new Uint8Array(imageSize.width * imageSize.height);
+function buildDiffAlpha(reference, cleanGround, bounds, coordinateSpace) {
+  const rawAlpha = new Uint8Array(coordinateSpace.width * coordinateSpace.height);
   const strongThreshold = 42;
   const softThreshold = 18;
-  const area = paddedBounds(bounds, imageSize, 2);
+  const area = paddedBounds(bounds, coordinateSpace, 2);
 
   for (let y = area.top; y < area.bottom; y += 1) {
     for (let x = area.left; x < area.right; x += 1) {
-      const index = (y * imageSize.width) + x;
+      const index = (y * coordinateSpace.width) + x;
       const offset = index * 4;
       const redDiff = Math.abs(reference.data[offset] - cleanGround.data[offset]);
       const greenDiff = Math.abs(reference.data[offset + 1] - cleanGround.data[offset + 1]);
@@ -233,18 +331,18 @@ function buildDiffAlpha(reference, cleanGround, bounds, imageSize) {
     }
   }
 
-  return blurAlpha(dilateAlpha(rawAlpha, imageSize.width, imageSize.height, 1), imageSize.width, imageSize.height, 1, 1);
+  return blurAlpha(dilateAlpha(rawAlpha, coordinateSpace.width, coordinateSpace.height, 1), coordinateSpace.width, coordinateSpace.height, 1, 1);
 }
 
-function cropBoundsFromAlpha(alpha, imageSize, fallbackBounds, padding) {
+function cropBoundsFromAlpha(alpha, coordinateSpace, fallbackBounds, padding) {
   let left = Number.POSITIVE_INFINITY;
   let top = Number.POSITIVE_INFINITY;
   let right = 0;
   let bottom = 0;
 
-  for (let y = 0; y < imageSize.height; y += 1) {
-    for (let x = 0; x < imageSize.width; x += 1) {
-      if (alpha[(y * imageSize.width) + x] === 0) continue;
+  for (let y = 0; y < coordinateSpace.height; y += 1) {
+    for (let x = 0; x < coordinateSpace.width; x += 1) {
+      if (alpha[(y * coordinateSpace.width) + x] === 0) continue;
       left = Math.min(left, x);
       top = Math.min(top, y);
       right = Math.max(right, x + 1);
@@ -253,18 +351,19 @@ function cropBoundsFromAlpha(alpha, imageSize, fallbackBounds, padding) {
   }
 
   if (!Number.isFinite(left)) {
+    const fallbackImageBounds = worldBoundsToImageBounds(fallbackBounds, coordinateSpace);
     return {
-      x: Math.max(0, Math.floor(fallbackBounds.x)),
-      y: Math.max(0, Math.floor(fallbackBounds.y)),
-      width: Math.min(imageSize.width, Math.ceil(fallbackBounds.width)),
-      height: Math.min(imageSize.height, Math.ceil(fallbackBounds.height)),
+      x: Math.max(0, Math.floor(fallbackImageBounds.x)),
+      y: Math.max(0, Math.floor(fallbackImageBounds.y)),
+      width: Math.min(coordinateSpace.width, Math.ceil(fallbackImageBounds.width)),
+      height: Math.min(coordinateSpace.height, Math.ceil(fallbackImageBounds.height)),
     };
   }
 
   const x = Math.max(0, left - padding);
   const y = Math.max(0, top - padding);
-  const cropRight = Math.min(imageSize.width, right + padding);
-  const cropBottom = Math.min(imageSize.height, bottom + padding);
+  const cropRight = Math.min(coordinateSpace.width, right + padding);
+  const cropBottom = Math.min(coordinateSpace.height, bottom + padding);
   return {
     x,
     y,
@@ -331,17 +430,18 @@ function countAlphaPixels(alpha) {
 }
 
 function fillAlphaPolygon(alpha, imageSize, points, value) {
-  if (points.length < 3) return;
-  const minY = Math.max(0, Math.floor(Math.min(...points.map((point) => point.y))));
-  const maxY = Math.min(imageSize.height - 1, Math.ceil(Math.max(...points.map((point) => point.y))));
+  const imagePoints = points.map((point) => worldPointToImagePoint(point, imageSize));
+  if (imagePoints.length < 3) return;
+  const minY = Math.max(0, Math.floor(Math.min(...imagePoints.map((point) => point.y))));
+  const maxY = Math.min(imageSize.height - 1, Math.ceil(Math.max(...imagePoints.map((point) => point.y))));
 
   for (let y = minY; y <= maxY; y += 1) {
     const scanY = y + 0.5;
     const intersections = [];
 
-    for (let index = 0; index < points.length; index += 1) {
-      const start = points[index];
-      const end = points[(index + 1) % points.length];
+    for (let index = 0; index < imagePoints.length; index += 1) {
+      const start = imagePoints[index];
+      const end = imagePoints[(index + 1) % imagePoints.length];
       if ((start.y <= scanY && end.y > scanY) || (end.y <= scanY && start.y > scanY)) {
         const ratio = (scanY - start.y) / (end.y - start.y);
         intersections.push(start.x + ratio * (end.x - start.x));
@@ -361,10 +461,11 @@ function fillAlphaPolygon(alpha, imageSize, points, value) {
 }
 
 function fillAlphaRect(alpha, imageSize, bounds, value, extraPadding) {
-  const left = Math.max(0, Math.floor(bounds.x - extraPadding));
-  const top = Math.max(0, Math.floor(bounds.y - extraPadding));
-  const right = Math.min(imageSize.width, Math.ceil(bounds.x + bounds.width + extraPadding));
-  const bottom = Math.min(imageSize.height, Math.ceil(bounds.y + bounds.height + extraPadding));
+  const imageBounds = worldBoundsToImageBounds(bounds, imageSize);
+  const left = Math.max(0, Math.floor(imageBounds.x - extraPadding));
+  const top = Math.max(0, Math.floor(imageBounds.y - extraPadding));
+  const right = Math.min(imageSize.width, Math.ceil(imageBounds.x + imageBounds.width + extraPadding));
+  const bottom = Math.min(imageSize.height, Math.ceil(imageBounds.y + imageBounds.height + extraPadding));
 
   for (let y = top; y < bottom; y += 1) {
     for (let x = left; x < right; x += 1) {
@@ -374,11 +475,12 @@ function fillAlphaRect(alpha, imageSize, bounds, value, extraPadding) {
 }
 
 function paddedBounds(bounds, imageSize, padding) {
+  const imageBounds = worldBoundsToImageBounds(bounds, imageSize);
   return {
-    left: Math.max(0, Math.floor(bounds.x - padding)),
-    top: Math.max(0, Math.floor(bounds.y - padding)),
-    right: Math.min(imageSize.width, Math.ceil(bounds.x + bounds.width + padding)),
-    bottom: Math.min(imageSize.height, Math.ceil(bounds.y + bounds.height + padding)),
+    left: Math.max(0, Math.floor(imageBounds.x - padding)),
+    top: Math.max(0, Math.floor(imageBounds.y - padding)),
+    right: Math.min(imageSize.width, Math.ceil(imageBounds.x + imageBounds.width + padding)),
+    bottom: Math.min(imageSize.height, Math.ceil(imageBounds.y + imageBounds.height + padding)),
   };
 }
 

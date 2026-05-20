@@ -1,0 +1,3293 @@
+{
+  "schemaVersion": 1,
+  "zone": {
+    "id": "all",
+    "label": "All manifest zones",
+    "bbox": {
+      "x": -512,
+      "y": 0,
+      "width": 2048,
+      "height": 1024
+    }
+  },
+  "zones": [
+    {
+      "id": "apex",
+      "label": "Apex dojo garden",
+      "bbox": {
+        "x": 0,
+        "y": 0,
+        "width": 760,
+        "height": 470
+      },
+      "status": "inventoried",
+      "notes": "First manifest pass for the flat PNG top-left dojo area. Boxes are intentionally explicit so regeneration and Tiled placement have a shared source of truth."
+    },
+    {
+      "id": "center",
+      "label": "Shared center plaza",
+      "bbox": {
+        "x": 520,
+        "y": 250,
+        "width": 490,
+        "height": 430
+      },
+      "status": "needs-layer-generation",
+      "notes": "Shared path junction, center tree, circular planter, and transition details between agent areas. Label separately so Apex, Gale, and Metheus masks do not fight over it."
+    },
+    {
+      "id": "gale",
+      "label": "Gale weather garden",
+      "bbox": {
+        "x": 0,
+        "y": 470,
+        "width": 700,
+        "height": 554
+      },
+      "status": "needs-layer-generation",
+      "notes": "Bottom-left weather area. Use for Gale-specific terrain, props, blockers, and occluders."
+    },
+    {
+      "id": "metheus",
+      "label": "Metheus observatory garden",
+      "bbox": {
+        "x": 744,
+        "y": 0,
+        "width": 792,
+        "height": 520
+      },
+      "status": "needs-layer-generation",
+      "notes": "Right-side observatory/library area. Use for Metheus-specific terrain, props, blockers, and occluders."
+    },
+    {
+      "id": "bacon",
+      "label": "Bacon kitchen garden",
+      "bbox": {
+        "x": -512,
+        "y": 0,
+        "width": 512,
+        "height": 1024
+      },
+      "status": "needs-layer-generation",
+      "notes": "West cooking and food area. Use with the baconFullMapTest editor/runtime route so labels stay in world coordinates from x=-512 to x=0."
+    }
+  ],
+  "sourceImages": {
+    "reference": "/world-v2/layers/bacon-fullmap-*.png",
+    "cleanGround": "/world-v2/layers/bacon-fullmap-*.png"
+  },
+  "outputs": {
+    "placementPreviewFull": "/world-v2/runtime/manifest-bacon-fullmap/foreground-placement-preview-full.png",
+    "alphaMaskFull": "/world-v2/runtime/manifest-bacon-fullmap/foreground-alpha-mask-full.png",
+    "sprites": "/world-v2/runtime/manifest-bacon-fullmap/sprites/"
+  },
+  "extractionPolicy": {
+    "mode": "reference-overlay",
+    "includedObjects": "Extract occluders and only interactive objects with occlusion.required=true.",
+    "manualMask": "Use manifest removalMask polygons when present.",
+    "autoDiff": "Disabled in reference-overlay mode; unmasked objects use their authored boxes.",
+    "fallbackBox": "Use the authored box when no manual removalMask exists."
+  },
+  "sprites": [
+    {
+      "id": "apex-dojo-right-banner",
+      "zone": "apex",
+      "label": "Red banners to the dojo right",
+      "role": "occluder",
+      "category": "prop",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/apex-dojo-right-banner.png",
+      "sourceBbox": {
+        "x": 671,
+        "y": 48,
+        "width": 40,
+        "height": 87
+      },
+      "spriteCrop": {
+        "x": 671,
+        "y": 53,
+        "width": 42,
+        "height": 85
+      },
+      "x": 671,
+      "y": 53,
+      "depthY": 128,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1537,
+      "spriteAlphaCoverage": 0.431,
+      "removalMaskPoints": 10,
+      "status": [
+        "inventoried",
+        "needs-layer-generation",
+        "needs-collision",
+        "needs-occlusion-mask"
+      ],
+      "notes": "Keep as separate occluder, not part of zen ground."
+    },
+    {
+      "id": "apex-dojo-right-banner-copy",
+      "zone": "apex",
+      "label": "Red banners to the dojo right copy",
+      "role": "occluder",
+      "category": "prop",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/apex-dojo-right-banner-copy.png",
+      "sourceBbox": {
+        "x": 702,
+        "y": 64,
+        "width": 40,
+        "height": 87
+      },
+      "spriteCrop": {
+        "x": 708,
+        "y": 62,
+        "width": 30,
+        "height": 80
+      },
+      "x": 708,
+      "y": 62,
+      "depthY": 137,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1255,
+      "spriteAlphaCoverage": 0.523,
+      "removalMaskPoints": 9,
+      "status": [
+        "inventoried",
+        "needs-layer-generation",
+        "needs-collision",
+        "needs-occlusion-mask"
+      ],
+      "notes": "Keep as separate occluder, not part of zen ground."
+    },
+    {
+      "id": "metheus-new-occluder-19",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-19",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/metheus-new-occluder-19.png",
+      "sourceBbox": {
+        "x": 1206,
+        "y": 90,
+        "width": 30,
+        "height": 64
+      },
+      "spriteCrop": {
+        "x": 1203,
+        "y": 76,
+        "width": 35,
+        "height": 88
+      },
+      "x": 1203,
+      "y": 76,
+      "depthY": 154,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1524,
+      "spriteAlphaCoverage": 0.495,
+      "removalMaskPoints": 13,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "weapon-rack",
+      "zone": "apex",
+      "label": "apex-new-occluder",
+      "role": "occluder",
+      "category": "prop",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/weapon-rack.png",
+      "sourceBbox": {
+        "x": 401,
+        "y": 112,
+        "width": 40,
+        "height": 56
+      },
+      "spriteCrop": {
+        "x": 398,
+        "y": 114,
+        "width": 47,
+        "height": 59
+      },
+      "x": 398,
+      "y": 114,
+      "depthY": 164,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1628,
+      "spriteAlphaCoverage": 0.587,
+      "removalMaskPoints": 18,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "apex-new-occluder-2",
+      "zone": "apex",
+      "label": "apex-new-occluder-2",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/apex-new-occluder-2.png",
+      "sourceBbox": {
+        "x": 323,
+        "y": 105,
+        "width": 32,
+        "height": 72
+      },
+      "spriteCrop": {
+        "x": 323,
+        "y": 98,
+        "width": 34,
+        "height": 78
+      },
+      "x": 323,
+      "y": 98,
+      "depthY": 170,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1100,
+      "spriteAlphaCoverage": 0.415,
+      "removalMaskPoints": 18,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "apex-new-occluder",
+      "zone": "apex",
+      "label": "apex-new-occluder",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/apex-new-occluder.png",
+      "sourceBbox": {
+        "x": 656,
+        "y": 129,
+        "width": 34,
+        "height": 48
+      },
+      "spriteCrop": {
+        "x": 657,
+        "y": 128,
+        "width": 32,
+        "height": 53
+      },
+      "x": 657,
+      "y": 128,
+      "depthY": 175,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 889,
+      "spriteAlphaCoverage": 0.524,
+      "removalMaskPoints": 7,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "training-dummy",
+      "zone": "apex",
+      "label": "apex-new-occluder",
+      "role": "occluder",
+      "category": "prop",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/training-dummy.png",
+      "sourceBbox": {
+        "x": 711,
+        "y": 147,
+        "width": 29,
+        "height": 50
+      },
+      "spriteCrop": {
+        "x": 713,
+        "y": 150,
+        "width": 25,
+        "height": 49
+      },
+      "x": 713,
+      "y": 150,
+      "depthY": 194,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 623,
+      "spriteAlphaCoverage": 0.509,
+      "removalMaskPoints": 6,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "training-dummy-copy",
+      "zone": "apex",
+      "label": "apex-new-occluder copy",
+      "role": "occluder",
+      "category": "prop",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/training-dummy-copy.png",
+      "sourceBbox": {
+        "x": 751,
+        "y": 149,
+        "width": 29,
+        "height": 50
+      },
+      "spriteCrop": {
+        "x": 752,
+        "y": 149,
+        "width": 24,
+        "height": 52
+      },
+      "x": 752,
+      "y": 149,
+      "depthY": 196,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 650,
+      "spriteAlphaCoverage": 0.521,
+      "removalMaskPoints": 5,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "metheus-new-occluder-16",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-16",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/metheus-new-occluder-16.png",
+      "sourceBbox": {
+        "x": 1351,
+        "y": 158,
+        "width": 31,
+        "height": 41
+      },
+      "spriteCrop": {
+        "x": 1347,
+        "y": 153,
+        "width": 39,
+        "height": 51
+      },
+      "x": 1347,
+      "y": 153,
+      "depthY": 199,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 952,
+      "spriteAlphaCoverage": 0.479,
+      "removalMaskPoints": 6,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "metheus-new-occluder-18",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-18",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/metheus-new-occluder-18.png",
+      "sourceBbox": {
+        "x": 1256,
+        "y": 140,
+        "width": 37,
+        "height": 64
+      },
+      "spriteCrop": {
+        "x": 1251,
+        "y": 133,
+        "width": 48,
+        "height": 75
+      },
+      "x": 1251,
+      "y": 133,
+      "depthY": 204,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1943,
+      "spriteAlphaCoverage": 0.54,
+      "removalMaskPoints": 10,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "metheus-new-occluder-20",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-20",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/metheus-new-occluder-20.png",
+      "sourceBbox": {
+        "x": 1182,
+        "y": 147,
+        "width": 80,
+        "height": 60
+      },
+      "spriteCrop": {
+        "x": 1184,
+        "y": 149,
+        "width": 87,
+        "height": 68
+      },
+      "x": 1184,
+      "y": 149,
+      "depthY": 207,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1868,
+      "spriteAlphaCoverage": 0.316,
+      "removalMaskPoints": 4,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "apex-new-occluder-7",
+      "zone": "apex",
+      "label": "apex-new-occluder-7",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/apex-new-occluder-7.png",
+      "sourceBbox": {
+        "x": 689,
+        "y": 188,
+        "width": 22,
+        "height": 22
+      },
+      "spriteCrop": {
+        "x": 685,
+        "y": 183,
+        "width": 26,
+        "height": 30
+      },
+      "x": 685,
+      "y": 183,
+      "depthY": 210,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 248,
+      "spriteAlphaCoverage": 0.318,
+      "removalMaskPoints": 6,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "apex-new-occluder-8",
+      "zone": "apex",
+      "label": "apex-new-occluder-8",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/apex-new-occluder-8.png",
+      "sourceBbox": {
+        "x": 783,
+        "y": 186,
+        "width": 17,
+        "height": 26
+      },
+      "spriteCrop": {
+        "x": 777,
+        "y": 183,
+        "width": 27,
+        "height": 28
+      },
+      "x": 777,
+      "y": 183,
+      "depthY": 212,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 282,
+      "spriteAlphaCoverage": 0.373,
+      "removalMaskPoints": 7,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "metheus-new-occluder-21",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-21",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/metheus-new-occluder-21.png",
+      "sourceBbox": {
+        "x": 1084,
+        "y": 139,
+        "width": 80,
+        "height": 80
+      },
+      "spriteCrop": {
+        "x": 1078,
+        "y": 178,
+        "width": 88,
+        "height": 46
+      },
+      "x": 1078,
+      "y": 178,
+      "depthY": 219,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1817,
+      "spriteAlphaCoverage": 0.449,
+      "removalMaskPoints": 17,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "metheus-new-occluder-15",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-15",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/metheus-new-occluder-15.png",
+      "sourceBbox": {
+        "x": 1385,
+        "y": 179,
+        "width": 29,
+        "height": 41
+      },
+      "spriteCrop": {
+        "x": 1378,
+        "y": 176,
+        "width": 41,
+        "height": 51
+      },
+      "x": 1378,
+      "y": 176,
+      "depthY": 220,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1031,
+      "spriteAlphaCoverage": 0.493,
+      "removalMaskPoints": 6,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "apex-left-back-fence",
+      "zone": "apex",
+      "label": "Small fence behind training yard",
+      "role": "occluder",
+      "category": "prop",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/apex-left-back-fence.png",
+      "sourceBbox": {
+        "x": 334,
+        "y": 191,
+        "width": 82,
+        "height": 40
+      },
+      "spriteCrop": {
+        "x": 338,
+        "y": 193,
+        "width": 71,
+        "height": 38
+      },
+      "x": 338,
+      "y": 193,
+      "depthY": 229,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1346,
+      "spriteAlphaCoverage": 0.499,
+      "removalMaskPoints": 9,
+      "status": [
+        "inventoried",
+        "needs-layer-generation",
+        "needs-collision",
+        "needs-occlusion-mask"
+      ],
+      "notes": "This is one of the small reference details missing from the current ground layer."
+    },
+    {
+      "id": "metheus-new-occluder-23",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-23",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/metheus-new-occluder-23.png",
+      "sourceBbox": {
+        "x": 921,
+        "y": 175,
+        "width": 135,
+        "height": 59
+      },
+      "spriteCrop": {
+        "x": 950,
+        "y": 157,
+        "width": 112,
+        "height": 89
+      },
+      "x": 950,
+      "y": 157,
+      "depthY": 234,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 2543,
+      "spriteAlphaCoverage": 0.255,
+      "removalMaskPoints": 4,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "metheus-new-occluder-17",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-17",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/metheus-new-occluder-17.png",
+      "sourceBbox": {
+        "x": 1439,
+        "y": 126,
+        "width": 22,
+        "height": 112
+      },
+      "spriteCrop": {
+        "x": 1437,
+        "y": 116,
+        "width": 99,
+        "height": 173
+      },
+      "x": 1437,
+      "y": 116,
+      "depthY": 238,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 9403,
+      "spriteAlphaCoverage": 0.549,
+      "removalMaskPoints": 9,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "apex-left-stone-lantern-shrine",
+      "zone": "apex",
+      "label": "Left stone lantern shrine cluster",
+      "role": "occluder",
+      "category": "prop",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/apex-left-stone-lantern-shrine.png",
+      "sourceBbox": {
+        "x": 301,
+        "y": 171,
+        "width": 36,
+        "height": 73
+      },
+      "spriteCrop": {
+        "x": 303,
+        "y": 166,
+        "width": 34,
+        "height": 79
+      },
+      "x": 303,
+      "y": 166,
+      "depthY": 239,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1212,
+      "spriteAlphaCoverage": 0.451,
+      "removalMaskPoints": 14,
+      "status": [
+        "inventoried",
+        "needs-layer-generation",
+        "needs-collision",
+        "needs-occlusion-mask"
+      ],
+      "notes": "Includes small surrounding flowers and base stones."
+    },
+    {
+      "id": "metheus-new-occluder-22",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-22",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/metheus-new-occluder-22.png",
+      "sourceBbox": {
+        "x": 1023,
+        "y": 183,
+        "width": 80,
+        "height": 64
+      },
+      "spriteCrop": {
+        "x": 1049,
+        "y": 193,
+        "width": 43,
+        "height": 58
+      },
+      "x": 1049,
+      "y": 193,
+      "depthY": 247,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 946,
+      "spriteAlphaCoverage": 0.379,
+      "removalMaskPoints": 4,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "metheus-new-occluder-12",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-12",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/metheus-new-occluder-12.png",
+      "sourceBbox": {
+        "x": 1299,
+        "y": 188,
+        "width": 80,
+        "height": 60
+      },
+      "spriteCrop": {
+        "x": 1294,
+        "y": 180,
+        "width": 90,
+        "height": 77
+      },
+      "x": 1294,
+      "y": 180,
+      "depthY": 248,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 3651,
+      "spriteAlphaCoverage": 0.527,
+      "removalMaskPoints": 6,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "apex-left-bamboo-fence",
+      "zone": "apex",
+      "label": "Horizontal bamboo fence behind training yard",
+      "role": "occluder",
+      "category": "fence",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/apex-left-bamboo-fence.png",
+      "sourceBbox": {
+        "x": 306,
+        "y": 244,
+        "width": 213,
+        "height": 22
+      },
+      "spriteCrop": {
+        "x": 366,
+        "y": 238,
+        "width": 151,
+        "height": 26
+      },
+      "x": 366,
+      "y": 238,
+      "depthY": 260,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1883,
+      "spriteAlphaCoverage": 0.48,
+      "removalMaskPoints": 12,
+      "status": [
+        "inventoried",
+        "needs-layer-generation",
+        "needs-collision",
+        "needs-occlusion-mask"
+      ],
+      "notes": "Separates training yard from dojo path in the reference."
+    },
+    {
+      "id": "apex-left-bamboo-fence-copy",
+      "zone": "apex",
+      "label": "Horizontal bamboo fence behind training yard copy",
+      "role": "occluder",
+      "category": "fence",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/apex-left-bamboo-fence-copy.png",
+      "sourceBbox": {
+        "x": 299,
+        "y": 243,
+        "width": 65,
+        "height": 22
+      },
+      "spriteCrop": {
+        "x": 292,
+        "y": 240,
+        "width": 67,
+        "height": 24
+      },
+      "x": 292,
+      "y": 240,
+      "depthY": 260,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 856,
+      "spriteAlphaCoverage": 0.532,
+      "removalMaskPoints": 4,
+      "status": [
+        "inventoried",
+        "needs-layer-generation",
+        "needs-collision",
+        "needs-occlusion-mask"
+      ],
+      "notes": "Separates training yard from dojo path in the reference."
+    },
+    {
+      "id": "apex-new-occluder-6",
+      "zone": "apex",
+      "label": "apex-new-occluder-6",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/apex-new-occluder-6.png",
+      "sourceBbox": {
+        "x": 672,
+        "y": 219,
+        "width": 46,
+        "height": 45
+      },
+      "spriteCrop": {
+        "x": 669,
+        "y": 216,
+        "width": 51,
+        "height": 52
+      },
+      "x": 669,
+      "y": 216,
+      "depthY": 264,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1208,
+      "spriteAlphaCoverage": 0.456,
+      "removalMaskPoints": 14,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "metheus-new-occluder-13",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-13",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/metheus-new-occluder-13.png",
+      "sourceBbox": {
+        "x": 1395,
+        "y": 213,
+        "width": 37,
+        "height": 52
+      },
+      "spriteCrop": {
+        "x": 1388,
+        "y": 206,
+        "width": 48,
+        "height": 70
+      },
+      "x": 1388,
+      "y": 206,
+      "depthY": 265,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1694,
+      "spriteAlphaCoverage": 0.504,
+      "removalMaskPoints": 10,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "metheus-new-occluder-8",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-8",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/metheus-new-occluder-8.png",
+      "sourceBbox": {
+        "x": 1223,
+        "y": 217,
+        "width": 72,
+        "height": 54
+      },
+      "spriteCrop": {
+        "x": 1213,
+        "y": 196,
+        "width": 86,
+        "height": 85
+      },
+      "x": 1213,
+      "y": 196,
+      "depthY": 271,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 3795,
+      "spriteAlphaCoverage": 0.519,
+      "removalMaskPoints": 6,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "apex-new-occluder-3",
+      "zone": "apex",
+      "label": "apex-new-occluder-3",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/apex-new-occluder-3.png",
+      "sourceBbox": {
+        "x": 249,
+        "y": 217,
+        "width": 25,
+        "height": 77
+      },
+      "spriteCrop": {
+        "x": 249,
+        "y": 204,
+        "width": 29,
+        "height": 79
+      },
+      "x": 249,
+      "y": 204,
+      "depthY": 282,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 985,
+      "spriteAlphaCoverage": 0.43,
+      "removalMaskPoints": 16,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "metheus-new-occluder-14",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-14",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/metheus-new-occluder-14.png",
+      "sourceBbox": {
+        "x": 1453,
+        "y": 246,
+        "width": 40,
+        "height": 40
+      },
+      "spriteCrop": {
+        "x": 1446,
+        "y": 240,
+        "width": 51,
+        "height": 51
+      },
+      "x": 1446,
+      "y": 240,
+      "depthY": 286,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1379,
+      "spriteAlphaCoverage": 0.53,
+      "removalMaskPoints": 16,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "metheus-new-occluder-11",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-11",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/metheus-new-occluder-11.png",
+      "sourceBbox": {
+        "x": 1316,
+        "y": 251,
+        "width": 28,
+        "height": 36
+      },
+      "spriteCrop": {
+        "x": 1313,
+        "y": 252,
+        "width": 35,
+        "height": 42
+      },
+      "x": 1313,
+      "y": 252,
+      "depthY": 287,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 670,
+      "spriteAlphaCoverage": 0.456,
+      "removalMaskPoints": 7,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "metheus-new-occluder-7",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-7",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/metheus-new-occluder-7.png",
+      "sourceBbox": {
+        "x": 1225,
+        "y": 269,
+        "width": 31,
+        "height": 28
+      },
+      "spriteCrop": {
+        "x": 1223,
+        "y": 262,
+        "width": 38,
+        "height": 40
+      },
+      "x": 1223,
+      "y": 262,
+      "depthY": 297,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 631,
+      "spriteAlphaCoverage": 0.415,
+      "removalMaskPoints": 6,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "training-dummy-copy-2-copy",
+      "zone": "apex",
+      "label": "apex-new-occluder copy copy",
+      "role": "occluder",
+      "category": "prop",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/training-dummy-copy-2-copy.png",
+      "sourceBbox": {
+        "x": 430,
+        "y": 268,
+        "width": 22,
+        "height": 41
+      },
+      "spriteCrop": {
+        "x": 433,
+        "y": 264,
+        "width": 18,
+        "height": 43
+      },
+      "x": 433,
+      "y": 264,
+      "depthY": 304,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 305,
+      "spriteAlphaCoverage": 0.394,
+      "removalMaskPoints": 5,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "apex-street-lamp",
+      "zone": "apex",
+      "label": "apex-new-occluder",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/apex-street-lamp.png",
+      "sourceBbox": {
+        "x": 838,
+        "y": 250,
+        "width": 19,
+        "height": 55
+      },
+      "spriteCrop": {
+        "x": 837,
+        "y": 240,
+        "width": 21,
+        "height": 66
+      },
+      "x": 837,
+      "y": 240,
+      "depthY": 305,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 499,
+      "spriteAlphaCoverage": 0.36,
+      "removalMaskPoints": 9,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "apex-new-occluder-4-copy",
+      "zone": "apex",
+      "label": "apex-new-occluder-4 copy",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/apex-new-occluder-4-copy.png",
+      "sourceBbox": {
+        "x": 279,
+        "y": 273,
+        "width": 22,
+        "height": 42
+      },
+      "spriteCrop": {
+        "x": 282,
+        "y": 268,
+        "width": 15,
+        "height": 41
+      },
+      "x": 282,
+      "y": 268,
+      "depthY": 306,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 192,
+      "spriteAlphaCoverage": 0.312,
+      "removalMaskPoints": 4,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "apex-zen-right-banner",
+      "zone": "apex",
+      "label": "Right red banner by zen garden",
+      "role": "occluder",
+      "category": "prop",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/apex-zen-right-banner.png",
+      "sourceBbox": {
+        "x": 813,
+        "y": 237,
+        "width": 31,
+        "height": 77
+      },
+      "spriteCrop": {
+        "x": 811,
+        "y": 240,
+        "width": 32,
+        "height": 72
+      },
+      "x": 811,
+      "y": 240,
+      "depthY": 307,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1186,
+      "spriteAlphaCoverage": 0.515,
+      "removalMaskPoints": 9,
+      "status": [
+        "inventoried",
+        "needs-layer-generation",
+        "needs-collision",
+        "needs-occlusion-mask"
+      ],
+      "notes": "Should not be accidentally baked into the zen sand sprite."
+    },
+    {
+      "id": "training-dummy-copy-2-copy-copy-copy",
+      "zone": "apex",
+      "label": "apex-new-occluder copy copy copy copy",
+      "role": "occluder",
+      "category": "prop",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/training-dummy-copy-2-copy-copy-copy.png",
+      "sourceBbox": {
+        "x": 332,
+        "y": 275,
+        "width": 22,
+        "height": 41
+      },
+      "spriteCrop": {
+        "x": 337,
+        "y": 266,
+        "width": 15,
+        "height": 50
+      },
+      "x": 337,
+      "y": 266,
+      "depthY": 311,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 279,
+      "spriteAlphaCoverage": 0.372,
+      "removalMaskPoints": 4,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "metheus-new-occluder-6",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-6",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/metheus-new-occluder-6.png",
+      "sourceBbox": {
+        "x": 1194,
+        "y": 248,
+        "width": 41,
+        "height": 64
+      },
+      "spriteCrop": {
+        "x": 1184,
+        "y": 241,
+        "width": 55,
+        "height": 80
+      },
+      "x": 1184,
+      "y": 241,
+      "depthY": 312,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 2510,
+      "spriteAlphaCoverage": 0.57,
+      "removalMaskPoints": 6,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "metheus-new-occluder-10",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-10",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/metheus-new-occluder-10.png",
+      "sourceBbox": {
+        "x": 1294,
+        "y": 247,
+        "width": 24,
+        "height": 65
+      },
+      "spriteCrop": {
+        "x": 1288,
+        "y": 238,
+        "width": 33,
+        "height": 80
+      },
+      "x": 1288,
+      "y": 238,
+      "depthY": 312,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1169,
+      "spriteAlphaCoverage": 0.443,
+      "removalMaskPoints": 13,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "training-dummy-copy-2",
+      "zone": "apex",
+      "label": "apex-new-occluder copy",
+      "role": "occluder",
+      "category": "prop",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/training-dummy-copy-2.png",
+      "sourceBbox": {
+        "x": 459,
+        "y": 268,
+        "width": 22,
+        "height": 48
+      },
+      "spriteCrop": {
+        "x": 459,
+        "y": 264,
+        "width": 20,
+        "height": 53
+      },
+      "x": 459,
+      "y": 264,
+      "depthY": 313,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 483,
+      "spriteAlphaCoverage": 0.456,
+      "removalMaskPoints": 10,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "apex-yard-center-lantern",
+      "zone": "apex",
+      "label": "Black lantern below dojo",
+      "role": "occluder",
+      "category": "prop",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/apex-yard-center-lantern.png",
+      "sourceBbox": {
+        "x": 574,
+        "y": 245,
+        "width": 40,
+        "height": 84
+      },
+      "spriteCrop": {
+        "x": 575,
+        "y": 247,
+        "width": 42,
+        "height": 85
+      },
+      "x": 575,
+      "y": 247,
+      "depthY": 324,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1479,
+      "spriteAlphaCoverage": 0.414,
+      "removalMaskPoints": 15,
+      "status": [
+        "inventoried",
+        "needs-layer-generation",
+        "needs-collision",
+        "needs-occlusion-mask"
+      ],
+      "notes": "Currently absent from the layered prototype."
+    },
+    {
+      "id": "metheus-new-occluder-9",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-9",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/metheus-new-occluder-9.png",
+      "sourceBbox": {
+        "x": 1325,
+        "y": 252,
+        "width": 62,
+        "height": 75
+      },
+      "spriteCrop": {
+        "x": 1322,
+        "y": 232,
+        "width": 76,
+        "height": 103
+      },
+      "x": 1322,
+      "y": 232,
+      "depthY": 327,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 3856,
+      "spriteAlphaCoverage": 0.493,
+      "removalMaskPoints": 15,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "apex-new-occluder-4",
+      "zone": "apex",
+      "label": "apex-new-occluder-4",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/apex-new-occluder-4.png",
+      "sourceBbox": {
+        "x": 254,
+        "y": 298,
+        "width": 22,
+        "height": 42
+      },
+      "spriteCrop": {
+        "x": 257,
+        "y": 288,
+        "width": 15,
+        "height": 47
+      },
+      "x": 257,
+      "y": 288,
+      "depthY": 331,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 264,
+      "spriteAlphaCoverage": 0.374,
+      "removalMaskPoints": 4,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "training-dummy-copy-2-copy-copy",
+      "zone": "apex",
+      "label": "apex-new-occluder copy copy copy",
+      "role": "occluder",
+      "category": "prop",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/training-dummy-copy-2-copy-copy.png",
+      "sourceBbox": {
+        "x": 429,
+        "y": 295,
+        "width": 22,
+        "height": 41
+      },
+      "spriteCrop": {
+        "x": 433,
+        "y": 292,
+        "width": 15,
+        "height": 42
+      },
+      "x": 433,
+      "y": 292,
+      "depthY": 331,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 231,
+      "spriteAlphaCoverage": 0.367,
+      "removalMaskPoints": 4,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "bush",
+      "zone": "apex",
+      "label": "apex-new-occluder-4",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/bush.png",
+      "sourceBbox": {
+        "x": 617,
+        "y": 296,
+        "width": 47,
+        "height": 43
+      },
+      "spriteCrop": {
+        "x": 611,
+        "y": 289,
+        "width": 56,
+        "height": 52
+      },
+      "x": 611,
+      "y": 289,
+      "depthY": 337,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1658,
+      "spriteAlphaCoverage": 0.569,
+      "removalMaskPoints": 15,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "apex-koi-pond-fence",
+      "zone": "apex",
+      "label": "Koi pond fence and posts",
+      "role": "occluder",
+      "category": "fence",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/apex-koi-pond-fence.png",
+      "sourceBbox": {
+        "x": 668,
+        "y": 304,
+        "width": 132,
+        "height": 30
+      },
+      "spriteCrop": {
+        "x": 663,
+        "y": 256,
+        "width": 157,
+        "height": 95
+      },
+      "x": 663,
+      "y": 256,
+      "depthY": 343,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 4014,
+      "spriteAlphaCoverage": 0.269,
+      "removalMaskPoints": 29,
+      "status": [
+        "inventoried",
+        "needs-layer-generation",
+        "needs-collision",
+        "needs-occlusion-mask"
+      ],
+      "notes": "Likely split into upper fence, lower fence, and side-post occluders in Tiled."
+    },
+    {
+      "id": "metheus-new-occluder",
+      "zone": "metheus",
+      "label": "metheus-new-occluder",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/metheus-new-occluder.png",
+      "sourceBbox": {
+        "x": 1078,
+        "y": 308,
+        "width": 69,
+        "height": 55
+      },
+      "spriteCrop": {
+        "x": 1078,
+        "y": 305,
+        "width": 77,
+        "height": 48
+      },
+      "x": 1078,
+      "y": 305,
+      "depthY": 348,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 2350,
+      "spriteAlphaCoverage": 0.636,
+      "removalMaskPoints": 4,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "metheus-new-occluder-2",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-2",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/metheus-new-occluder-2.png",
+      "sourceBbox": {
+        "x": 978,
+        "y": 287,
+        "width": 23,
+        "height": 64
+      },
+      "spriteCrop": {
+        "x": 980,
+        "y": 284,
+        "width": 25,
+        "height": 77
+      },
+      "x": 980,
+      "y": 284,
+      "depthY": 351,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1018,
+      "spriteAlphaCoverage": 0.529,
+      "removalMaskPoints": 6,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "apex-new-occluder-5",
+      "zone": "apex",
+      "label": "apex-new-occluder-5",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/apex-new-occluder-5.png",
+      "sourceBbox": {
+        "x": 283,
+        "y": 326,
+        "width": 48,
+        "height": 31
+      },
+      "spriteCrop": {
+        "x": 300,
+        "y": 331,
+        "width": 33,
+        "height": 31
+      },
+      "x": 300,
+      "y": 331,
+      "depthY": 357,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 478,
+      "spriteAlphaCoverage": 0.467,
+      "removalMaskPoints": 6,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "apex-training-front-right-rail",
+      "zone": "apex",
+      "label": "Training yard front-right rail",
+      "role": "occluder",
+      "category": "fence",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/apex-training-front-right-rail.png",
+      "sourceBbox": {
+        "x": 383,
+        "y": 329,
+        "width": 129,
+        "height": 38
+      },
+      "spriteCrop": {
+        "x": 378,
+        "y": 315,
+        "width": 140,
+        "height": 53
+      },
+      "x": 378,
+      "y": 315,
+      "depthY": 364,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 3607,
+      "spriteAlphaCoverage": 0.486,
+      "removalMaskPoints": 21,
+      "status": [
+        "inventoried",
+        "needs-layer-generation",
+        "needs-collision",
+        "needs-occlusion-mask"
+      ],
+      "notes": "Split from the old broad front-rails box so the stair opening stays open."
+    },
+    {
+      "id": "apex-koi-pond-fence-copy-copy",
+      "zone": "apex",
+      "label": "Koi pond fence and posts copy copy",
+      "role": "occluder",
+      "category": "fence",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/apex-koi-pond-fence-copy-copy.png",
+      "sourceBbox": {
+        "x": 631,
+        "y": 325,
+        "width": 45,
+        "height": 60
+      },
+      "spriteCrop": {
+        "x": 637,
+        "y": 320,
+        "width": 34,
+        "height": 67
+      },
+      "x": 637,
+      "y": 320,
+      "depthY": 378,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 881,
+      "spriteAlphaCoverage": 0.387,
+      "removalMaskPoints": 12,
+      "status": [
+        "inventoried",
+        "needs-layer-generation",
+        "needs-collision",
+        "needs-occlusion-mask"
+      ],
+      "notes": "Likely split into upper fence, lower fence, and side-post occluders in Tiled."
+    },
+    {
+      "id": "bush-copy",
+      "zone": "apex",
+      "label": "apex-new-occluder-4 copy",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/bush-copy.png",
+      "sourceBbox": {
+        "x": 538,
+        "y": 342,
+        "width": 39,
+        "height": 38
+      },
+      "spriteCrop": {
+        "x": 534,
+        "y": 340,
+        "width": 46,
+        "height": 41
+      },
+      "x": 534,
+      "y": 340,
+      "depthY": 379,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 992,
+      "spriteAlphaCoverage": 0.526,
+      "removalMaskPoints": 12,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "metheus-new-occluder-4",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-4",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/metheus-new-occluder-4.png",
+      "sourceBbox": {
+        "x": 1211,
+        "y": 353,
+        "width": 24,
+        "height": 28
+      },
+      "spriteCrop": {
+        "x": 1210,
+        "y": 356,
+        "width": 18,
+        "height": 31
+      },
+      "x": 1210,
+      "y": 356,
+      "depthY": 381,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 176,
+      "spriteAlphaCoverage": 0.315,
+      "removalMaskPoints": 6,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "metheus-new-occluder-24",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-24",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/metheus-new-occluder-24.png",
+      "sourceBbox": {
+        "x": 1292,
+        "y": 347,
+        "width": 115,
+        "height": 34
+      },
+      "spriteCrop": {
+        "x": 1293,
+        "y": 311,
+        "width": 243,
+        "height": 73
+      },
+      "x": 1293,
+      "y": 311,
+      "depthY": 381,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 5501,
+      "spriteAlphaCoverage": 0.31,
+      "removalMaskPoints": 34,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "apex-training-front-banner",
+      "zone": "apex",
+      "label": "Front red training banner",
+      "role": "occluder",
+      "category": "prop",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/apex-training-front-banner.png",
+      "sourceBbox": {
+        "x": 271,
+        "y": 307,
+        "width": 35,
+        "height": 89
+      },
+      "spriteCrop": {
+        "x": 269,
+        "y": 302,
+        "width": 43,
+        "height": 88
+      },
+      "x": 269,
+      "y": 302,
+      "depthY": 386,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1846,
+      "spriteAlphaCoverage": 0.488,
+      "removalMaskPoints": 11,
+      "status": [
+        "inventoried",
+        "needs-layer-generation",
+        "needs-collision",
+        "needs-occlusion-mask"
+      ],
+      "notes": "Current generated platform slice can accidentally include or omit this; track it separately."
+    },
+    {
+      "id": "bacon-new-occluder-2",
+      "zone": "bacon",
+      "label": "bacon-new-occluder-2",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/bacon-new-occluder-2.png",
+      "sourceBbox": {
+        "x": -178,
+        "y": 328,
+        "width": 169,
+        "height": 80
+      },
+      "spriteCrop": {
+        "x": -185,
+        "y": 275,
+        "width": 177,
+        "height": 137
+      },
+      "x": -185,
+      "y": 275,
+      "depthY": 408,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 10040,
+      "spriteAlphaCoverage": 0.414,
+      "removalMaskPoints": 18,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "metheus-new-occluder-3",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-3",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/metheus-new-occluder-3.png",
+      "sourceBbox": {
+        "x": 1196,
+        "y": 376,
+        "width": 16,
+        "height": 37
+      },
+      "spriteCrop": {
+        "x": 1197,
+        "y": 377,
+        "width": 15,
+        "height": 38
+      },
+      "x": 1197,
+      "y": 377,
+      "depthY": 413,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 206,
+      "spriteAlphaCoverage": 0.361,
+      "removalMaskPoints": 4,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "apex-koi-pond-fence-copy-copy-copy",
+      "zone": "apex",
+      "label": "Koi pond fence and posts copy copy copy",
+      "role": "occluder",
+      "category": "fence",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/apex-koi-pond-fence-copy-copy-copy.png",
+      "sourceBbox": {
+        "x": 725,
+        "y": 373,
+        "width": 111,
+        "height": 34
+      },
+      "spriteCrop": {
+        "x": 721,
+        "y": 359,
+        "width": 101,
+        "height": 50
+      },
+      "x": 721,
+      "y": 359,
+      "depthY": 416,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1633,
+      "spriteAlphaCoverage": 0.323,
+      "removalMaskPoints": 24,
+      "status": [
+        "inventoried",
+        "needs-layer-generation",
+        "needs-collision",
+        "needs-occlusion-mask"
+      ],
+      "notes": "Likely split into upper fence, lower fence, and side-post occluders in Tiled."
+    },
+    {
+      "id": "apex-koi-pond-fence-copy-copy-copy-copy",
+      "zone": "apex",
+      "label": "Koi pond fence and posts copy copy copy copy",
+      "role": "occluder",
+      "category": "fence",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/apex-koi-pond-fence-copy-copy-copy-copy.png",
+      "sourceBbox": {
+        "x": 670,
+        "y": 378,
+        "width": 52,
+        "height": 30
+      },
+      "spriteCrop": {
+        "x": 660,
+        "y": 370,
+        "width": 80,
+        "height": 63
+      },
+      "x": 660,
+      "y": 370,
+      "depthY": 420,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1725,
+      "spriteAlphaCoverage": 0.342,
+      "removalMaskPoints": 16,
+      "status": [
+        "inventoried",
+        "needs-layer-generation",
+        "needs-collision",
+        "needs-occlusion-mask"
+      ],
+      "notes": "Likely split into upper fence, lower fence, and side-post occluders in Tiled."
+    },
+    {
+      "id": "bacon-new-occluder-6",
+      "zone": "bacon",
+      "label": "bacon-new-occluder-6",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/bacon-new-occluder-6.png",
+      "sourceBbox": {
+        "x": -12,
+        "y": 345,
+        "width": 109,
+        "height": 80
+      },
+      "spriteCrop": {
+        "x": -16,
+        "y": 299,
+        "width": 118,
+        "height": 136
+      },
+      "x": -16,
+      "y": 299,
+      "depthY": 425,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 9803,
+      "spriteAlphaCoverage": 0.611,
+      "removalMaskPoints": 21,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "metheus-new-occluder-5",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-5",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/metheus-new-occluder-5.png",
+      "sourceBbox": {
+        "x": 1228,
+        "y": 363,
+        "width": 10,
+        "height": 66
+      },
+      "spriteCrop": {
+        "x": 1224,
+        "y": 359,
+        "width": 18,
+        "height": 74
+      },
+      "x": 1224,
+      "y": 359,
+      "depthY": 429,
+      "maskSource": "bbox-fallback",
+      "alphaPixels": 660,
+      "spriteAlphaCoverage": 0.495,
+      "removalMaskPoints": 0,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "bacon-new-occluder",
+      "zone": "bacon",
+      "label": "bacon-new-occluder",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/bacon-new-occluder.png",
+      "sourceBbox": {
+        "x": -352,
+        "y": 368,
+        "width": 149,
+        "height": 80
+      },
+      "spriteCrop": {
+        "x": -361,
+        "y": 326,
+        "width": 161,
+        "height": 127
+      },
+      "x": -361,
+      "y": 326,
+      "depthY": 448,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 11429,
+      "spriteAlphaCoverage": 0.559,
+      "removalMaskPoints": 32,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "apex-koi-bottom-lantern",
+      "zone": "apex",
+      "label": "Lower pond lantern",
+      "role": "occluder",
+      "category": "prop",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/apex-koi-bottom-lantern.png",
+      "sourceBbox": {
+        "x": 776,
+        "y": 379,
+        "width": 30,
+        "height": 80
+      },
+      "spriteCrop": {
+        "x": 778,
+        "y": 374,
+        "width": 29,
+        "height": 85
+      },
+      "x": 778,
+      "y": 374,
+      "depthY": 455,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 977,
+      "spriteAlphaCoverage": 0.396,
+      "removalMaskPoints": 14,
+      "status": [
+        "inventoried",
+        "needs-layer-generation",
+        "needs-collision",
+        "needs-occlusion-mask"
+      ],
+      "notes": "Only partially visible in Apex crop; still belongs to Apex pond composition."
+    },
+    {
+      "id": "apex-koi-left-bridge-rail",
+      "zone": "apex",
+      "label": "Small bridge and rail left of pond",
+      "role": "occluder",
+      "category": "bridge",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/apex-koi-left-bridge-rail.png",
+      "sourceBbox": {
+        "x": 600,
+        "y": 425,
+        "width": 77,
+        "height": 40
+      },
+      "spriteCrop": {
+        "x": 598,
+        "y": 405,
+        "width": 84,
+        "height": 64
+      },
+      "x": 598,
+      "y": 405,
+      "depthY": 459,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1943,
+      "spriteAlphaCoverage": 0.361,
+      "removalMaskPoints": 18,
+      "status": [
+        "inventoried",
+        "needs-layer-generation",
+        "needs-collision",
+        "needs-occlusion-mask"
+      ],
+      "notes": "Bridge/rail is separate from the pond water in the flat PNG."
+    },
+    {
+      "id": "bacon-new-occluder-3",
+      "zone": "bacon",
+      "label": "bacon-new-occluder-3",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/bacon-new-occluder-3.png",
+      "sourceBbox": {
+        "x": -398,
+        "y": 413,
+        "width": 37,
+        "height": 56
+      },
+      "spriteCrop": {
+        "x": -404,
+        "y": 404,
+        "width": 47,
+        "height": 69
+      },
+      "x": -404,
+      "y": 404,
+      "depthY": 469,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1928,
+      "spriteAlphaCoverage": 0.595,
+      "removalMaskPoints": 14,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "bacon-new-occluder-5",
+      "zone": "bacon",
+      "label": "bacon-new-occluder-5",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/bacon-new-occluder-5.png",
+      "sourceBbox": {
+        "x": -218,
+        "y": 414,
+        "width": 238,
+        "height": 80
+      },
+      "spriteCrop": {
+        "x": -219,
+        "y": 395,
+        "width": 237,
+        "height": 111
+      },
+      "x": -219,
+      "y": 395,
+      "depthY": 494,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 14274,
+      "spriteAlphaCoverage": 0.543,
+      "removalMaskPoints": 42,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "bacon-new-occluder-4",
+      "zone": "bacon",
+      "label": "bacon-new-occluder-4",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/bacon-new-occluder-4.png",
+      "sourceBbox": {
+        "x": -407,
+        "y": 415,
+        "width": 80,
+        "height": 80
+      },
+      "spriteCrop": {
+        "x": -429,
+        "y": 441,
+        "width": 103,
+        "height": 57
+      },
+      "x": -429,
+      "y": 441,
+      "depthY": 495,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1757,
+      "spriteAlphaCoverage": 0.299,
+      "removalMaskPoints": 19,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "gale-new-occluder-4",
+      "zone": "gale",
+      "label": "gale-new-occluder-4",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/gale-new-occluder-4.png",
+      "sourceBbox": {
+        "x": 250,
+        "y": 470,
+        "width": 44,
+        "height": 47
+      },
+      "spriteCrop": {
+        "x": 245,
+        "y": 467,
+        "width": 55,
+        "height": 55
+      },
+      "x": 245,
+      "y": 467,
+      "depthY": 517,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1641,
+      "spriteAlphaCoverage": 0.542,
+      "removalMaskPoints": 13,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "metheus-new-occluder-25",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-25",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/metheus-new-occluder-25.png",
+      "sourceBbox": {
+        "x": 828,
+        "y": 365,
+        "width": 165,
+        "height": 166
+      },
+      "spriteCrop": {
+        "x": 824,
+        "y": 357,
+        "width": 171,
+        "height": 180
+      },
+      "x": 824,
+      "y": 357,
+      "depthY": 531,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 18222,
+      "spriteAlphaCoverage": 0.592,
+      "removalMaskPoints": 59,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "gale-house-roof",
+      "zone": "gale",
+      "label": "gale-new-occluder",
+      "role": "occluder",
+      "category": "",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/gale-house-roof.png",
+      "sourceBbox": {
+        "x": 300,
+        "y": 445,
+        "width": 109,
+        "height": 115
+      },
+      "spriteCrop": {
+        "x": 294,
+        "y": 431,
+        "width": 116,
+        "height": 134
+      },
+      "x": 294,
+      "y": 431,
+      "depthY": 560,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 9401,
+      "spriteAlphaCoverage": 0.605,
+      "removalMaskPoints": 32,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "bacon-new-occluder-7",
+      "zone": "bacon",
+      "label": "bacon-new-occluder-7",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/bacon-new-occluder-7.png",
+      "sourceBbox": {
+        "x": 75,
+        "y": 491,
+        "width": 181,
+        "height": 80
+      },
+      "spriteCrop": {
+        "x": 67,
+        "y": 464,
+        "width": 190,
+        "height": 113
+      },
+      "x": 67,
+      "y": 464,
+      "depthY": 571,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 14361,
+      "spriteAlphaCoverage": 0.669,
+      "removalMaskPoints": 36,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "gale-new-occluder-2",
+      "zone": "gale",
+      "label": "gale-new-occluder-2",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/gale-new-occluder-2.png",
+      "sourceBbox": {
+        "x": 595,
+        "y": 540,
+        "width": 38,
+        "height": 35
+      },
+      "spriteCrop": {
+        "x": 586,
+        "y": 534,
+        "width": 51,
+        "height": 44
+      },
+      "x": 586,
+      "y": 534,
+      "depthY": 575,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1156,
+      "spriteAlphaCoverage": 0.515,
+      "removalMaskPoints": 13,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "metheus-new-occluder-27",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-27",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/metheus-new-occluder-27.png",
+      "sourceBbox": {
+        "x": 1328,
+        "y": 497,
+        "width": 46,
+        "height": 80
+      },
+      "spriteCrop": {
+        "x": 1324,
+        "y": 495,
+        "width": 53,
+        "height": 84
+      },
+      "x": 1324,
+      "y": 495,
+      "depthY": 577,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1867,
+      "spriteAlphaCoverage": 0.419,
+      "removalMaskPoints": 15,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "gale-new-occluder-5",
+      "zone": "gale",
+      "label": "gale-new-occluder-5",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/gale-new-occluder-5.png",
+      "sourceBbox": {
+        "x": 415,
+        "y": 513,
+        "width": 80,
+        "height": 69
+      },
+      "spriteCrop": {
+        "x": 389,
+        "y": 503,
+        "width": 107,
+        "height": 82
+      },
+      "x": 389,
+      "y": 503,
+      "depthY": 582,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 3939,
+      "spriteAlphaCoverage": 0.449,
+      "removalMaskPoints": 15,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "bacon-new-occluder-8",
+      "zone": "bacon",
+      "label": "bacon-new-occluder-8",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/bacon-new-occluder-8.png",
+      "sourceBbox": {
+        "x": 10,
+        "y": 518,
+        "width": 80,
+        "height": 80
+      },
+      "spriteCrop": {
+        "x": 0,
+        "y": 499,
+        "width": 110,
+        "height": 108
+      },
+      "x": 0,
+      "y": 499,
+      "depthY": 598,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 6899,
+      "spriteAlphaCoverage": 0.581,
+      "removalMaskPoints": 21,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "metheus-new-occluder-26",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-26",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/metheus-new-occluder-26.png",
+      "sourceBbox": {
+        "x": 1250,
+        "y": 542,
+        "width": 21,
+        "height": 71
+      },
+      "spriteCrop": {
+        "x": 1246,
+        "y": 536,
+        "width": 30,
+        "height": 80
+      },
+      "x": 1246,
+      "y": 536,
+      "depthY": 613,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 819,
+      "spriteAlphaCoverage": 0.341,
+      "removalMaskPoints": 12,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "bacon-new-occluder-9",
+      "zone": "bacon",
+      "label": "bacon-new-occluder-9",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/bacon-new-occluder-9.png",
+      "sourceBbox": {
+        "x": -302,
+        "y": 539,
+        "width": 80,
+        "height": 80
+      },
+      "spriteCrop": {
+        "x": -326,
+        "y": 476,
+        "width": 119,
+        "height": 148
+      },
+      "x": -326,
+      "y": 476,
+      "depthY": 619,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 9177,
+      "spriteAlphaCoverage": 0.521,
+      "removalMaskPoints": 31,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "cloud-magic",
+      "zone": "gale",
+      "label": "gale-new-interactive",
+      "role": "interactive",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/cloud-magic.png",
+      "sourceBbox": {
+        "x": 514,
+        "y": 580,
+        "width": 54,
+        "height": 42
+      },
+      "spriteCrop": {
+        "x": 510,
+        "y": 576,
+        "width": 62,
+        "height": 50
+      },
+      "x": 510,
+      "y": 576,
+      "depthY": 622,
+      "maskSource": "bbox-fallback",
+      "alphaPixels": 2268,
+      "spriteAlphaCoverage": 0.732,
+      "removalMaskPoints": 0,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "cloud-machine",
+      "zone": "gale",
+      "label": "gale-new-occluder",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/cloud-machine.png",
+      "sourceBbox": {
+        "x": 502,
+        "y": 476,
+        "width": 79,
+        "height": 146
+      },
+      "spriteCrop": {
+        "x": 494,
+        "y": 486,
+        "width": 90,
+        "height": 149
+      },
+      "x": 494,
+      "y": 486,
+      "depthY": 630,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 5961,
+      "spriteAlphaCoverage": 0.445,
+      "removalMaskPoints": 42,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "machine-copy-copy-copy-copy-copy-copy-copy-copy",
+      "zone": "gale",
+      "label": "gale-new-occluder copy copy copy copy copy copy copy copy",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/machine-copy-copy-copy-copy-copy-copy-copy-copy.png",
+      "sourceBbox": {
+        "x": 573,
+        "y": 596,
+        "width": 33,
+        "height": 77
+      },
+      "spriteCrop": {
+        "x": 567,
+        "y": 583,
+        "width": 42,
+        "height": 95
+      },
+      "x": 567,
+      "y": 583,
+      "depthY": 673,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1994,
+      "spriteAlphaCoverage": 0.5,
+      "removalMaskPoints": 8,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "street-lamp",
+      "zone": "gale",
+      "label": "gale-new-occluder",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/street-lamp.png",
+      "sourceBbox": {
+        "x": 715,
+        "y": 595,
+        "width": 40,
+        "height": 87
+      },
+      "spriteCrop": {
+        "x": 714,
+        "y": 601,
+        "width": 48,
+        "height": 83
+      },
+      "x": 714,
+      "y": 601,
+      "depthY": 682,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1226,
+      "spriteAlphaCoverage": 0.308,
+      "removalMaskPoints": 8,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "machine-copy-copy-copy-copy-copy-copy-copy-copy-copy",
+      "zone": "gale",
+      "label": "gale-new-occluder copy copy copy copy copy copy copy copy copy",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/machine-copy-copy-copy-copy-copy-copy-copy-copy-copy.png",
+      "sourceBbox": {
+        "x": 204,
+        "y": 569,
+        "width": 58,
+        "height": 135
+      },
+      "spriteCrop": {
+        "x": 200,
+        "y": 558,
+        "width": 62,
+        "height": 144
+      },
+      "x": 200,
+      "y": 558,
+      "depthY": 704,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 5625,
+      "spriteAlphaCoverage": 0.63,
+      "removalMaskPoints": 19,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "machine",
+      "zone": "gale",
+      "label": "gale-new-occluder",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/machine.png",
+      "sourceBbox": {
+        "x": 288,
+        "y": 654,
+        "width": 51,
+        "height": 58
+      },
+      "spriteCrop": {
+        "x": 279,
+        "y": 631,
+        "width": 63,
+        "height": 89
+      },
+      "x": 279,
+      "y": 631,
+      "depthY": 712,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 3017,
+      "spriteAlphaCoverage": 0.538,
+      "removalMaskPoints": 16,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "gale-new-occluder",
+      "zone": "gale",
+      "label": "gale-new-occluder",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/gale-new-occluder.png",
+      "sourceBbox": {
+        "x": 674,
+        "y": 550,
+        "width": 9,
+        "height": 162
+      },
+      "spriteCrop": {
+        "x": 647,
+        "y": 547,
+        "width": 38,
+        "height": 165
+      },
+      "x": 647,
+      "y": 547,
+      "depthY": 712,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1550,
+      "spriteAlphaCoverage": 0.247,
+      "removalMaskPoints": 14,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "globe",
+      "zone": "gale",
+      "label": "gale-new-occluder",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/globe.png",
+      "sourceBbox": {
+        "x": 414,
+        "y": 608,
+        "width": 120,
+        "height": 117
+      },
+      "spriteCrop": {
+        "x": 412,
+        "y": 601,
+        "width": 130,
+        "height": 134
+      },
+      "x": 412,
+      "y": 601,
+      "depthY": 725,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 11862,
+      "spriteAlphaCoverage": 0.681,
+      "removalMaskPoints": 25,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "machine-copy-copy-copy-copy-copy-copy-copy",
+      "zone": "gale",
+      "label": "gale-new-occluder copy copy copy copy copy copy copy",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/machine-copy-copy-copy-copy-copy-copy-copy.png",
+      "sourceBbox": {
+        "x": 600,
+        "y": 596,
+        "width": 68,
+        "height": 129
+      },
+      "spriteCrop": {
+        "x": 599,
+        "y": 600,
+        "width": 72,
+        "height": 126
+      },
+      "x": 599,
+      "y": 600,
+      "depthY": 725,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 4506,
+      "spriteAlphaCoverage": 0.497,
+      "removalMaskPoints": 18,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "bacon-new-occluder-12",
+      "zone": "bacon",
+      "label": "bacon-new-occluder-12",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/bacon-new-occluder-12.png",
+      "sourceBbox": {
+        "x": -207,
+        "y": 694,
+        "width": 80,
+        "height": 54
+      },
+      "spriteCrop": {
+        "x": -216,
+        "y": 679,
+        "width": 96,
+        "height": 79
+      },
+      "x": -216,
+      "y": 679,
+      "depthY": 748,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 4034,
+      "spriteAlphaCoverage": 0.532,
+      "removalMaskPoints": 14,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "machine-copy-copy-copy",
+      "zone": "gale",
+      "label": "gale-new-occluder copy copy copy",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/machine-copy-copy-copy.png",
+      "sourceBbox": {
+        "x": 656,
+        "y": 709,
+        "width": 30,
+        "height": 65
+      },
+      "spriteCrop": {
+        "x": 653,
+        "y": 703,
+        "width": 35,
+        "height": 78
+      },
+      "x": 653,
+      "y": 703,
+      "depthY": 774,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1392,
+      "spriteAlphaCoverage": 0.51,
+      "removalMaskPoints": 9,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "machine-copy",
+      "zone": "gale",
+      "label": "gale-new-occluder copy",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/machine-copy.png",
+      "sourceBbox": {
+        "x": 259,
+        "y": 691,
+        "width": 47,
+        "height": 86
+      },
+      "spriteCrop": {
+        "x": 255,
+        "y": 682,
+        "width": 52,
+        "height": 98
+      },
+      "x": 255,
+      "y": 682,
+      "depthY": 777,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 3006,
+      "spriteAlphaCoverage": 0.59,
+      "removalMaskPoints": 22,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "bacon-new-occluder-14",
+      "zone": "bacon",
+      "label": "bacon-new-occluder-14",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/bacon-new-occluder-14.png",
+      "sourceBbox": {
+        "x": -350,
+        "y": 721,
+        "width": 137,
+        "height": 60
+      },
+      "spriteCrop": {
+        "x": -348,
+        "y": 718,
+        "width": 137,
+        "height": 64
+      },
+      "x": -348,
+      "y": 718,
+      "depthY": 781,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 2898,
+      "spriteAlphaCoverage": 0.331,
+      "removalMaskPoints": 28,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "bacon-new-occluder-11",
+      "zone": "bacon",
+      "label": "bacon-new-occluder-11",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/bacon-new-occluder-11.png",
+      "sourceBbox": {
+        "x": -179,
+        "y": 706,
+        "width": 173,
+        "height": 80
+      },
+      "spriteCrop": {
+        "x": -180,
+        "y": 703,
+        "width": 179,
+        "height": 91
+      },
+      "x": -180,
+      "y": 703,
+      "depthY": 786,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 7506,
+      "spriteAlphaCoverage": 0.461,
+      "removalMaskPoints": 40,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "bacon-new-occluder-15",
+      "zone": "bacon",
+      "label": "bacon-new-occluder-15",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/bacon-new-occluder-15.png",
+      "sourceBbox": {
+        "x": 62,
+        "y": 768,
+        "width": 41,
+        "height": 38
+      },
+      "spriteCrop": {
+        "x": 60,
+        "y": 767,
+        "width": 44,
+        "height": 40
+      },
+      "x": 60,
+      "y": 767,
+      "depthY": 806,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 856,
+      "spriteAlphaCoverage": 0.486,
+      "removalMaskPoints": 11,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "machine-copy-copy",
+      "zone": "gale",
+      "label": "gale-new-occluder copy copy",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/machine-copy-copy.png",
+      "sourceBbox": {
+        "x": 604,
+        "y": 758,
+        "width": 62,
+        "height": 66
+      },
+      "spriteCrop": {
+        "x": 610,
+        "y": 746,
+        "width": 52,
+        "height": 84
+      },
+      "x": 610,
+      "y": 746,
+      "depthY": 824,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 2510,
+      "spriteAlphaCoverage": 0.575,
+      "removalMaskPoints": 13,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "bacon-new-occluder-13",
+      "zone": "bacon",
+      "label": "bacon-new-occluder-13",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/bacon-new-occluder-13.png",
+      "sourceBbox": {
+        "x": -222,
+        "y": 768,
+        "width": 48,
+        "height": 58
+      },
+      "spriteCrop": {
+        "x": -216,
+        "y": 763,
+        "width": 44,
+        "height": 66
+      },
+      "x": -216,
+      "y": 763,
+      "depthY": 826,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1705,
+      "spriteAlphaCoverage": 0.587,
+      "removalMaskPoints": 13,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "machine-copy-copy-copy-copy",
+      "zone": "gale",
+      "label": "gale-new-occluder copy copy copy copy",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/machine-copy-copy-copy-copy.png",
+      "sourceBbox": {
+        "x": 562,
+        "y": 794,
+        "width": 30,
+        "height": 65
+      },
+      "spriteCrop": {
+        "x": 561,
+        "y": 790,
+        "width": 34,
+        "height": 69
+      },
+      "x": 561,
+      "y": 790,
+      "depthY": 859,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1136,
+      "spriteAlphaCoverage": 0.484,
+      "removalMaskPoints": 15,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "machine-copy-copy-copy-copy-copy-copy",
+      "zone": "gale",
+      "label": "gale-new-occluder copy copy copy copy copy copy",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/machine-copy-copy-copy-copy-copy-copy.png",
+      "sourceBbox": {
+        "x": 404,
+        "y": 813,
+        "width": 26,
+        "height": 51
+      },
+      "spriteCrop": {
+        "x": 408,
+        "y": 808,
+        "width": 20,
+        "height": 58
+      },
+      "x": 408,
+      "y": 808,
+      "depthY": 864,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 462,
+      "spriteAlphaCoverage": 0.398,
+      "removalMaskPoints": 7,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "crystal-machine",
+      "zone": "gale",
+      "label": "gale-new-occluder",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/crystal-machine.png",
+      "sourceBbox": {
+        "x": 286,
+        "y": 755,
+        "width": 49,
+        "height": 116
+      },
+      "spriteCrop": {
+        "x": 289,
+        "y": 745,
+        "width": 65,
+        "height": 129
+      },
+      "x": 289,
+      "y": 745,
+      "depthY": 871,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 4798,
+      "spriteAlphaCoverage": 0.572,
+      "removalMaskPoints": 20,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "machine-copy-copy-copy-copy-copy",
+      "zone": "gale",
+      "label": "gale-new-occluder copy copy copy copy copy",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/machine-copy-copy-copy-copy-copy.png",
+      "sourceBbox": {
+        "x": 373,
+        "y": 820,
+        "width": 29,
+        "height": 51
+      },
+      "spriteCrop": {
+        "x": 371,
+        "y": 818,
+        "width": 37,
+        "height": 50
+      },
+      "x": 371,
+      "y": 818,
+      "depthY": 871,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 998,
+      "spriteAlphaCoverage": 0.539,
+      "removalMaskPoints": 12,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "machine-copy-copy-copy-copy-copy-copy-copy-copy-copy-copy",
+      "zone": "gale",
+      "label": "gale-new-occluder copy copy copy copy copy copy copy copy copy copy",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/machine-copy-copy-copy-copy-copy-copy-copy-copy-copy-copy.png",
+      "sourceBbox": {
+        "x": 524,
+        "y": 828,
+        "width": 26,
+        "height": 43
+      },
+      "spriteCrop": {
+        "x": 522,
+        "y": 814,
+        "width": 30,
+        "height": 61
+      },
+      "x": 522,
+      "y": 814,
+      "depthY": 871,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 908,
+      "spriteAlphaCoverage": 0.496,
+      "removalMaskPoints": 8,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "bacon-new-occluder-10",
+      "zone": "bacon",
+      "label": "bacon-new-occluder-10",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/bacon-new-occluder-10.png",
+      "sourceBbox": {
+        "x": -90,
+        "y": 806,
+        "width": 203,
+        "height": 80
+      },
+      "spriteCrop": {
+        "x": -92,
+        "y": 783,
+        "width": 150,
+        "height": 119
+      },
+      "x": -92,
+      "y": 783,
+      "depthY": 886,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 7474,
+      "spriteAlphaCoverage": 0.419,
+      "removalMaskPoints": 33,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "cloud-machine-copy",
+      "zone": "gale",
+      "label": "gale-new-occluder copy",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/cloud-machine-copy.png",
+      "sourceBbox": {
+        "x": 417,
+        "y": 429,
+        "width": 82,
+        "height": 69
+      },
+      "spriteCrop": {
+        "x": 411,
+        "y": 439,
+        "width": 92,
+        "height": 76
+      },
+      "x": 411,
+      "y": 439,
+      "depthY": 978,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 3810,
+      "spriteAlphaCoverage": 0.545,
+      "removalMaskPoints": 28,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    }
+  ]
+}

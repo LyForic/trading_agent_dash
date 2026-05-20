@@ -343,8 +343,12 @@ const FOREGROUND_WORKSPACE_INDEX_ASSET = {
   src: DEV_WORLD_TOOLS ? `/world-v2/source/${GROUND_PREVIEW_ZONE}-foreground-workspace/sprite-index.json` : '',
 };
 const MANIFEST_RUNTIME_INDEX_ASSET = {
-  key: 'world-v2-manifest-runtime-index',
-  src: '/world-v2/runtime/manifest/sprite-index.json',
+  key: DEV_BACON_FULL_MAP_TEST
+    ? 'world-v2-manifest-runtime-bacon-fullmap-index'
+    : 'world-v2-manifest-runtime-index',
+  src: DEV_BACON_FULL_MAP_TEST
+    ? '/world-v2/runtime/manifest-bacon-fullmap/sprite-index.json'
+    : '/world-v2/runtime/manifest/sprite-index.json',
 };
 const DEBUG_DEPTH_CHECKPOINTS = [
   { key: '1', label: 'behind canopy', x: 650, y: 174 },
