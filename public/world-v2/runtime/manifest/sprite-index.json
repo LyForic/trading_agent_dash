@@ -156,6 +156,38 @@
       "notes": "Keep as separate occluder, not part of zen ground."
     },
     {
+      "id": "metheus-new-occluder-19",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-19",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-19.png",
+      "sourceBbox": {
+        "x": 1206,
+        "y": 90,
+        "width": 30,
+        "height": 64
+      },
+      "spriteCrop": {
+        "x": 1203,
+        "y": 76,
+        "width": 35,
+        "height": 88
+      },
+      "x": 1203,
+      "y": 76,
+      "depthY": 154,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1524,
+      "spriteAlphaCoverage": 0.495,
+      "removalMaskPoints": 13,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
       "id": "weapon-rack",
       "zone": "apex",
       "label": "apex-new-occluder",
@@ -181,38 +213,6 @@
       "alphaPixels": 1628,
       "spriteAlphaCoverage": 0.587,
       "removalMaskPoints": 18,
-      "status": [
-        "inventoried",
-        "needs-layer-generation"
-      ],
-      "notes": "Created in the manifest editor."
-    },
-    {
-      "id": "metheus-new-occluder-19",
-      "zone": "metheus",
-      "label": "metheus-new-occluder-19",
-      "role": "occluder",
-      "category": "decor",
-      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-19.png",
-      "sourceBbox": {
-        "x": 1098,
-        "y": 103,
-        "width": 30,
-        "height": 64
-      },
-      "spriteCrop": {
-        "x": 1095,
-        "y": 89,
-        "width": 35,
-        "height": 88
-      },
-      "x": 1095,
-      "y": 89,
-      "depthY": 167,
-      "maskSource": "manual-removalMask",
-      "alphaPixels": 1524,
-      "spriteAlphaCoverage": 0.495,
-      "removalMaskPoints": 13,
       "status": [
         "inventoried",
         "needs-layer-generation"
@@ -348,6 +348,102 @@
       "notes": "Created in the manifest editor."
     },
     {
+      "id": "metheus-new-occluder-16",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-16",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-16.png",
+      "sourceBbox": {
+        "x": 1351,
+        "y": 158,
+        "width": 31,
+        "height": 41
+      },
+      "spriteCrop": {
+        "x": 1347,
+        "y": 153,
+        "width": 39,
+        "height": 51
+      },
+      "x": 1347,
+      "y": 153,
+      "depthY": 199,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 952,
+      "spriteAlphaCoverage": 0.479,
+      "removalMaskPoints": 6,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "metheus-new-occluder-18",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-18",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-18.png",
+      "sourceBbox": {
+        "x": 1256,
+        "y": 140,
+        "width": 37,
+        "height": 64
+      },
+      "spriteCrop": {
+        "x": 1251,
+        "y": 133,
+        "width": 48,
+        "height": 75
+      },
+      "x": 1251,
+      "y": 133,
+      "depthY": 204,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1943,
+      "spriteAlphaCoverage": 0.54,
+      "removalMaskPoints": 10,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "metheus-new-occluder-20",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-20",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-20.png",
+      "sourceBbox": {
+        "x": 1182,
+        "y": 147,
+        "width": 80,
+        "height": 60
+      },
+      "spriteCrop": {
+        "x": 1184,
+        "y": 149,
+        "width": 87,
+        "height": 68
+      },
+      "x": 1184,
+      "y": 149,
+      "depthY": 207,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1868,
+      "spriteAlphaCoverage": 0.316,
+      "removalMaskPoints": 4,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
       "id": "apex-new-occluder-7",
       "zone": "apex",
       "label": "apex-new-occluder-7",
@@ -372,38 +468,6 @@
       "maskSource": "manual-removalMask",
       "alphaPixels": 248,
       "spriteAlphaCoverage": 0.318,
-      "removalMaskPoints": 6,
-      "status": [
-        "inventoried",
-        "needs-layer-generation"
-      ],
-      "notes": "Created in the manifest editor."
-    },
-    {
-      "id": "metheus-new-occluder-16",
-      "zone": "metheus",
-      "label": "metheus-new-occluder-16",
-      "role": "occluder",
-      "category": "decor",
-      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-16.png",
-      "sourceBbox": {
-        "x": 1253,
-        "y": 169,
-        "width": 31,
-        "height": 41
-      },
-      "spriteCrop": {
-        "x": 1249,
-        "y": 164,
-        "width": 39,
-        "height": 51
-      },
-      "x": 1249,
-      "y": 164,
-      "depthY": 210,
-      "maskSource": "manual-removalMask",
-      "alphaPixels": 952,
-      "spriteAlphaCoverage": 0.479,
       "removalMaskPoints": 6,
       "status": [
         "inventoried",
@@ -444,31 +508,31 @@
       "notes": "Created in the manifest editor."
     },
     {
-      "id": "metheus-new-occluder-20",
+      "id": "metheus-new-occluder-21",
       "zone": "metheus",
-      "label": "metheus-new-occluder-20",
+      "label": "metheus-new-occluder-21",
       "role": "occluder",
       "category": "decor",
-      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-20.png",
+      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-21.png",
       "sourceBbox": {
-        "x": 1070,
-        "y": 155,
+        "x": 1084,
+        "y": 139,
         "width": 80,
-        "height": 60
+        "height": 80
       },
       "spriteCrop": {
-        "x": 1072,
-        "y": 157,
-        "width": 87,
-        "height": 68
+        "x": 1078,
+        "y": 178,
+        "width": 88,
+        "height": 46
       },
-      "x": 1072,
-      "y": 157,
-      "depthY": 215,
+      "x": 1078,
+      "y": 178,
+      "depthY": 219,
       "maskSource": "manual-removalMask",
-      "alphaPixels": 1868,
-      "spriteAlphaCoverage": 0.316,
-      "removalMaskPoints": 4,
+      "alphaPixels": 1817,
+      "spriteAlphaCoverage": 0.449,
+      "removalMaskPoints": 17,
       "status": [
         "inventoried",
         "needs-layer-generation"
@@ -476,31 +540,31 @@
       "notes": "Created in the manifest editor."
     },
     {
-      "id": "metheus-new-occluder-18",
+      "id": "metheus-new-occluder-15",
       "zone": "metheus",
-      "label": "metheus-new-occluder-18",
+      "label": "metheus-new-occluder-15",
       "role": "occluder",
       "category": "decor",
-      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-18.png",
+      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-15.png",
       "sourceBbox": {
-        "x": 1151,
-        "y": 157,
-        "width": 37,
-        "height": 64
+        "x": 1385,
+        "y": 179,
+        "width": 29,
+        "height": 41
       },
       "spriteCrop": {
-        "x": 1146,
-        "y": 150,
-        "width": 48,
-        "height": 75
+        "x": 1378,
+        "y": 176,
+        "width": 41,
+        "height": 51
       },
-      "x": 1146,
-      "y": 150,
-      "depthY": 221,
+      "x": 1378,
+      "y": 176,
+      "depthY": 220,
       "maskSource": "manual-removalMask",
-      "alphaPixels": 1943,
-      "spriteAlphaCoverage": 0.54,
-      "removalMaskPoints": 10,
+      "alphaPixels": 1031,
+      "spriteAlphaCoverage": 0.493,
+      "removalMaskPoints": 6,
       "status": [
         "inventoried",
         "needs-layer-generation"
@@ -542,31 +606,31 @@
       "notes": "This is one of the small reference details missing from the current ground layer."
     },
     {
-      "id": "metheus-new-occluder-15",
+      "id": "metheus-new-occluder-23",
       "zone": "metheus",
-      "label": "metheus-new-occluder-15",
+      "label": "metheus-new-occluder-23",
       "role": "occluder",
       "category": "decor",
-      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-15.png",
+      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-23.png",
       "sourceBbox": {
-        "x": 1286,
-        "y": 192,
-        "width": 29,
-        "height": 41
+        "x": 921,
+        "y": 175,
+        "width": 135,
+        "height": 59
       },
       "spriteCrop": {
-        "x": 1279,
-        "y": 189,
-        "width": 41,
-        "height": 51
+        "x": 950,
+        "y": 157,
+        "width": 112,
+        "height": 89
       },
-      "x": 1279,
-      "y": 189,
-      "depthY": 233,
+      "x": 950,
+      "y": 157,
+      "depthY": 234,
       "maskSource": "manual-removalMask",
-      "alphaPixels": 1031,
-      "spriteAlphaCoverage": 0.493,
-      "removalMaskPoints": 6,
+      "alphaPixels": 2543,
+      "spriteAlphaCoverage": 0.255,
+      "removalMaskPoints": 4,
       "status": [
         "inventoried",
         "needs-layer-generation"
@@ -574,31 +638,31 @@
       "notes": "Created in the manifest editor."
     },
     {
-      "id": "metheus-new-occluder-21",
+      "id": "metheus-new-occluder-17",
       "zone": "metheus",
-      "label": "metheus-new-occluder-21",
+      "label": "metheus-new-occluder-17",
       "role": "occluder",
       "category": "decor",
-      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-21.png",
+      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-17.png",
       "sourceBbox": {
-        "x": 969,
-        "y": 158,
-        "width": 80,
-        "height": 80
+        "x": 1439,
+        "y": 126,
+        "width": 22,
+        "height": 112
       },
       "spriteCrop": {
-        "x": 963,
-        "y": 197,
-        "width": 88,
-        "height": 46
+        "x": 1437,
+        "y": 116,
+        "width": 99,
+        "height": 173
       },
-      "x": 963,
-      "y": 197,
+      "x": 1437,
+      "y": 116,
       "depthY": 238,
       "maskSource": "manual-removalMask",
-      "alphaPixels": 1817,
-      "spriteAlphaCoverage": 0.449,
-      "removalMaskPoints": 17,
+      "alphaPixels": 9403,
+      "spriteAlphaCoverage": 0.549,
+      "removalMaskPoints": 9,
       "status": [
         "inventoried",
         "needs-layer-generation"
@@ -640,70 +704,6 @@
       "notes": "Includes small surrounding flowers and base stones."
     },
     {
-      "id": "metheus-new-occluder-23",
-      "zone": "metheus",
-      "label": "metheus-new-occluder-23",
-      "role": "occluder",
-      "category": "decor",
-      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-23.png",
-      "sourceBbox": {
-        "x": 799,
-        "y": 191,
-        "width": 135,
-        "height": 59
-      },
-      "spriteCrop": {
-        "x": 828,
-        "y": 173,
-        "width": 112,
-        "height": 89
-      },
-      "x": 828,
-      "y": 173,
-      "depthY": 250,
-      "maskSource": "manual-removalMask",
-      "alphaPixels": 2543,
-      "spriteAlphaCoverage": 0.255,
-      "removalMaskPoints": 4,
-      "status": [
-        "inventoried",
-        "needs-layer-generation"
-      ],
-      "notes": "Created in the manifest editor."
-    },
-    {
-      "id": "metheus-new-occluder-17",
-      "zone": "metheus",
-      "label": "metheus-new-occluder-17",
-      "role": "occluder",
-      "category": "decor",
-      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-17.png",
-      "sourceBbox": {
-        "x": 1347,
-        "y": 139,
-        "width": 22,
-        "height": 112
-      },
-      "spriteCrop": {
-        "x": 1345,
-        "y": 129,
-        "width": 123,
-        "height": 173
-      },
-      "x": 1345,
-      "y": 129,
-      "depthY": 251,
-      "maskSource": "manual-removalMask",
-      "alphaPixels": 11932,
-      "spriteAlphaCoverage": 0.561,
-      "removalMaskPoints": 9,
-      "status": [
-        "inventoried",
-        "needs-layer-generation"
-      ],
-      "notes": "Created in the manifest editor."
-    },
-    {
       "id": "metheus-new-occluder-22",
       "zone": "metheus",
       "label": "metheus-new-occluder-22",
@@ -711,24 +711,56 @@
       "category": "decor",
       "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-22.png",
       "sourceBbox": {
-        "x": 906,
-        "y": 194,
+        "x": 1023,
+        "y": 183,
         "width": 80,
         "height": 64
       },
       "spriteCrop": {
-        "x": 932,
-        "y": 204,
+        "x": 1049,
+        "y": 193,
         "width": 43,
         "height": 58
       },
-      "x": 932,
-      "y": 204,
-      "depthY": 258,
+      "x": 1049,
+      "y": 193,
+      "depthY": 247,
       "maskSource": "manual-removalMask",
       "alphaPixels": 946,
       "spriteAlphaCoverage": 0.379,
       "removalMaskPoints": 4,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "metheus-new-occluder-12",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-12",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-12.png",
+      "sourceBbox": {
+        "x": 1299,
+        "y": 188,
+        "width": 80,
+        "height": 60
+      },
+      "spriteCrop": {
+        "x": 1294,
+        "y": 180,
+        "width": 90,
+        "height": 77
+      },
+      "x": 1294,
+      "y": 180,
+      "depthY": 248,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 3651,
+      "spriteAlphaCoverage": 0.527,
+      "removalMaskPoints": 6,
       "status": [
         "inventoried",
         "needs-layer-generation"
@@ -804,38 +836,6 @@
       "notes": "Separates training yard from dojo path in the reference."
     },
     {
-      "id": "metheus-new-occluder-12",
-      "zone": "metheus",
-      "label": "metheus-new-occluder-12",
-      "role": "occluder",
-      "category": "decor",
-      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-12.png",
-      "sourceBbox": {
-        "x": 1195,
-        "y": 203,
-        "width": 80,
-        "height": 60
-      },
-      "spriteCrop": {
-        "x": 1190,
-        "y": 195,
-        "width": 90,
-        "height": 77
-      },
-      "x": 1190,
-      "y": 195,
-      "depthY": 263,
-      "maskSource": "manual-removalMask",
-      "alphaPixels": 3651,
-      "spriteAlphaCoverage": 0.527,
-      "removalMaskPoints": 6,
-      "status": [
-        "inventoried",
-        "needs-layer-generation"
-      ],
-      "notes": "Created in the manifest editor."
-    },
-    {
       "id": "apex-new-occluder-6",
       "zone": "apex",
       "label": "apex-new-occluder-6",
@@ -861,6 +861,70 @@
       "alphaPixels": 1208,
       "spriteAlphaCoverage": 0.456,
       "removalMaskPoints": 14,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "metheus-new-occluder-13",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-13",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-13.png",
+      "sourceBbox": {
+        "x": 1395,
+        "y": 213,
+        "width": 37,
+        "height": 52
+      },
+      "spriteCrop": {
+        "x": 1388,
+        "y": 206,
+        "width": 48,
+        "height": 70
+      },
+      "x": 1388,
+      "y": 206,
+      "depthY": 265,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1694,
+      "spriteAlphaCoverage": 0.504,
+      "removalMaskPoints": 10,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "metheus-new-occluder-8",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-8",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-8.png",
+      "sourceBbox": {
+        "x": 1223,
+        "y": 217,
+        "width": 72,
+        "height": 54
+      },
+      "spriteCrop": {
+        "x": 1213,
+        "y": 196,
+        "width": 86,
+        "height": 85
+      },
+      "x": 1213,
+      "y": 196,
+      "depthY": 271,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 3795,
+      "spriteAlphaCoverage": 0.519,
+      "removalMaskPoints": 6,
       "status": [
         "inventoried",
         "needs-layer-generation"
@@ -900,70 +964,6 @@
       "notes": "Created in the manifest editor."
     },
     {
-      "id": "metheus-new-occluder-13",
-      "zone": "metheus",
-      "label": "metheus-new-occluder-13",
-      "role": "occluder",
-      "category": "decor",
-      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-13.png",
-      "sourceBbox": {
-        "x": 1300,
-        "y": 230,
-        "width": 37,
-        "height": 52
-      },
-      "spriteCrop": {
-        "x": 1293,
-        "y": 223,
-        "width": 48,
-        "height": 70
-      },
-      "x": 1293,
-      "y": 223,
-      "depthY": 282,
-      "maskSource": "manual-removalMask",
-      "alphaPixels": 1694,
-      "spriteAlphaCoverage": 0.504,
-      "removalMaskPoints": 10,
-      "status": [
-        "inventoried",
-        "needs-layer-generation"
-      ],
-      "notes": "Created in the manifest editor."
-    },
-    {
-      "id": "metheus-new-occluder-8",
-      "zone": "metheus",
-      "label": "metheus-new-occluder-8",
-      "role": "occluder",
-      "category": "decor",
-      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-8.png",
-      "sourceBbox": {
-        "x": 1118,
-        "y": 231,
-        "width": 72,
-        "height": 54
-      },
-      "spriteCrop": {
-        "x": 1108,
-        "y": 210,
-        "width": 86,
-        "height": 85
-      },
-      "x": 1108,
-      "y": 210,
-      "depthY": 285,
-      "maskSource": "manual-removalMask",
-      "alphaPixels": 3795,
-      "spriteAlphaCoverage": 0.519,
-      "removalMaskPoints": 6,
-      "status": [
-        "inventoried",
-        "needs-layer-generation"
-      ],
-      "notes": "Created in the manifest editor."
-    },
-    {
       "id": "metheus-new-occluder-14",
       "zone": "metheus",
       "label": "metheus-new-occluder-14",
@@ -971,24 +971,88 @@
       "category": "decor",
       "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-14.png",
       "sourceBbox": {
-        "x": 1359,
-        "y": 263,
+        "x": 1453,
+        "y": 246,
         "width": 40,
         "height": 40
       },
       "spriteCrop": {
-        "x": 1352,
-        "y": 257,
+        "x": 1446,
+        "y": 240,
         "width": 51,
         "height": 51
       },
-      "x": 1352,
-      "y": 257,
-      "depthY": 303,
+      "x": 1446,
+      "y": 240,
+      "depthY": 286,
       "maskSource": "manual-removalMask",
       "alphaPixels": 1379,
       "spriteAlphaCoverage": 0.53,
       "removalMaskPoints": 16,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "metheus-new-occluder-11",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-11",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-11.png",
+      "sourceBbox": {
+        "x": 1316,
+        "y": 251,
+        "width": 28,
+        "height": 36
+      },
+      "spriteCrop": {
+        "x": 1313,
+        "y": 252,
+        "width": 35,
+        "height": 42
+      },
+      "x": 1313,
+      "y": 252,
+      "depthY": 287,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 670,
+      "spriteAlphaCoverage": 0.456,
+      "removalMaskPoints": 7,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "metheus-new-occluder-7",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-7",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-7.png",
+      "sourceBbox": {
+        "x": 1225,
+        "y": 269,
+        "width": 31,
+        "height": 28
+      },
+      "spriteCrop": {
+        "x": 1223,
+        "y": 262,
+        "width": 38,
+        "height": 40
+      },
+      "x": 1223,
+      "y": 262,
+      "depthY": 297,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 631,
+      "spriteAlphaCoverage": 0.415,
+      "removalMaskPoints": 6,
       "status": [
         "inventoried",
         "needs-layer-generation"
@@ -1021,38 +1085,6 @@
       "alphaPixels": 305,
       "spriteAlphaCoverage": 0.394,
       "removalMaskPoints": 5,
-      "status": [
-        "inventoried",
-        "needs-layer-generation"
-      ],
-      "notes": "Created in the manifest editor."
-    },
-    {
-      "id": "metheus-new-occluder-11",
-      "zone": "metheus",
-      "label": "metheus-new-occluder-11",
-      "role": "occluder",
-      "category": "decor",
-      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-11.png",
-      "sourceBbox": {
-        "x": 1215,
-        "y": 268,
-        "width": 28,
-        "height": 36
-      },
-      "spriteCrop": {
-        "x": 1212,
-        "y": 269,
-        "width": 35,
-        "height": 42
-      },
-      "x": 1212,
-      "y": 269,
-      "depthY": 304,
-      "maskSource": "manual-removalMask",
-      "alphaPixels": 670,
-      "spriteAlphaCoverage": 0.456,
-      "removalMaskPoints": 7,
       "status": [
         "inventoried",
         "needs-layer-generation"
@@ -1190,6 +1222,70 @@
       "notes": "Created in the manifest editor."
     },
     {
+      "id": "metheus-new-occluder-6",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-6",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-6.png",
+      "sourceBbox": {
+        "x": 1194,
+        "y": 248,
+        "width": 41,
+        "height": 64
+      },
+      "spriteCrop": {
+        "x": 1184,
+        "y": 241,
+        "width": 55,
+        "height": 80
+      },
+      "x": 1184,
+      "y": 241,
+      "depthY": 312,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 2510,
+      "spriteAlphaCoverage": 0.57,
+      "removalMaskPoints": 6,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "metheus-new-occluder-10",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-10",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-10.png",
+      "sourceBbox": {
+        "x": 1294,
+        "y": 247,
+        "width": 24,
+        "height": 65
+      },
+      "spriteCrop": {
+        "x": 1288,
+        "y": 238,
+        "width": 33,
+        "height": 80
+      },
+      "x": 1288,
+      "y": 238,
+      "depthY": 312,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1169,
+      "spriteAlphaCoverage": 0.443,
+      "removalMaskPoints": 13,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
       "id": "training-dummy-copy-2",
       "zone": "apex",
       "label": "apex-new-occluder copy",
@@ -1256,95 +1352,31 @@
       "notes": "Currently absent from the layered prototype."
     },
     {
-      "id": "metheus-new-occluder-6",
+      "id": "metheus-new-occluder-9",
       "zone": "metheus",
-      "label": "metheus-new-occluder-6",
+      "label": "metheus-new-occluder-9",
       "role": "occluder",
       "category": "decor",
-      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-6.png",
+      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-9.png",
       "sourceBbox": {
-        "x": 1084,
-        "y": 263,
-        "width": 41,
-        "height": 64
+        "x": 1325,
+        "y": 252,
+        "width": 62,
+        "height": 75
       },
       "spriteCrop": {
-        "x": 1074,
-        "y": 256,
-        "width": 55,
-        "height": 80
+        "x": 1322,
+        "y": 232,
+        "width": 76,
+        "height": 103
       },
-      "x": 1074,
-      "y": 256,
+      "x": 1322,
+      "y": 232,
       "depthY": 327,
       "maskSource": "manual-removalMask",
-      "alphaPixels": 2510,
-      "spriteAlphaCoverage": 0.57,
-      "removalMaskPoints": 6,
-      "status": [
-        "inventoried",
-        "needs-layer-generation"
-      ],
-      "notes": "Created in the manifest editor."
-    },
-    {
-      "id": "metheus-new-occluder-7",
-      "zone": "metheus",
-      "label": "metheus-new-occluder-7",
-      "role": "occluder",
-      "category": "decor",
-      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-7.png",
-      "sourceBbox": {
-        "x": 1155,
-        "y": 302,
-        "width": 31,
-        "height": 28
-      },
-      "spriteCrop": {
-        "x": 1153,
-        "y": 295,
-        "width": 38,
-        "height": 40
-      },
-      "x": 1153,
-      "y": 295,
-      "depthY": 330,
-      "maskSource": "manual-removalMask",
-      "alphaPixels": 631,
-      "spriteAlphaCoverage": 0.415,
-      "removalMaskPoints": 6,
-      "status": [
-        "inventoried",
-        "needs-layer-generation"
-      ],
-      "notes": "Created in the manifest editor."
-    },
-    {
-      "id": "metheus-new-occluder-10",
-      "zone": "metheus",
-      "label": "metheus-new-occluder-10",
-      "role": "occluder",
-      "category": "decor",
-      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-10.png",
-      "sourceBbox": {
-        "x": 1191,
-        "y": 265,
-        "width": 24,
-        "height": 65
-      },
-      "spriteCrop": {
-        "x": 1185,
-        "y": 256,
-        "width": 33,
-        "height": 80
-      },
-      "x": 1185,
-      "y": 256,
-      "depthY": 330,
-      "maskSource": "manual-removalMask",
-      "alphaPixels": 1169,
-      "spriteAlphaCoverage": 0.443,
-      "removalMaskPoints": 13,
+      "alphaPixels": 3856,
+      "spriteAlphaCoverage": 0.493,
+      "removalMaskPoints": 15,
       "status": [
         "inventoried",
         "needs-layer-generation"
@@ -1482,31 +1514,63 @@
       "notes": "Likely split into upper fence, lower fence, and side-post occluders in Tiled."
     },
     {
-      "id": "metheus-new-occluder-9",
+      "id": "metheus-new-occluder",
       "zone": "metheus",
-      "label": "metheus-new-occluder-9",
+      "label": "metheus-new-occluder",
       "role": "occluder",
       "category": "decor",
-      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-9.png",
+      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder.png",
       "sourceBbox": {
-        "x": 1224,
-        "y": 270,
-        "width": 62,
-        "height": 75
+        "x": 1078,
+        "y": 308,
+        "width": 69,
+        "height": 55
       },
       "spriteCrop": {
-        "x": 1221,
-        "y": 250,
-        "width": 76,
-        "height": 103
+        "x": 1078,
+        "y": 305,
+        "width": 77,
+        "height": 48
       },
-      "x": 1221,
-      "y": 250,
-      "depthY": 345,
+      "x": 1078,
+      "y": 305,
+      "depthY": 348,
       "maskSource": "manual-removalMask",
-      "alphaPixels": 3856,
-      "spriteAlphaCoverage": 0.493,
-      "removalMaskPoints": 15,
+      "alphaPixels": 2350,
+      "spriteAlphaCoverage": 0.636,
+      "removalMaskPoints": 4,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "metheus-new-occluder-2",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-2",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-2.png",
+      "sourceBbox": {
+        "x": 978,
+        "y": 287,
+        "width": 23,
+        "height": 64
+      },
+      "spriteCrop": {
+        "x": 980,
+        "y": 284,
+        "width": 25,
+        "height": 77
+      },
+      "x": 980,
+      "y": 284,
+      "depthY": 351,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1018,
+      "spriteAlphaCoverage": 0.529,
+      "removalMaskPoints": 6,
       "status": [
         "inventoried",
         "needs-layer-generation"
@@ -1580,70 +1644,6 @@
       "notes": "Split from the old broad front-rails box so the stair opening stays open."
     },
     {
-      "id": "metheus-new-occluder",
-      "zone": "metheus",
-      "label": "metheus-new-occluder",
-      "role": "occluder",
-      "category": "decor",
-      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder.png",
-      "sourceBbox": {
-        "x": 958,
-        "y": 327,
-        "width": 69,
-        "height": 55
-      },
-      "spriteCrop": {
-        "x": 958,
-        "y": 324,
-        "width": 77,
-        "height": 48
-      },
-      "x": 958,
-      "y": 324,
-      "depthY": 367,
-      "maskSource": "manual-removalMask",
-      "alphaPixels": 2350,
-      "spriteAlphaCoverage": 0.636,
-      "removalMaskPoints": 4,
-      "status": [
-        "inventoried",
-        "needs-layer-generation"
-      ],
-      "notes": "Created in the manifest editor."
-    },
-    {
-      "id": "metheus-new-occluder-2",
-      "zone": "metheus",
-      "label": "metheus-new-occluder-2",
-      "role": "occluder",
-      "category": "decor",
-      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-2.png",
-      "sourceBbox": {
-        "x": 856,
-        "y": 309,
-        "width": 23,
-        "height": 64
-      },
-      "spriteCrop": {
-        "x": 858,
-        "y": 306,
-        "width": 25,
-        "height": 77
-      },
-      "x": 858,
-      "y": 306,
-      "depthY": 373,
-      "maskSource": "manual-removalMask",
-      "alphaPixels": 1018,
-      "spriteAlphaCoverage": 0.529,
-      "removalMaskPoints": 6,
-      "status": [
-        "inventoried",
-        "needs-layer-generation"
-      ],
-      "notes": "Created in the manifest editor."
-    },
-    {
       "id": "apex-koi-pond-fence-copy-copy",
       "zone": "apex",
       "label": "Koi pond fence and posts copy copy",
@@ -1710,6 +1710,70 @@
       "notes": "Created in the manifest editor."
     },
     {
+      "id": "metheus-new-occluder-4",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-4",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-4.png",
+      "sourceBbox": {
+        "x": 1211,
+        "y": 353,
+        "width": 24,
+        "height": 28
+      },
+      "spriteCrop": {
+        "x": 1210,
+        "y": 356,
+        "width": 18,
+        "height": 31
+      },
+      "x": 1210,
+      "y": 356,
+      "depthY": 381,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 176,
+      "spriteAlphaCoverage": 0.315,
+      "removalMaskPoints": 6,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "metheus-new-occluder-24",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-24",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-24.png",
+      "sourceBbox": {
+        "x": 1292,
+        "y": 347,
+        "width": 115,
+        "height": 34
+      },
+      "spriteCrop": {
+        "x": 1293,
+        "y": 311,
+        "width": 243,
+        "height": 73
+      },
+      "x": 1293,
+      "y": 311,
+      "depthY": 381,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 5501,
+      "spriteAlphaCoverage": 0.31,
+      "removalMaskPoints": 34,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
       "id": "apex-training-front-banner",
       "zone": "apex",
       "label": "Front red training banner",
@@ -1744,63 +1808,31 @@
       "notes": "Current generated platform slice can accidentally include or omit this; track it separately."
     },
     {
-      "id": "metheus-new-occluder-24",
+      "id": "metheus-new-occluder-3",
       "zone": "metheus",
-      "label": "metheus-new-occluder-24",
+      "label": "metheus-new-occluder-3",
       "role": "occluder",
       "category": "decor",
-      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-24.png",
+      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-3.png",
       "sourceBbox": {
-        "x": 1192,
-        "y": 353,
-        "width": 271,
-        "height": 48
+        "x": 1196,
+        "y": 376,
+        "width": 16,
+        "height": 37
       },
       "spriteCrop": {
-        "x": 1190,
-        "y": 295,
-        "width": 291,
-        "height": 113
+        "x": 1197,
+        "y": 377,
+        "width": 15,
+        "height": 38
       },
-      "x": 1190,
-      "y": 295,
-      "depthY": 401,
+      "x": 1197,
+      "y": 377,
+      "depthY": 413,
       "maskSource": "manual-removalMask",
-      "alphaPixels": 7053,
-      "spriteAlphaCoverage": 0.214,
-      "removalMaskPoints": 49,
-      "status": [
-        "inventoried",
-        "needs-layer-generation"
-      ],
-      "notes": "Created in the manifest editor."
-    },
-    {
-      "id": "metheus-new-occluder-4",
-      "zone": "metheus",
-      "label": "metheus-new-occluder-4",
-      "role": "occluder",
-      "category": "decor",
-      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-4.png",
-      "sourceBbox": {
-        "x": 1102,
-        "y": 381,
-        "width": 13,
-        "height": 22
-      },
-      "spriteCrop": {
-        "x": 1101,
-        "y": 378,
-        "width": 18,
-        "height": 31
-      },
-      "x": 1101,
-      "y": 378,
-      "depthY": 403,
-      "maskSource": "manual-removalMask",
-      "alphaPixels": 176,
-      "spriteAlphaCoverage": 0.315,
-      "removalMaskPoints": 6,
+      "alphaPixels": 206,
+      "spriteAlphaCoverage": 0.361,
+      "removalMaskPoints": 4,
       "status": [
         "inventoried",
         "needs-layer-generation"
@@ -1876,31 +1908,31 @@
       "notes": "Likely split into upper fence, lower fence, and side-post occluders in Tiled."
     },
     {
-      "id": "metheus-new-occluder-3",
+      "id": "metheus-new-occluder-5",
       "zone": "metheus",
-      "label": "metheus-new-occluder-3",
+      "label": "metheus-new-occluder-5",
       "role": "occluder",
       "category": "decor",
-      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-3.png",
+      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-5.png",
       "sourceBbox": {
-        "x": 1087,
-        "y": 398,
-        "width": 16,
-        "height": 37
+        "x": 1228,
+        "y": 363,
+        "width": 10,
+        "height": 66
       },
       "spriteCrop": {
-        "x": 1088,
-        "y": 399,
-        "width": 15,
-        "height": 38
+        "x": 1224,
+        "y": 359,
+        "width": 18,
+        "height": 74
       },
-      "x": 1088,
-      "y": 399,
-      "depthY": 435,
-      "maskSource": "manual-removalMask",
-      "alphaPixels": 206,
-      "spriteAlphaCoverage": 0.361,
-      "removalMaskPoints": 4,
+      "x": 1224,
+      "y": 359,
+      "depthY": 429,
+      "maskSource": "bbox-fallback",
+      "alphaPixels": 660,
+      "spriteAlphaCoverage": 0.495,
+      "removalMaskPoints": 0,
       "status": [
         "inventoried",
         "needs-layer-generation"
@@ -1940,38 +1972,6 @@
         "needs-occlusion-mask"
       ],
       "notes": "Only partially visible in Apex crop; still belongs to Apex pond composition."
-    },
-    {
-      "id": "metheus-new-occluder-5",
-      "zone": "metheus",
-      "label": "metheus-new-occluder-5",
-      "role": "occluder",
-      "category": "decor",
-      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-5.png",
-      "sourceBbox": {
-        "x": 1118,
-        "y": 389,
-        "width": 10,
-        "height": 66
-      },
-      "spriteCrop": {
-        "x": 1114,
-        "y": 385,
-        "width": 18,
-        "height": 74
-      },
-      "x": 1114,
-      "y": 385,
-      "depthY": 455,
-      "maskSource": "bbox-fallback",
-      "alphaPixels": 660,
-      "spriteAlphaCoverage": 0.495,
-      "removalMaskPoints": 0,
-      "status": [
-        "inventoried",
-        "needs-layer-generation"
-      ],
-      "notes": "Created in the manifest editor."
     },
     {
       "id": "apex-koi-left-bridge-rail",
@@ -2015,56 +2015,24 @@
       "category": "decor",
       "sprite": "/world-v2/runtime/manifest/sprites/gale-new-occluder-4.png",
       "sourceBbox": {
-        "x": 83,
-        "y": 503,
+        "x": 250,
+        "y": 470,
         "width": 44,
         "height": 47
       },
       "spriteCrop": {
-        "x": 78,
-        "y": 500,
+        "x": 245,
+        "y": 467,
         "width": 55,
         "height": 55
       },
-      "x": 78,
-      "y": 500,
-      "depthY": 550,
+      "x": 245,
+      "y": 467,
+      "depthY": 517,
       "maskSource": "manual-removalMask",
       "alphaPixels": 1641,
       "spriteAlphaCoverage": 0.542,
       "removalMaskPoints": 13,
-      "status": [
-        "inventoried",
-        "needs-layer-generation"
-      ],
-      "notes": "Created in the manifest editor."
-    },
-    {
-      "id": "gale-new-occluder-3",
-      "zone": "gale",
-      "label": "gale-new-occluder-3",
-      "role": "occluder",
-      "category": "decor",
-      "sprite": "/world-v2/runtime/manifest/sprites/gale-new-occluder-3.png",
-      "sourceBbox": {
-        "x": 18,
-        "y": 476,
-        "width": 55,
-        "height": 82
-      },
-      "spriteCrop": {
-        "x": 19,
-        "y": 472,
-        "width": 59,
-        "height": 93
-      },
-      "x": 19,
-      "y": 472,
-      "depthY": 558,
-      "maskSource": "manual-removalMask",
-      "alphaPixels": 2480,
-      "spriteAlphaCoverage": 0.452,
-      "removalMaskPoints": 23,
       "status": [
         "inventoried",
         "needs-layer-generation"
@@ -2079,20 +2047,20 @@
       "category": "decor",
       "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-25.png",
       "sourceBbox": {
-        "x": 699,
-        "y": 393,
+        "x": 828,
+        "y": 365,
         "width": 165,
         "height": 166
       },
       "spriteCrop": {
-        "x": 695,
-        "y": 385,
+        "x": 824,
+        "y": 357,
         "width": 171,
         "height": 180
       },
-      "x": 695,
-      "y": 385,
-      "depthY": 559,
+      "x": 824,
+      "y": 357,
+      "depthY": 531,
       "maskSource": "manual-removalMask",
       "alphaPixels": 18222,
       "spriteAlphaCoverage": 0.592,
@@ -2111,20 +2079,20 @@
       "category": "",
       "sprite": "/world-v2/runtime/manifest/sprites/gale-house-roof.png",
       "sourceBbox": {
-        "x": 134,
-        "y": 478,
+        "x": 300,
+        "y": 445,
         "width": 109,
         "height": 115
       },
       "spriteCrop": {
-        "x": 128,
-        "y": 464,
+        "x": 294,
+        "y": 431,
         "width": 116,
         "height": 134
       },
-      "x": 128,
-      "y": 464,
-      "depthY": 593,
+      "x": 294,
+      "y": 431,
+      "depthY": 560,
       "maskSource": "manual-removalMask",
       "alphaPixels": 9401,
       "spriteAlphaCoverage": 0.605,
@@ -2143,24 +2111,56 @@
       "category": "decor",
       "sprite": "/world-v2/runtime/manifest/sprites/gale-new-occluder-2.png",
       "sourceBbox": {
-        "x": 448,
-        "y": 575,
+        "x": 595,
+        "y": 540,
         "width": 38,
         "height": 35
       },
       "spriteCrop": {
-        "x": 439,
-        "y": 569,
+        "x": 586,
+        "y": 534,
         "width": 51,
         "height": 44
       },
-      "x": 439,
-      "y": 569,
-      "depthY": 610,
+      "x": 586,
+      "y": 534,
+      "depthY": 575,
       "maskSource": "manual-removalMask",
       "alphaPixels": 1156,
       "spriteAlphaCoverage": 0.515,
       "removalMaskPoints": 13,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "metheus-new-occluder-27",
+      "zone": "metheus",
+      "label": "metheus-new-occluder-27",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-27.png",
+      "sourceBbox": {
+        "x": 1328,
+        "y": 497,
+        "width": 46,
+        "height": 80
+      },
+      "spriteCrop": {
+        "x": 1324,
+        "y": 495,
+        "width": 53,
+        "height": 84
+      },
+      "x": 1324,
+      "y": 495,
+      "depthY": 577,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1867,
+      "spriteAlphaCoverage": 0.419,
+      "removalMaskPoints": 15,
       "status": [
         "inventoried",
         "needs-layer-generation"
@@ -2175,20 +2175,20 @@
       "category": "decor",
       "sprite": "/world-v2/runtime/manifest/sprites/gale-new-occluder-5.png",
       "sourceBbox": {
-        "x": 257,
-        "y": 551,
+        "x": 415,
+        "y": 513,
         "width": 80,
         "height": 69
       },
       "spriteCrop": {
-        "x": 231,
-        "y": 541,
+        "x": 389,
+        "y": 503,
         "width": 107,
         "height": 82
       },
-      "x": 231,
-      "y": 541,
-      "depthY": 620,
+      "x": 389,
+      "y": 503,
+      "depthY": 582,
       "maskSource": "manual-removalMask",
       "alphaPixels": 3939,
       "spriteAlphaCoverage": 0.449,
@@ -2207,56 +2207,24 @@
       "category": "decor",
       "sprite": "/world-v2/runtime/manifest/sprites/metheus-new-occluder-26.png",
       "sourceBbox": {
-        "x": 1142,
-        "y": 587,
+        "x": 1250,
+        "y": 542,
         "width": 21,
         "height": 71
       },
       "spriteCrop": {
-        "x": 1138,
-        "y": 581,
+        "x": 1246,
+        "y": 536,
         "width": 30,
         "height": 80
       },
-      "x": 1138,
-      "y": 581,
-      "depthY": 658,
+      "x": 1246,
+      "y": 536,
+      "depthY": 613,
       "maskSource": "manual-removalMask",
       "alphaPixels": 819,
       "spriteAlphaCoverage": 0.341,
       "removalMaskPoints": 12,
-      "status": [
-        "inventoried",
-        "needs-layer-generation"
-      ],
-      "notes": "Created in the manifest editor."
-    },
-    {
-      "id": "cloud-machine",
-      "zone": "gale",
-      "label": "gale-new-occluder",
-      "role": "occluder",
-      "category": "decor",
-      "sprite": "/world-v2/runtime/manifest/sprites/cloud-machine.png",
-      "sourceBbox": {
-        "x": 346,
-        "y": 521,
-        "width": 79,
-        "height": 146
-      },
-      "spriteCrop": {
-        "x": 341,
-        "y": 520,
-        "width": 93,
-        "height": 150
-      },
-      "x": 341,
-      "y": 520,
-      "depthY": 667,
-      "maskSource": "manual-removalMask",
-      "alphaPixels": 6589,
-      "spriteAlphaCoverage": 0.472,
-      "removalMaskPoints": 14,
       "status": [
         "inventoried",
         "needs-layer-generation"
@@ -2271,24 +2239,56 @@
       "category": "decor",
       "sprite": "/world-v2/runtime/manifest/sprites/cloud-magic.png",
       "sourceBbox": {
-        "x": 358,
-        "y": 625,
+        "x": 514,
+        "y": 580,
         "width": 54,
         "height": 42
       },
       "spriteCrop": {
-        "x": 354,
-        "y": 621,
+        "x": 510,
+        "y": 576,
         "width": 62,
         "height": 50
       },
-      "x": 354,
-      "y": 621,
-      "depthY": 667,
+      "x": 510,
+      "y": 576,
+      "depthY": 622,
       "maskSource": "bbox-fallback",
       "alphaPixels": 2268,
       "spriteAlphaCoverage": 0.732,
       "removalMaskPoints": 0,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "cloud-machine",
+      "zone": "gale",
+      "label": "gale-new-occluder",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest/sprites/cloud-machine.png",
+      "sourceBbox": {
+        "x": 502,
+        "y": 476,
+        "width": 79,
+        "height": 146
+      },
+      "spriteCrop": {
+        "x": 494,
+        "y": 486,
+        "width": 90,
+        "height": 149
+      },
+      "x": 494,
+      "y": 486,
+      "depthY": 630,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 5961,
+      "spriteAlphaCoverage": 0.445,
+      "removalMaskPoints": 42,
       "status": [
         "inventoried",
         "needs-layer-generation"
@@ -2303,24 +2303,24 @@
       "category": "decor",
       "sprite": "/world-v2/runtime/manifest/sprites/machine-copy-copy-copy-copy-copy-copy-copy-copy.png",
       "sourceBbox": {
-        "x": 424,
-        "y": 632,
+        "x": 573,
+        "y": 596,
         "width": 33,
         "height": 77
       },
       "spriteCrop": {
-        "x": 417,
-        "y": 628,
-        "width": 43,
-        "height": 92
+        "x": 567,
+        "y": 583,
+        "width": 42,
+        "height": 95
       },
-      "x": 417,
-      "y": 628,
-      "depthY": 709,
+      "x": 567,
+      "y": 583,
+      "depthY": 673,
       "maskSource": "manual-removalMask",
-      "alphaPixels": 2029,
-      "spriteAlphaCoverage": 0.513,
-      "removalMaskPoints": 19,
+      "alphaPixels": 1994,
+      "spriteAlphaCoverage": 0.5,
+      "removalMaskPoints": 8,
       "status": [
         "inventoried",
         "needs-layer-generation"
@@ -2335,20 +2335,20 @@
       "category": "decor",
       "sprite": "/world-v2/runtime/manifest/sprites/street-lamp.png",
       "sourceBbox": {
-        "x": 574,
-        "y": 638,
+        "x": 715,
+        "y": 595,
         "width": 40,
         "height": 87
       },
       "spriteCrop": {
-        "x": 573,
-        "y": 644,
+        "x": 714,
+        "y": 601,
         "width": 48,
         "height": 83
       },
-      "x": 573,
-      "y": 644,
-      "depthY": 725,
+      "x": 714,
+      "y": 601,
+      "depthY": 682,
       "maskSource": "manual-removalMask",
       "alphaPixels": 1226,
       "spriteAlphaCoverage": 0.308,
@@ -2367,56 +2367,24 @@
       "category": "decor",
       "sprite": "/world-v2/runtime/manifest/sprites/machine-copy-copy-copy-copy-copy-copy-copy-copy-copy.png",
       "sourceBbox": {
-        "x": 28,
-        "y": 611,
+        "x": 204,
+        "y": 569,
         "width": 58,
         "height": 135
       },
       "spriteCrop": {
-        "x": 24,
-        "y": 607,
-        "width": 66,
-        "height": 143
+        "x": 200,
+        "y": 558,
+        "width": 62,
+        "height": 144
       },
-      "x": 24,
-      "y": 607,
-      "depthY": 746,
-      "maskSource": "bbox-fallback",
-      "alphaPixels": 7830,
-      "spriteAlphaCoverage": 0.83,
-      "removalMaskPoints": 0,
-      "status": [
-        "inventoried",
-        "needs-layer-generation"
-      ],
-      "notes": "Created in the manifest editor."
-    },
-    {
-      "id": "gale-new-occluder",
-      "zone": "gale",
-      "label": "gale-new-occluder",
-      "role": "occluder",
-      "category": "decor",
-      "sprite": "/world-v2/runtime/manifest/sprites/gale-new-occluder.png",
-      "sourceBbox": {
-        "x": 531,
-        "y": 586,
-        "width": 9,
-        "height": 162
-      },
-      "spriteCrop": {
-        "x": 502,
-        "y": 583,
-        "width": 44,
-        "height": 169
-      },
-      "x": 502,
-      "y": 583,
-      "depthY": 748,
+      "x": 200,
+      "y": 558,
+      "depthY": 704,
       "maskSource": "manual-removalMask",
-      "alphaPixels": 1586,
-      "spriteAlphaCoverage": 0.213,
-      "removalMaskPoints": 16,
+      "alphaPixels": 5625,
+      "spriteAlphaCoverage": 0.63,
+      "removalMaskPoints": 19,
       "status": [
         "inventoried",
         "needs-layer-generation"
@@ -2431,24 +2399,24 @@
       "category": "decor",
       "sprite": "/world-v2/runtime/manifest/sprites/machine.png",
       "sourceBbox": {
-        "x": 118,
-        "y": 693,
+        "x": 288,
+        "y": 654,
         "width": 51,
         "height": 58
       },
       "spriteCrop": {
-        "x": 111,
-        "y": 675,
-        "width": 66,
-        "height": 95
+        "x": 279,
+        "y": 631,
+        "width": 63,
+        "height": 89
       },
-      "x": 111,
-      "y": 675,
-      "depthY": 751,
+      "x": 279,
+      "y": 631,
+      "depthY": 712,
       "maskSource": "manual-removalMask",
-      "alphaPixels": 3272,
-      "spriteAlphaCoverage": 0.522,
-      "removalMaskPoints": 18,
+      "alphaPixels": 3017,
+      "spriteAlphaCoverage": 0.538,
+      "removalMaskPoints": 16,
       "status": [
         "inventoried",
         "needs-layer-generation"
@@ -2456,31 +2424,31 @@
       "notes": "Created in the manifest editor."
     },
     {
-      "id": "machine-copy-copy-copy-copy-copy-copy-copy",
+      "id": "gale-new-occluder",
       "zone": "gale",
-      "label": "gale-new-occluder copy copy copy copy copy copy copy",
+      "label": "gale-new-occluder",
       "role": "occluder",
       "category": "decor",
-      "sprite": "/world-v2/runtime/manifest/sprites/machine-copy-copy-copy-copy-copy-copy-copy.png",
+      "sprite": "/world-v2/runtime/manifest/sprites/gale-new-occluder.png",
       "sourceBbox": {
-        "x": 453,
-        "y": 636,
-        "width": 68,
-        "height": 129
+        "x": 674,
+        "y": 550,
+        "width": 9,
+        "height": 162
       },
       "spriteCrop": {
-        "x": 450,
-        "y": 639,
-        "width": 75,
-        "height": 136
+        "x": 647,
+        "y": 547,
+        "width": 38,
+        "height": 165
       },
-      "x": 450,
-      "y": 639,
-      "depthY": 765,
+      "x": 647,
+      "y": 547,
+      "depthY": 712,
       "maskSource": "manual-removalMask",
-      "alphaPixels": 5002,
-      "spriteAlphaCoverage": 0.49,
-      "removalMaskPoints": 19,
+      "alphaPixels": 1550,
+      "spriteAlphaCoverage": 0.247,
+      "removalMaskPoints": 14,
       "status": [
         "inventoried",
         "needs-layer-generation"
@@ -2495,24 +2463,56 @@
       "category": "decor",
       "sprite": "/world-v2/runtime/manifest/sprites/globe.png",
       "sourceBbox": {
-        "x": 258,
-        "y": 649,
-        "width": 126,
-        "height": 121
+        "x": 414,
+        "y": 608,
+        "width": 120,
+        "height": 117
       },
       "spriteCrop": {
-        "x": 252,
-        "y": 644,
-        "width": 134,
-        "height": 136
+        "x": 412,
+        "y": 601,
+        "width": 130,
+        "height": 134
       },
-      "x": 252,
-      "y": 644,
-      "depthY": 770,
+      "x": 412,
+      "y": 601,
+      "depthY": 725,
       "maskSource": "manual-removalMask",
-      "alphaPixels": 12672,
-      "spriteAlphaCoverage": 0.695,
+      "alphaPixels": 11862,
+      "spriteAlphaCoverage": 0.681,
       "removalMaskPoints": 25,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "machine-copy-copy-copy-copy-copy-copy-copy",
+      "zone": "gale",
+      "label": "gale-new-occluder copy copy copy copy copy copy copy",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest/sprites/machine-copy-copy-copy-copy-copy-copy-copy.png",
+      "sourceBbox": {
+        "x": 600,
+        "y": 596,
+        "width": 68,
+        "height": 129
+      },
+      "spriteCrop": {
+        "x": 599,
+        "y": 600,
+        "width": 72,
+        "height": 126
+      },
+      "x": 599,
+      "y": 600,
+      "depthY": 725,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 4506,
+      "spriteAlphaCoverage": 0.497,
+      "removalMaskPoints": 18,
       "status": [
         "inventoried",
         "needs-layer-generation"
@@ -2527,24 +2527,24 @@
       "category": "decor",
       "sprite": "/world-v2/runtime/manifest/sprites/machine-copy-copy-copy.png",
       "sourceBbox": {
-        "x": 511,
-        "y": 754,
+        "x": 656,
+        "y": 709,
         "width": 30,
         "height": 65
       },
       "spriteCrop": {
-        "x": 509,
-        "y": 751,
+        "x": 653,
+        "y": 703,
         "width": 35,
-        "height": 77
+        "height": 78
       },
-      "x": 509,
-      "y": 751,
-      "depthY": 819,
+      "x": 653,
+      "y": 703,
+      "depthY": 774,
       "maskSource": "manual-removalMask",
-      "alphaPixels": 1482,
-      "spriteAlphaCoverage": 0.55,
-      "removalMaskPoints": 16,
+      "alphaPixels": 1392,
+      "spriteAlphaCoverage": 0.51,
+      "removalMaskPoints": 9,
       "status": [
         "inventoried",
         "needs-layer-generation"
@@ -2559,24 +2559,24 @@
       "category": "decor",
       "sprite": "/world-v2/runtime/manifest/sprites/machine-copy.png",
       "sourceBbox": {
-        "x": 87,
-        "y": 736,
+        "x": 259,
+        "y": 691,
         "width": 47,
         "height": 86
       },
       "spriteCrop": {
-        "x": 86,
-        "y": 730,
-        "width": 49,
-        "height": 94
+        "x": 255,
+        "y": 682,
+        "width": 52,
+        "height": 98
       },
-      "x": 86,
-      "y": 730,
-      "depthY": 822,
+      "x": 255,
+      "y": 682,
+      "depthY": 777,
       "maskSource": "manual-removalMask",
-      "alphaPixels": 2600,
-      "spriteAlphaCoverage": 0.564,
-      "removalMaskPoints": 24,
+      "alphaPixels": 3006,
+      "spriteAlphaCoverage": 0.59,
+      "removalMaskPoints": 22,
       "status": [
         "inventoried",
         "needs-layer-generation"
@@ -2591,24 +2591,24 @@
       "category": "decor",
       "sprite": "/world-v2/runtime/manifest/sprites/machine-copy-copy.png",
       "sourceBbox": {
-        "x": 463,
-        "y": 803,
-        "width": 47,
+        "x": 604,
+        "y": 758,
+        "width": 62,
         "height": 66
       },
       "spriteCrop": {
-        "x": 460,
-        "y": 794,
-        "width": 58,
-        "height": 82
+        "x": 610,
+        "y": 746,
+        "width": 52,
+        "height": 84
       },
-      "x": 460,
-      "y": 794,
-      "depthY": 869,
+      "x": 610,
+      "y": 746,
+      "depthY": 824,
       "maskSource": "manual-removalMask",
-      "alphaPixels": 2824,
-      "spriteAlphaCoverage": 0.594,
-      "removalMaskPoints": 14,
+      "alphaPixels": 2510,
+      "spriteAlphaCoverage": 0.575,
+      "removalMaskPoints": 13,
       "status": [
         "inventoried",
         "needs-layer-generation"
@@ -2623,88 +2623,24 @@
       "category": "decor",
       "sprite": "/world-v2/runtime/manifest/sprites/machine-copy-copy-copy-copy.png",
       "sourceBbox": {
-        "x": 414,
-        "y": 842,
+        "x": 562,
+        "y": 794,
         "width": 30,
         "height": 65
       },
       "spriteCrop": {
-        "x": 412,
-        "y": 844,
-        "width": 33,
-        "height": 63
+        "x": 561,
+        "y": 790,
+        "width": 34,
+        "height": 69
       },
-      "x": 412,
-      "y": 844,
-      "depthY": 907,
+      "x": 561,
+      "y": 790,
+      "depthY": 859,
       "maskSource": "manual-removalMask",
-      "alphaPixels": 953,
-      "spriteAlphaCoverage": 0.458,
-      "removalMaskPoints": 16,
-      "status": [
-        "inventoried",
-        "needs-layer-generation"
-      ],
-      "notes": "Created in the manifest editor."
-    },
-    {
-      "id": "crystal-machine",
-      "zone": "gale",
-      "label": "gale-new-occluder",
-      "role": "occluder",
-      "category": "decor",
-      "sprite": "/world-v2/runtime/manifest/sprites/crystal-machine.png",
-      "sourceBbox": {
-        "x": 130,
-        "y": 800,
-        "width": 49,
-        "height": 116
-      },
-      "spriteCrop": {
-        "x": 126,
-        "y": 796,
-        "width": 58,
-        "height": 123
-      },
-      "x": 126,
-      "y": 796,
-      "depthY": 916,
-      "maskSource": "manual-removalMask",
-      "alphaPixels": 4430,
-      "spriteAlphaCoverage": 0.621,
-      "removalMaskPoints": 9,
-      "status": [
-        "inventoried",
-        "needs-layer-generation"
-      ],
-      "notes": "Created in the manifest editor."
-    },
-    {
-      "id": "machine-copy-copy-copy-copy-copy-copy-copy-copy-copy-copy",
-      "zone": "gale",
-      "label": "gale-new-occluder copy copy copy copy copy copy copy copy copy copy",
-      "role": "occluder",
-      "category": "decor",
-      "sprite": "/world-v2/runtime/manifest/sprites/machine-copy-copy-copy-copy-copy-copy-copy-copy-copy-copy.png",
-      "sourceBbox": {
-        "x": 368,
-        "y": 873,
-        "width": 26,
-        "height": 43
-      },
-      "spriteCrop": {
-        "x": 366,
-        "y": 870,
-        "width": 30,
-        "height": 50
-      },
-      "x": 366,
-      "y": 870,
-      "depthY": 916,
-      "maskSource": "manual-removalMask",
-      "alphaPixels": 746,
-      "spriteAlphaCoverage": 0.497,
-      "removalMaskPoints": 8,
+      "alphaPixels": 1136,
+      "spriteAlphaCoverage": 0.484,
+      "removalMaskPoints": 15,
       "status": [
         "inventoried",
         "needs-layer-generation"
@@ -2719,24 +2655,56 @@
       "category": "decor",
       "sprite": "/world-v2/runtime/manifest/sprites/machine-copy-copy-copy-copy-copy-copy.png",
       "sourceBbox": {
-        "x": 244,
-        "y": 866,
+        "x": 404,
+        "y": 813,
         "width": 26,
         "height": 51
       },
       "spriteCrop": {
-        "x": 244,
-        "y": 864,
-        "width": 24,
-        "height": 57
+        "x": 408,
+        "y": 808,
+        "width": 20,
+        "height": 58
       },
-      "x": 244,
-      "y": 864,
-      "depthY": 917,
+      "x": 408,
+      "y": 808,
+      "depthY": 864,
       "maskSource": "manual-removalMask",
-      "alphaPixels": 517,
-      "spriteAlphaCoverage": 0.378,
-      "removalMaskPoints": 14,
+      "alphaPixels": 462,
+      "spriteAlphaCoverage": 0.398,
+      "removalMaskPoints": 7,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "crystal-machine",
+      "zone": "gale",
+      "label": "gale-new-occluder",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest/sprites/crystal-machine.png",
+      "sourceBbox": {
+        "x": 286,
+        "y": 755,
+        "width": 49,
+        "height": 116
+      },
+      "spriteCrop": {
+        "x": 289,
+        "y": 745,
+        "width": 65,
+        "height": 129
+      },
+      "x": 289,
+      "y": 745,
+      "depthY": 871,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 4798,
+      "spriteAlphaCoverage": 0.572,
+      "removalMaskPoints": 20,
       "status": [
         "inventoried",
         "needs-layer-generation"
@@ -2751,24 +2719,56 @@
       "category": "decor",
       "sprite": "/world-v2/runtime/manifest/sprites/machine-copy-copy-copy-copy-copy.png",
       "sourceBbox": {
-        "x": 212,
-        "y": 874,
+        "x": 373,
+        "y": 820,
         "width": 29,
         "height": 51
       },
       "spriteCrop": {
-        "x": 208,
-        "y": 870,
+        "x": 371,
+        "y": 818,
         "width": 37,
-        "height": 59
+        "height": 50
       },
-      "x": 208,
-      "y": 870,
-      "depthY": 925,
-      "maskSource": "bbox-fallback",
-      "alphaPixels": 1479,
-      "spriteAlphaCoverage": 0.678,
-      "removalMaskPoints": 0,
+      "x": 371,
+      "y": 818,
+      "depthY": 871,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 998,
+      "spriteAlphaCoverage": 0.539,
+      "removalMaskPoints": 12,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "machine-copy-copy-copy-copy-copy-copy-copy-copy-copy-copy",
+      "zone": "gale",
+      "label": "gale-new-occluder copy copy copy copy copy copy copy copy copy copy",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest/sprites/machine-copy-copy-copy-copy-copy-copy-copy-copy-copy-copy.png",
+      "sourceBbox": {
+        "x": 524,
+        "y": 828,
+        "width": 26,
+        "height": 43
+      },
+      "spriteCrop": {
+        "x": 522,
+        "y": 814,
+        "width": 30,
+        "height": 61
+      },
+      "x": 522,
+      "y": 814,
+      "depthY": 871,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 908,
+      "spriteAlphaCoverage": 0.496,
+      "removalMaskPoints": 8,
       "status": [
         "inventoried",
         "needs-layer-generation"
@@ -2783,24 +2783,24 @@
       "category": "decor",
       "sprite": "/world-v2/runtime/manifest/sprites/cloud-machine-copy.png",
       "sourceBbox": {
-        "x": 261,
-        "y": 474,
+        "x": 417,
+        "y": 429,
         "width": 82,
         "height": 69
       },
       "spriteCrop": {
-        "x": 259,
-        "y": 477,
-        "width": 81,
-        "height": 55
+        "x": 411,
+        "y": 439,
+        "width": 92,
+        "height": 76
       },
-      "x": 259,
-      "y": 477,
-      "depthY": 1023,
+      "x": 411,
+      "y": 439,
+      "depthY": 978,
       "maskSource": "manual-removalMask",
-      "alphaPixels": 2797,
-      "spriteAlphaCoverage": 0.628,
-      "removalMaskPoints": 6,
+      "alphaPixels": 3810,
+      "spriteAlphaCoverage": 0.545,
+      "removalMaskPoints": 28,
       "status": [
         "inventoried",
         "needs-layer-generation"
