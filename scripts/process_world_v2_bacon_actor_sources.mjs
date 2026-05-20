@@ -70,15 +70,15 @@ for (const source of SOURCES) {
     data: Buffer.alloc(FRAME_WIDTH * COLUMNS * FRAME_HEIGHT * ROWS * 4),
   };
   let firstFrame = null;
+  const processedFrames = [];
 
   for (let row = 0; row < ROWS; row += 1) {
+    processedFrames[row] = [];
     for (let column = 0; column < COLUMNS; column += 1) {
-      const frame = fitSourceCellToFrame(image, source, detectedFrames[row][column]);
-      removeStrayEdgeComponents(frame);
-      if (row === 1 || row === 2) {
-        normalizeSideFrame(frame, source);
-        removeStrayEdgeComponents(frame);
-      }
+      const frame = row === 2
+        ? mirrorImage(processedFrames[1][column])
+        : processSourceFrame(image, source, detectedFrames[row][column], row);
+      processedFrames[row][column] = frame;
       pasteImage(walkSheet, frame, column * FRAME_WIDTH, row * FRAME_HEIGHT);
       if (row === 0 && column === 0) firstFrame = frame;
     }
@@ -89,6 +89,16 @@ for (const source of SOURCES) {
   writePng(path.join(ROOT, source.actor), firstFrame);
   writePng(path.join(ROOT, source.walk), walkSheet);
   console.log(`wrote ${source.actor} and ${source.walk}`);
+}
+
+function processSourceFrame(image, profile, bounds, row) {
+  const frame = fitSourceCellToFrame(image, profile, bounds);
+  removeStrayEdgeComponents(frame);
+  if (row === 1) {
+    normalizeSideFrame(frame, profile);
+    removeStrayEdgeComponents(frame);
+  }
+  return frame;
 }
 
 function fitSourceCellToFrame(image, profile, bounds) {
@@ -114,6 +124,27 @@ function fitSourceCellToFrame(image, profile, bounds) {
   drawScaledCrop(frame, image, crop, destX, destY, scale);
   trimEdgeKeyPixels(frame);
   return frame;
+}
+
+function mirrorImage(image) {
+  const mirrored = {
+    width: image.width,
+    height: image.height,
+    data: Buffer.alloc(image.width * image.height * 4),
+  };
+
+  for (let y = 0; y < image.height; y += 1) {
+    for (let x = 0; x < image.width; x += 1) {
+      const sourceOffset = ((y * image.width) + x) * 4;
+      const targetOffset = ((y * image.width) + (image.width - x - 1)) * 4;
+      mirrored.data[targetOffset] = image.data[sourceOffset];
+      mirrored.data[targetOffset + 1] = image.data[sourceOffset + 1];
+      mirrored.data[targetOffset + 2] = image.data[sourceOffset + 2];
+      mirrored.data[targetOffset + 3] = image.data[sourceOffset + 3];
+    }
+  }
+
+  return mirrored;
 }
 
 function normalizeSideFrame(frame, profile) {
