@@ -134,6 +134,7 @@ interface ObjectDragStart {
   depthYStart?: number;
   collisionBboxStart?: Bounds;
   collisionPointsStart?: WorldPoint[];
+  removalMaskStart?: RemovalMask;
   walkablePointsStart?: WorldPoint[];
 }
 
@@ -535,6 +536,7 @@ export function WorldV2ManifestEditorPage() {
         depthYStart: candidate.depthY,
         collisionBboxStart: candidate.collision.bbox,
         collisionPointsStart: candidate.collision.points,
+        removalMaskStart: candidate.removalMask,
         walkablePointsStart: candidate.walkable?.points,
       }));
     setBoxDrag({
@@ -1387,8 +1389,8 @@ function offsetManifestObject(
         ? { points: offsetPoints(start.collisionPointsStart, deltaX, deltaY, worldBounds) }
         : {}),
     },
-    ...(object.removalMask
-      ? { removalMask: offsetRemovalMask(object.removalMask, deltaX, deltaY, worldBounds) }
+    ...(start.removalMaskStart
+      ? { removalMask: offsetRemovalMask(start.removalMaskStart, deltaX, deltaY, worldBounds) }
       : {}),
     ...(start.walkablePointsStart
       ? {
