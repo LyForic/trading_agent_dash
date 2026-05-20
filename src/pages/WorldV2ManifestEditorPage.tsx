@@ -241,12 +241,12 @@ export function WorldV2ManifestEditorPage() {
     () => boundsFromChunks(referenceChunks, imageSize),
     [imageSize, referenceChunks],
   );
-  const visibleObjectIds = useMemo(() => filteredObjects.map((object) => object.id), [filteredObjects]);
-  const activeSelectedIds = useMemo(
-    () => selectedIds.filter((id) => manifest?.objects.some((object) => object.id === id)),
-    [manifest, selectedIds],
+  const filteredObjectIds = useMemo(() => filteredObjects.map((object) => object.id), [filteredObjects]);
+  const filteredSelectedIds = useMemo(
+    () => selectedIds.filter((id) => filteredObjectIds.includes(id)),
+    [filteredObjectIds, selectedIds],
   );
-  const selectedCount = activeSelectedIds.length;
+  const selectedCount = filteredSelectedIds.length;
   const selectedPointEditTarget = selectedObject ? pointEditTarget(selectedObject) : null;
   const canEditSelectedPointPolygon = selectedPointEditTarget !== null;
   const selectedPointCount = selectedObject && selectedPointEditTarget
@@ -273,9 +273,9 @@ export function WorldV2ManifestEditorPage() {
     });
   };
 
-  const selectVisibleObjects = () => {
-    setSelectedIds(visibleObjectIds);
-    setSelectedId(visibleObjectIds[0] ?? null);
+  const selectFilteredObjects = () => {
+    setSelectedIds(filteredObjectIds);
+    setSelectedId(filteredObjectIds[0] ?? null);
   };
 
   const clearObjectSelection = () => {
@@ -283,7 +283,7 @@ export function WorldV2ManifestEditorPage() {
     setSelectedIds([]);
   };
 
-  const isObjectSelected = (object: ManifestObject) => activeSelectedIds.includes(object.id);
+  const isObjectSelected = (object: ManifestObject) => filteredSelectedIds.includes(object.id);
 
   const updateSelected = (updater: (object: ManifestObject) => ManifestObject) => {
     if (!manifest || !selectedId) return;
@@ -516,7 +516,7 @@ export function WorldV2ManifestEditorPage() {
     if (event.button !== 0) return;
     event.stopPropagation();
     const additive = event.shiftKey || event.metaKey || event.ctrlKey;
-    const selectedBeforePointerDown = activeSelectedIds.includes(object.id);
+    const selectedBeforePointerDown = filteredSelectedIds.includes(object.id);
     selectObject(object.id, additive);
 
     if (editorMode === 'mask') return;
@@ -525,7 +525,7 @@ export function WorldV2ManifestEditorPage() {
     setDraftBox(null);
     setBoxResize(null);
     const dragIds = selectedBeforePointerDown
-      ? activeSelectedIds.filter((id) => visibleObjectIds.includes(id))
+      ? filteredSelectedIds
       : [object.id];
     const objectStarts = (manifest?.objects ?? [])
       .filter((candidate) => dragIds.includes(candidate.id))
@@ -769,7 +769,7 @@ export function WorldV2ManifestEditorPage() {
 
   const deleteObject = () => {
     if (!manifest || !selectedId) return;
-    const idsToDelete = activeSelectedIds.length > 0 ? activeSelectedIds : [selectedId];
+    const idsToDelete = filteredSelectedIds.length > 0 ? filteredSelectedIds : [selectedId];
     const nextObjects = manifest.objects.filter((object) => !idsToDelete.includes(object.id));
     setManifest({ ...manifest, objects: nextObjects });
     selectSingleObject(nextObjects.find((object) => zoneFilter === 'all' || object.zone === zoneFilter)?.id ?? null);
@@ -894,9 +894,9 @@ export function WorldV2ManifestEditorPage() {
             <MousePointer2 size={14} aria-hidden />
             {selectedCount} selected
           </span>
-          <button type="button" onClick={selectVisibleObjects} disabled={visibleObjectIds.length === 0}>
+          <button type="button" onClick={selectFilteredObjects} disabled={filteredObjectIds.length === 0}>
             <CheckSquare size={14} aria-hidden />
-            Select visible
+            Select all
           </button>
           <button type="button" onClick={clearObjectSelection} disabled={selectedCount === 0}>
             <XSquare size={14} aria-hidden />
