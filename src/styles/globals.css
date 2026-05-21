@@ -2571,10 +2571,6 @@ body[data-route="world-v2"] {
     padding-top: 8px;
   }
 
-  .world-v2-agent-list-extra .world-v2-agent-button {
-    grid-column: 1 / 2;
-  }
-
   .world-v2-agent-button {
     grid-template-columns: 1fr;
     justify-items: center;
