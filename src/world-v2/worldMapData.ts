@@ -1,6 +1,6 @@
 import type { AgentId } from '@/lib/types';
 
-export type ZoneId = AgentId | 'bacon';
+export type ZoneId = AgentId | 'bacon' | 'nova';
 
 export interface WorldPoint {
   x: number;
@@ -202,6 +202,21 @@ export const DEV_TEST_BACON_FULL_MAP_REPLACEMENT_CHUNKS: WorldMapChunk[] = [
   },
 ];
 
+export const DEV_TEST_NOVA_SOUTH_CHUNK: WorldMapChunk = {
+  id: 'dev-nova-south-alpha',
+  key: 'world-v2-dev-nova-south-alpha',
+  src: '/world-v2/layers/nova-south-alpha-chunk-v1.png',
+  x: -512,
+  y: 880,
+  width: 2048,
+  height: 656,
+};
+
+export const EXPANDED_WORLD_CHUNKS: WorldMapChunk[] = [
+  ...DEV_TEST_BACON_FULL_MAP_REPLACEMENT_CHUNKS,
+  DEV_TEST_NOVA_SOUTH_CHUNK,
+];
+
 export const TILED_WORLD_MAP = {
   key: 'world-v2-authored-map',
   src: '/world-v2/maps/world-v2-apex-slice.tmj',
@@ -232,6 +247,11 @@ export const ZONES: Record<ZoneId, ZoneBounds> = {
     id: 'bacon',
     center: { x: -304, y: 532 },
     rect: { x: -512, y: 32, width: 512, height: 930 },
+  },
+  nova: {
+    id: 'nova',
+    center: { x: 752, y: 1240 },
+    rect: { x: 64, y: 880, width: 1376, height: 656 },
   },
 };
 
@@ -267,6 +287,7 @@ export const NAV_MESH_POLYGONS: Record<ZoneId, WorldPoint[][]> = {
       { x: -508, y: 318 },
     ],
   ],
+  nova: [],
 };
 
 export const POIS: Poi[] = [
@@ -448,6 +469,15 @@ export const ACTOR_TEXTURES = [
   'gale-helper-crystal',
   'gale-helper-jar',
   'gale-helper-tool',
+  'bacon-idle',
+  'bacon-cook',
+  'bacon-helper-idle',
+  'bacon-helper-basket',
+  'bacon-helper-stir',
+  'nova-idle',
+  'nova-helper-idle',
+  'nova-helper-gem',
+  'nova-helper-scroll',
 ];
 
 function rectPoly(x1: number, y1: number, x2: number, y2: number): WorldPoint[] {

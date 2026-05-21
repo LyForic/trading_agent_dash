@@ -116,5 +116,25 @@ Runtime rules:
   foreground sprites. Rebuild those sprites with
   `npm run world-v2:manifest-runtime-assets` after saving manifest edits.
 
+Expansion workflow learned from Bacon/Nova:
+
+- Preserve all approved map pixels. Do not regenerate the whole world when
+  adding one area.
+- Generate the new area as a full-map candidate with generous context from the
+  existing world, then select the approved candidate.
+- Create a rectangular runtime chunk because Phaser chunks are rectangular, but
+  use alpha inside that chunk so only the new area and any tight silhouette
+  overlap are visible.
+- Keep the old map dominant at the boundary. If a tall new object overlaps the
+  old map plane, include only a tight polygon/feathered alpha mask around that
+  object instead of a broad rectangle.
+- Build a full merged preview PNG from old chunks plus the alpha chunk before
+  wiring labels or actors. Use small gridded crops for seam cleanup.
+- If a seam artifact belongs to old pixels showing through, adjust the alpha
+  mask. If the artifact is in the generated candidate itself, do a tiny masked
+  image edit on the candidate and rebuild the alpha chunk.
+- Add a dev flag for each expansion chunk first, then add a manifest zone so
+  labels can be authored in merged-world coordinates.
+
 Keep object placement authoritative here. In the preservation runtime, the full
 reference PNG is the visual world and the manifest supplies the game layers.

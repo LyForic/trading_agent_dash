@@ -9,48 +9,98 @@ const FRAME_HEIGHT = 112;
 const COLUMNS = 6;
 const ROWS = 4;
 
-const SOURCES = [
-  {
-    slug: 'bacon-idle',
-    source: 'private/world-v2/actors/walk/raw/bacon-idle-walk-source-v2.png',
-    actor: 'public/world-v2/actors/bacon-idle.png',
-    walk: 'public/world-v2/actors/walk/bacon-idle-walk.png',
-    targetWidth: 76,
-    targetHeight: 100,
-    sideTargetWidth: 58,
-    bottomPadding: 6,
-  },
-  {
-    slug: 'bacon-helper-idle',
-    source: 'private/world-v2/actors/walk/raw/bacon-helper-idle-walk-source-v2.png',
-    actor: 'public/world-v2/actors/bacon-helper-idle.png',
-    walk: 'public/world-v2/actors/walk/bacon-helper-idle-walk.png',
-    targetWidth: 74,
-    targetHeight: 96,
-    sideTargetWidth: 58,
-    bottomPadding: 6,
-  },
-  {
-    slug: 'bacon-helper-basket',
-    source: 'private/world-v2/actors/walk/raw/bacon-helper-basket-walk-source-v2.png',
-    actor: 'public/world-v2/actors/bacon-helper-basket.png',
-    walk: 'public/world-v2/actors/walk/bacon-helper-basket-walk.png',
-    targetWidth: 78,
-    targetHeight: 96,
-    sideTargetWidth: 60,
-    bottomPadding: 6,
-  },
-  {
-    slug: 'bacon-helper-stir',
-    source: 'private/world-v2/actors/walk/raw/bacon-helper-stir-walk-source-v2.png',
-    actor: 'public/world-v2/actors/bacon-helper-stir.png',
-    walk: 'public/world-v2/actors/walk/bacon-helper-stir-walk.png',
-    targetWidth: 76,
-    targetHeight: 96,
-    sideTargetWidth: 60,
-    bottomPadding: 6,
-  },
-];
+const SOURCE_PROFILES = {
+  bacon: [
+    {
+      slug: 'bacon-idle',
+      source: 'private/world-v2/actors/walk/raw/bacon-idle-walk-source-v2.png',
+      actor: 'public/world-v2/actors/bacon-idle.png',
+      walk: 'public/world-v2/actors/walk/bacon-idle-walk.png',
+      targetWidth: 76,
+      targetHeight: 100,
+      sideTargetWidth: 58,
+      bottomPadding: 6,
+    },
+    {
+      slug: 'bacon-helper-idle',
+      source: 'private/world-v2/actors/walk/raw/bacon-helper-idle-walk-source-v2.png',
+      actor: 'public/world-v2/actors/bacon-helper-idle.png',
+      walk: 'public/world-v2/actors/walk/bacon-helper-idle-walk.png',
+      targetWidth: 74,
+      targetHeight: 96,
+      sideTargetWidth: 58,
+      bottomPadding: 6,
+    },
+    {
+      slug: 'bacon-helper-basket',
+      source: 'private/world-v2/actors/walk/raw/bacon-helper-basket-walk-source-v2.png',
+      actor: 'public/world-v2/actors/bacon-helper-basket.png',
+      walk: 'public/world-v2/actors/walk/bacon-helper-basket-walk.png',
+      targetWidth: 78,
+      targetHeight: 96,
+      sideTargetWidth: 60,
+      bottomPadding: 6,
+    },
+    {
+      slug: 'bacon-helper-stir',
+      source: 'private/world-v2/actors/walk/raw/bacon-helper-stir-walk-source-v2.png',
+      actor: 'public/world-v2/actors/bacon-helper-stir.png',
+      walk: 'public/world-v2/actors/walk/bacon-helper-stir-walk.png',
+      targetWidth: 76,
+      targetHeight: 96,
+      sideTargetWidth: 60,
+      bottomPadding: 6,
+    },
+  ],
+  nova: [
+    {
+      slug: 'nova-idle',
+      source: 'private/world-v2/actors/walk/raw/nova-idle-walk-source-v1.png',
+      actor: 'public/world-v2/actors/nova-idle.png',
+      walk: 'public/world-v2/actors/walk/nova-idle-walk.png',
+      targetWidth: 84,
+      targetHeight: 108,
+      sideTargetWidth: 70,
+      bottomPadding: 4,
+    },
+    {
+      slug: 'nova-helper-idle',
+      source: 'private/world-v2/actors/walk/raw/nova-helper-idle-walk-source-v1.png',
+      actor: 'public/world-v2/actors/nova-helper-idle.png',
+      walk: 'public/world-v2/actors/walk/nova-helper-idle-walk.png',
+      targetWidth: 78,
+      targetHeight: 100,
+      sideTargetWidth: 64,
+      bottomPadding: 5,
+    },
+    {
+      slug: 'nova-helper-gem',
+      source: 'private/world-v2/actors/walk/raw/nova-helper-gem-walk-source-v1.png',
+      actor: 'public/world-v2/actors/nova-helper-gem.png',
+      walk: 'public/world-v2/actors/walk/nova-helper-gem-walk.png',
+      targetWidth: 78,
+      targetHeight: 100,
+      sideTargetWidth: 64,
+      bottomPadding: 5,
+    },
+    {
+      slug: 'nova-helper-scroll',
+      source: 'private/world-v2/actors/walk/raw/nova-helper-scroll-walk-source-v1.png',
+      actor: 'public/world-v2/actors/nova-helper-scroll.png',
+      walk: 'public/world-v2/actors/walk/nova-helper-scroll-walk.png',
+      targetWidth: 78,
+      targetHeight: 100,
+      sideTargetWidth: 64,
+      bottomPadding: 5,
+    },
+  ],
+};
+
+const selectedProfile = process.argv[2] ?? 'bacon';
+const SOURCES = SOURCE_PROFILES[selectedProfile];
+if (!SOURCES) {
+  throw new Error(`Unknown actor source profile "${selectedProfile}". Expected one of: ${Object.keys(SOURCE_PROFILES).join(', ')}`);
+}
 
 const pngSignature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
 const crcTable = new Uint32Array(256).map((_, index) => {

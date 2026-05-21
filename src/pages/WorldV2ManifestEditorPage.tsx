@@ -14,7 +14,7 @@ import {
   ZoomIn,
   ZoomOut,
 } from 'lucide-react';
-import { DEV_TEST_BACON_FULL_MAP_REPLACEMENT_CHUNKS } from '@/world-v2/worldMapData';
+import { DEV_TEST_BACON_FULL_MAP_REPLACEMENT_CHUNKS, DEV_TEST_NOVA_SOUTH_CHUNK } from '@/world-v2/worldMapData';
 
 type ManifestRole = 'ground-baked' | 'walkable-ground' | 'blocking-ground' | 'occluder' | 'decor-cluster' | 'interactive';
 type CollisionKind = 'none' | 'rect' | 'rects' | 'polygon';
@@ -164,6 +164,7 @@ interface DepthDrag {
 export function WorldV2ManifestEditorPage() {
   const editorParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
   const baconFullMapMode = editorParams?.has('baconFullMapTest') === true;
+  const novaSouthMode = editorParams?.has('novaSouthTest') === true;
   const [manifest, setManifest] = useState<Manifest | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -199,7 +200,12 @@ export function WorldV2ManifestEditorPage() {
       .then((nextManifest) => {
         if (cancelled) return;
         setManifest(nextManifest);
-        const firstZone = nextManifest.zones[0]?.id ?? 'apex';
+        const requestedZone = typeof window !== 'undefined'
+          ? new URLSearchParams(window.location.search).get('zone')
+          : null;
+        const firstZone = requestedZone && nextManifest.zones.some((zone) => zone.id === requestedZone)
+          ? requestedZone
+          : nextManifest.zones[0]?.id ?? 'apex';
         const firstId = nextManifest.objects.find((object) => object.zone === firstZone)?.id ?? nextManifest.objects[0]?.id ?? null;
         setZoneFilter(firstZone);
         setSelectedId(firstId);
@@ -226,18 +232,22 @@ export function WorldV2ManifestEditorPage() {
   const imageHeight = manifest?.source.imageSize.height ?? 1024;
   const imageSize = useMemo(() => ({ width: imageWidth, height: imageHeight }), [imageHeight, imageWidth]);
   const referenceChunks = useMemo(() => {
-    if (baconFullMapMode) return DEV_TEST_BACON_FULL_MAP_REPLACEMENT_CHUNKS;
-    if (!manifest) return [];
-    if (manifest.source.referenceChunks?.length) return manifest.source.referenceChunks;
-    return [{
-      id: 'reference',
-      src: manifest.source.referenceImage,
-      x: 0,
-      y: 0,
-      width: imageSize.width,
-      height: imageSize.height,
-    }];
-  }, [baconFullMapMode, imageSize.height, imageSize.width, manifest]);
+    const chunks = baconFullMapMode
+      ? DEV_TEST_BACON_FULL_MAP_REPLACEMENT_CHUNKS
+      : manifest?.source.referenceChunks?.length
+        ? manifest.source.referenceChunks
+        : manifest ? [{
+          id: 'reference',
+          src: manifest.source.referenceImage,
+          x: 0,
+          y: 0,
+          width: imageSize.width,
+          height: imageSize.height,
+        }] : [];
+
+    if (!novaSouthMode || chunks.some((chunk) => chunk.id === DEV_TEST_NOVA_SOUTH_CHUNK.id)) return chunks;
+    return [...chunks, DEV_TEST_NOVA_SOUTH_CHUNK];
+  }, [baconFullMapMode, imageSize.height, imageSize.width, manifest, novaSouthMode]);
   const coordinateBounds = useMemo(
     () => boundsFromChunks(referenceChunks, imageSize),
     [imageSize, referenceChunks],

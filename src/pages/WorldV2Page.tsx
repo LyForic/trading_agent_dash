@@ -19,7 +19,7 @@ import type { ZoneId } from '@/world-v2/worldMapData';
 
 type LivingWorldSceneInstance = InstanceType<typeof import('@/world-v2/LivingWorldScene').LivingWorldScene>;
 type PhaserModule = typeof import('phaser');
-type WorldMenuAgentId = AgentId | 'bacon';
+type WorldMenuAgentId = AgentId | 'bacon' | 'nova';
 
 const PORTRAITS: Record<AgentId, string> = {
   apex: '/world-v2/actors/apex-idle.png',
@@ -51,9 +51,15 @@ const WORLD_MENU_AGENTS: Record<WorldMenuAgentId, WorldMenuAgent> = {
     tagline: 'Chef pig',
     portrait: '/world-v2/actors/bacon-idle.png',
   },
+  nova: {
+    id: 'nova',
+    name: 'Nova',
+    tagline: 'Celestial phoenix',
+    portrait: '/world-v2/actors/nova-idle.png',
+  },
 };
 
-const WORLD_AGENT_ORDER: AgentId[] = ['apex', 'metheus', 'gale'];
+const WORLD_AGENT_ORDER: WorldMenuAgentId[] = ['apex', 'metheus', 'gale', 'bacon', 'nova'];
 const BNF_CHANGE_WINDOWS = ['24h', '7d', 'lifetime'] as const;
 type BnfChangeWindow = typeof BNF_CHANGE_WINDOWS[number];
 
@@ -75,8 +81,48 @@ const BNF_CHANGE_WINDOW_MS: Record<Exclude<BnfChangeWindow, 'lifetime'>, number>
 };
 
 interface BnfChange {
+  cents: number;
   pct: number;
 }
+
+interface ExpansionAgentInfo {
+  id: Exclude<WorldMenuAgentId, AgentId>;
+  status: string;
+  name: string;
+  nickname: string;
+  portrait: string;
+  stats: Array<{ label: string; value: string }>;
+  marketLine: string;
+}
+
+const EXPANSION_AGENT_INFO: Record<Exclude<WorldMenuAgentId, AgentId>, ExpansionAgentInfo> = {
+  bacon: {
+    id: 'bacon',
+    status: 'Kitchen prep',
+    name: 'Bacon',
+    nickname: 'Chef Pig',
+    portrait: WORLD_MENU_AGENTS.bacon.portrait,
+    stats: [
+      { label: 'Area', value: 'West' },
+      { label: 'Helpers', value: '5' },
+      { label: 'Status', value: 'Prep' },
+    ],
+    marketLine: 'Cooking and food expansion wing',
+  },
+  nova: {
+    id: 'nova',
+    status: 'Astral watch',
+    name: 'Nova',
+    nickname: 'Celestial Phoenix',
+    portrait: WORLD_MENU_AGENTS.nova.portrait,
+    stats: [
+      { label: 'Area', value: 'South' },
+      { label: 'Helpers', value: '5' },
+      { label: 'Status', value: 'Awake' },
+    ],
+    marketLine: 'Cosmic shrine and celestial research wing',
+  },
+};
 
 interface PhaserWorldProps {
   selectedAgentId: ZoneId | null;
@@ -164,6 +210,18 @@ function formatTotalBalance(cents: number) {
   return `$${Math.round(cents / 100).toLocaleString('en-US')}`;
 }
 
+function formatCurrencyChange(cents: number | null) {
+  if (cents === null || !Number.isFinite(cents)) return '—';
+  const sign = cents > 0 ? '+' : cents < 0 ? '-' : '';
+  const dollars = Math.abs(cents) / 100;
+  return `${sign}${dollars.toLocaleString('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
 function formatPercent(value: number | null) {
   if (value === null || !Number.isFinite(value)) return '—';
   return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
@@ -200,14 +258,21 @@ function calculateBnfChange(points: BnfPortfolioPoint[], window: BnfChangeWindow
   if (!latest) return null;
 
   if (window === 'lifetime') {
-    return Number.isFinite(latest.pct_vs_baseline) ? { pct: latest.pct_vs_baseline } : null;
+    return Number.isFinite(latest.pct_vs_baseline)
+      ? {
+          cents: latest.combined_cleared_cents - latest.combined_baseline_cents,
+          pct: latest.pct_vs_baseline,
+        }
+      : null;
   }
 
   const start = closestWindowStart(points, latest, window);
   if (!start || start.combined_cleared_cents === 0) return null;
+  const cents = latest.combined_cleared_cents - start.combined_cleared_cents;
 
   return {
-    pct: ((latest.combined_cleared_cents - start.combined_cleared_cents) / start.combined_cleared_cents) * 100,
+    cents,
+    pct: (cents / start.combined_cleared_cents) * 100,
   };
 }
 
@@ -219,10 +284,12 @@ function isLiveAgentId(id: WorldMenuAgentId | null): id is AgentId {
   return id === 'apex' || id === 'gale' || id === 'metheus';
 }
 
+function isExpansionAgentId(id: WorldMenuAgentId | null): id is Exclude<WorldMenuAgentId, AgentId> {
+  return id === 'bacon' || id === 'nova';
+}
+
 export function WorldV2Page() {
   const worldTestParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-  const baconExpansionMode = worldTestParams?.has('baconChunkTest') === true
-    || worldTestParams?.has('baconFullMapTest') === true;
   const isolatedTestMode = worldTestParams?.has('apexTest') === true
     || worldTestParams?.has('treeTest') === true
     || worldTestParams?.has('manifestWorld') === true
@@ -248,13 +315,11 @@ export function WorldV2Page() {
   const { data, cardViewModels, source, error, loading } = useAgentData(windowsByAgent);
   const bnf = useBnfPortfolio();
   const agentsById = useMemo(() => agentMap(data.agents), [data.agents]);
-  const worldAgentOrder = useMemo<WorldMenuAgentId[]>(
-    () => (baconExpansionMode ? [...WORLD_AGENT_ORDER, 'bacon'] : WORLD_AGENT_ORDER),
-    [baconExpansionMode],
-  );
+  const worldAgentOrder = WORLD_AGENT_ORDER;
   const primaryWorldAgentOrder = worldAgentOrder.slice(0, 3);
   const extraWorldAgentOrder = worldAgentOrder.slice(3);
   const selectedLiveAgentId = isLiveAgentId(selectedAgentId) ? selectedAgentId : null;
+  const selectedExpansionAgent = isExpansionAgentId(selectedAgentId) ? EXPANSION_AGENT_INFO[selectedAgentId] : null;
   const selectedAgent = selectedLiveAgentId ? agentsById[selectedLiveAgentId] : undefined;
   const selectedVm = selectedLiveAgentId ? cardViewModels[selectedLiveAgentId] : undefined;
   const latestBnfPoint = bnf.data.points[bnf.data.points.length - 1];
@@ -420,7 +485,6 @@ export function WorldV2Page() {
         <div className="world-v2-sheet-handle" aria-hidden />
         <div className="world-v2-menu-head">
           <div className="world-v2-menu-title">
-            <p>Trading Gym V2</p>
             <h1>Living World</h1>
           </div>
           <div ref={balanceWrapRef} className="world-v2-balance-wrap">
@@ -433,10 +497,11 @@ export function WorldV2Page() {
               aria-controls="world-v2-balance-menu"
               onClick={() => setBalanceMenuOpen((open) => !open)}
             >
-              <span>Total Bal.</span>
               <strong>{totalBalanceCopy}</strong>
               <em className={changeClassName(selectedBnfChange?.pct ?? null)}>
-                {BNF_CHANGE_WINDOW_LABELS[balanceWindow]} {formatPercent(selectedBnfChange?.pct ?? null)}
+                <span>{BNF_CHANGE_WINDOW_LABELS[balanceWindow]}</span>
+                <span>{formatCurrencyChange(selectedBnfChange?.cents ?? null)}</span>
+                <span>{formatPercent(selectedBnfChange?.pct ?? null)}</span>
               </em>
             </button>
             {balanceMenuOpen && (
@@ -458,7 +523,8 @@ export function WorldV2Page() {
                     >
                       <span>{BNF_CHANGE_WINDOW_MENU_LABELS[changeWindow]}</span>
                       <strong className={changeClassName(change?.pct ?? null)}>
-                        {formatPercent(change?.pct ?? null)}
+                        <span>{formatCurrencyChange(change?.cents ?? null)}</span>
+                        <span>{formatPercent(change?.pct ?? null)}</span>
                       </strong>
                     </button>
                   );
@@ -573,11 +639,11 @@ export function WorldV2Page() {
         </section>
       )}
 
-      {!isolatedTestMode && selectedAgentId === 'bacon' && (
+      {!isolatedTestMode && selectedExpansionAgent && (
         <section
           className="world-v2-stats-panel"
-          aria-label="Bacon area preview"
-          style={{ '--agent-accent': 'var(--color-bacon)' } as React.CSSProperties}
+          aria-label={`${selectedExpansionAgent.name} area info`}
+          style={{ '--agent-accent': `var(--color-${selectedExpansionAgent.id})` } as React.CSSProperties}
         >
           <div className="world-v2-stats-head">
             <button
@@ -590,14 +656,14 @@ export function WorldV2Page() {
             </button>
             <img
               className="world-v2-stats-portrait"
-              src={WORLD_MENU_AGENTS.bacon.portrait}
+              src={selectedExpansionAgent.portrait}
               alt=""
               draggable={false}
             />
             <div className="world-v2-stats-title">
-              <p>Kitchen prep</p>
-              <h2>Bacon</h2>
-              <span>Chef Pig</span>
+              <p>{selectedExpansionAgent.status}</p>
+              <h2>{selectedExpansionAgent.name}</h2>
+              <span>{selectedExpansionAgent.nickname}</span>
             </div>
             <button
               type="button"
@@ -610,23 +676,17 @@ export function WorldV2Page() {
           </div>
 
           <div className="world-v2-stat-grid">
-            <div>
-              <span>Area</span>
-              <strong>West</strong>
-            </div>
-            <div>
-              <span>Helpers</span>
-              <strong>5</strong>
-            </div>
-            <div>
-              <span>Status</span>
-              <strong>Blockout</strong>
-            </div>
+            {selectedExpansionAgent.stats.map((stat) => (
+              <div key={stat.label}>
+                <span>{stat.label}</span>
+                <strong>{stat.value}</strong>
+              </div>
+            ))}
           </div>
 
           <div className="world-v2-market-line">
             <BarChart3 size={15} aria-hidden />
-            <span>Cooking and food expansion preview</span>
+            <span>{selectedExpansionAgent.marketLine}</span>
           </div>
         </section>
       )}

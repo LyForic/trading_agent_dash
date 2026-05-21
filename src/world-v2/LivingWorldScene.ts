@@ -7,6 +7,8 @@ import {
   DEV_TEST_BACON_FULL_MAP_REPLACEMENT_CHUNKS,
   DEV_TEST_BACON_WEST_EXPANSION_CHUNK,
   DEV_TEST_EAST_EXPANSION_CHUNK,
+  DEV_TEST_NOVA_SOUTH_CHUNK,
+  EXPANDED_WORLD_CHUNKS,
   FALLBACK_WORLD_DATA,
   TILED_WORLD_MAP,
   WORLD_OBJECT_MANIFEST,
@@ -74,6 +76,10 @@ const ACTOR_WALK_SHEETS = [
   'bacon-helper-idle',
   'bacon-helper-basket',
   'bacon-helper-stir',
+  'nova-idle',
+  'nova-helper-idle',
+  'nova-helper-gem',
+  'nova-helper-scroll',
 ] as const;
 const ACTOR_WALK_SHEET_SLUGS = new Set<string>(ACTOR_WALK_SHEETS);
 const NavMeshModule = NavMeshRuntime as unknown as NavMeshRuntimeShape;
@@ -89,10 +95,12 @@ type ActorKind =
   | 'metheus'
   | 'gale'
   | 'bacon'
+  | 'nova'
   | 'apex-helper'
   | 'metheus-helper'
   | 'gale-helper'
-  | 'bacon-helper';
+  | 'bacon-helper'
+  | 'nova-helper';
 type WalkDirection = typeof WALK_DIRECTIONS[number];
 
 interface LivingActor {
@@ -272,14 +280,6 @@ const HELPER_CONFIG: Array<{ kind: ActorKind; zone: ZoneId; textures: string[]; 
   },
 ];
 
-const BACON_ACTOR_TEXTURES = [
-  { key: 'actor-bacon-idle', src: '/world-v2/actors/bacon-idle.png' },
-  { key: 'actor-bacon-cook', src: '/world-v2/actors/bacon-cook.png' },
-  { key: 'actor-bacon-helper-idle', src: '/world-v2/actors/bacon-helper-idle.png' },
-  { key: 'actor-bacon-helper-basket', src: '/world-v2/actors/bacon-helper-basket.png' },
-  { key: 'actor-bacon-helper-stir', src: '/world-v2/actors/bacon-helper-stir.png' },
-] as const;
-
 const BACON_AGENT_ACTOR_CONFIG: (typeof AGENT_ACTOR_CONFIG)[number] = {
   id: 'bacon',
   zone: 'bacon',
@@ -303,6 +303,29 @@ const BACON_HELPER_CONFIG: Array<{ kind: ActorKind; zone: ZoneId; textures: stri
   },
 ];
 
+const NOVA_AGENT_ACTOR_CONFIG: (typeof AGENT_ACTOR_CONFIG)[number] = {
+  id: 'nova',
+  zone: 'nova',
+  kind: 'nova',
+  idleTexture: 'actor-nova-idle',
+  actionTextures: ['actor-nova-idle'],
+  x: 952,
+  y: 1288,
+  speed: 40,
+  scale: 0.56,
+};
+
+const NOVA_HELPER_CONFIG: Array<{ kind: ActorKind; zone: ZoneId; textures: string[]; count: number; scale: number; speed: number }> = [
+  {
+    kind: 'nova-helper',
+    zone: 'nova',
+    textures: ['actor-nova-helper-idle', 'actor-nova-helper-gem', 'actor-nova-helper-scroll'],
+    count: 5,
+    scale: 0.39,
+    speed: 34,
+  },
+];
+
 const DEV_WORLD_TOOLS = import.meta.env.DEV;
 const queryParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
 const DEBUG_WORLD = DEV_WORLD_TOOLS && (queryParams?.has('debugWorld') ?? false);
@@ -314,11 +337,14 @@ const MANIFEST_RUNTIME = manifestRuntimeFromQuery(queryParams);
 const DEV_CHUNK_TEST = DEV_WORLD_TOOLS && (queryParams?.has('chunkTest') ?? false);
 const DEV_BACON_CHUNK_TEST = DEV_WORLD_TOOLS && (queryParams?.has('baconChunkTest') ?? false);
 const DEV_BACON_FULL_MAP_TEST = DEV_WORLD_TOOLS && (queryParams?.has('baconFullMapTest') ?? false);
-const DEV_BACON_WORLD_TEST = DEV_BACON_CHUNK_TEST || DEV_BACON_FULL_MAP_TEST;
+const DEV_NOVA_SOUTH_TEST = DEV_WORLD_TOOLS && (queryParams?.has('novaSouthTest') ?? false);
+const BACON_WORLD_ENABLED = true;
+const NOVA_WORLD_ENABLED = true;
 const ACTIVE_DEV_TEST_CHUNKS: WorldMapChunk[] = [
   ...(DEV_CHUNK_TEST ? [DEV_TEST_EAST_EXPANSION_CHUNK] : []),
   ...(DEV_BACON_CHUNK_TEST && !DEV_BACON_FULL_MAP_TEST ? [DEV_TEST_BACON_WEST_EXPANSION_CHUNK] : []),
   ...(DEV_BACON_FULL_MAP_TEST ? DEV_TEST_BACON_FULL_MAP_REPLACEMENT_CHUNKS : []),
+  ...(DEV_NOVA_SOUTH_TEST ? [DEV_TEST_NOVA_SOUTH_CHUNK] : []),
 ];
 const ACTOR_TUNING = DEV_WORLD_TOOLS && (queryParams?.has('actorTuning') ?? false);
 const DEBUG_ISOLATED_TEST = DEBUG_APEX_TEST || DEBUG_TREE_TEST || DEBUG_MANIFEST_WORLD;
@@ -347,12 +373,8 @@ const FOREGROUND_WORKSPACE_INDEX_ASSET = {
   src: DEV_WORLD_TOOLS ? `/world-v2/source/${GROUND_PREVIEW_ZONE}-foreground-workspace/sprite-index.json` : '',
 };
 const MANIFEST_RUNTIME_INDEX_ASSET = {
-  key: DEV_BACON_FULL_MAP_TEST
-    ? 'world-v2-manifest-runtime-bacon-fullmap-index'
-    : 'world-v2-manifest-runtime-index',
-  src: DEV_BACON_FULL_MAP_TEST
-    ? '/world-v2/runtime/manifest-bacon-fullmap/sprite-index.json'
-    : '/world-v2/runtime/manifest/sprite-index.json',
+  key: 'world-v2-manifest-runtime-expanded-index',
+  src: '/world-v2/runtime/manifest-bacon-fullmap/sprite-index.json',
 };
 const DEBUG_DEPTH_CHECKPOINTS = [
   { key: '1', label: 'behind canopy', x: 650, y: 174 },
@@ -475,11 +497,6 @@ export class LivingWorldScene extends Phaser.Scene {
     for (const key of ACTOR_TEXTURES) {
       this.load.image(`actor-${key}`, `/world-v2/actors/${key}.png`);
     }
-    if (DEV_BACON_WORLD_TEST) {
-      for (const texture of BACON_ACTOR_TEXTURES) {
-        this.load.image(texture.key, texture.src);
-      }
-    }
     for (const slug of ACTOR_WALK_SHEETS) {
       this.load.spritesheet(`actor-${slug}-walk`, `/world-v2/actors/walk/${slug}-walk.png`, {
         frameWidth: WALK_FRAME_WIDTH,
@@ -493,8 +510,9 @@ export class LivingWorldScene extends Phaser.Scene {
     if (MANIFEST_RUNTIME) {
       this.worldData = this.applyManifestRuntimeData(this.worldData);
     }
+    this.worldData = this.applyChunkData(this.worldData, EXPANDED_WORLD_CHUNKS);
     if (ACTIVE_DEV_TEST_CHUNKS.length > 0) {
-      this.worldData = this.applyDevChunkTestData(this.worldData);
+      this.worldData = this.applyChunkData(this.worldData, ACTIVE_DEV_TEST_CHUNKS);
     }
     this.zoneNavPolygons = new Map(
       (Object.keys(this.worldData.zones) as ZoneId[]).map((zone) => [zone, this.buildZoneNavPolygons(zone)]),
@@ -551,6 +569,9 @@ export class LivingWorldScene extends Phaser.Scene {
   private preloadWorldLayerChunks() {
     const chunkTextures = new Map<string, string>();
     for (const chunk of [...FALLBACK_WORLD_DATA.groundChunks, ...FALLBACK_WORLD_DATA.referenceChunks]) {
+      chunkTextures.set(chunk.key, chunk.src);
+    }
+    for (const chunk of EXPANDED_WORLD_CHUNKS) {
       chunkTextures.set(chunk.key, chunk.src);
     }
     for (const chunk of ACTIVE_DEV_TEST_CHUNKS) {
@@ -1077,9 +1098,13 @@ export class LivingWorldScene extends Phaser.Scene {
   }
 
   private createActors() {
-    const activeAgentConfigs = DEV_BACON_WORLD_TEST
-      ? [...AGENT_ACTOR_CONFIG, BACON_AGENT_ACTOR_CONFIG]
-      : AGENT_ACTOR_CONFIG;
+    const canSpawnBaconActors = BACON_WORLD_ENABLED && this.manifestRuntimeWalkableZones.has('bacon');
+    const canSpawnNovaActors = NOVA_WORLD_ENABLED && this.manifestRuntimeWalkableZones.has('nova');
+    const activeAgentConfigs = [
+      ...AGENT_ACTOR_CONFIG,
+      ...(canSpawnBaconActors ? [BACON_AGENT_ACTOR_CONFIG] : []),
+      ...(canSpawnNovaActors ? [NOVA_AGENT_ACTOR_CONFIG] : []),
+    ];
     const agentConfigs = DEBUG_ISOLATED_TEST
       ? AGENT_ACTOR_CONFIG.filter((config) => config.id === 'apex')
       : activeAgentConfigs;
@@ -1092,9 +1117,11 @@ export class LivingWorldScene extends Phaser.Scene {
       return;
     }
 
-    const helperConfigs = DEV_BACON_WORLD_TEST
-      ? [...HELPER_CONFIG, ...BACON_HELPER_CONFIG]
-      : HELPER_CONFIG;
+    const helperConfigs = [
+      ...HELPER_CONFIG,
+      ...(canSpawnBaconActors ? BACON_HELPER_CONFIG : []),
+      ...(canSpawnNovaActors ? NOVA_HELPER_CONFIG : []),
+    ];
     for (const helper of helperConfigs) {
       for (let i = 0; i < helper.count; i += 1) {
         const point = this.randomHelperSpawnPoint(helper.zone, helper.kind);
@@ -2164,9 +2191,9 @@ export class LivingWorldScene extends Phaser.Scene {
     };
   }
 
-  private applyDevChunkTestData(worldData: WorldMapData): WorldMapData {
+  private applyChunkData(worldData: WorldMapData, chunksToAppend: WorldMapChunk[]): WorldMapData {
     const appendChunk = (chunks: WorldMapChunk[]) => (
-      ACTIVE_DEV_TEST_CHUNKS.reduce(
+      chunksToAppend.reduce(
         (nextChunks, devChunk) => (
           nextChunks.some((chunk) => chunk.id === devChunk.id)
             ? nextChunks
@@ -2504,6 +2531,10 @@ function manifestPoiBehavior(zone: ZoneId, object: ManifestObject): Pick<Poi, 'a
     return { actionTexture: 'actor-bacon-cook', effect: 'bacon-cook' };
   }
 
+  if (zone === 'nova') {
+    return { effect: 'helper' };
+  }
+
   if (searchableText.includes('scope') || searchableText.includes('observatory')) {
     return { actionTexture: 'actor-metheus-telescope', effect: 'metheus-telescope' };
   }
@@ -2511,7 +2542,7 @@ function manifestPoiBehavior(zone: ZoneId, object: ManifestObject): Pick<Poi, 'a
 }
 
 function agentZoneFromString(zone: string): ZoneId | null {
-  if (zone === 'apex' || zone === 'gale' || zone === 'metheus' || zone === 'bacon') return zone;
+  if (zone === 'apex' || zone === 'gale' || zone === 'metheus' || zone === 'bacon' || zone === 'nova') return zone;
   return null;
 }
 

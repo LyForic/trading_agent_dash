@@ -27,6 +27,10 @@ const ACTORS = [
   { slug: 'bacon-helper-idle', label: 'Pig helper' },
   { slug: 'bacon-helper-basket', label: 'Pig basket' },
   { slug: 'bacon-helper-stir', label: 'Pig stir' },
+  { slug: 'nova-idle', label: 'Nova' },
+  { slug: 'nova-helper-idle', label: 'Phoenix helper' },
+  { slug: 'nova-helper-gem', label: 'Phoenix gem' },
+  { slug: 'nova-helper-scroll', label: 'Phoenix scroll' },
 ] as const;
 
 const DIRECTIONS = [
