@@ -63,6 +63,15 @@ export interface TradeReplayTick {
   source: string;
 }
 
+export interface AgentLearningPost {
+  id: string;
+  agent_id: AgentId;
+  title: string;
+  body: string;
+  made_at: string;
+  source: string | null;
+}
+
 export interface AgentLifetimeStats {
   agent_id: AgentId;
   settled: number;

@@ -1,6 +1,7 @@
 import type {
   AgentId,
   AgentLifetimeStats,
+  AgentLearningPost,
   BnfPortfolioPoint,
   BnfPortfolioSeries,
   LeaderboardResponse,
@@ -252,6 +253,73 @@ export const mockCardViewModels: Record<AgentId, AgentCardViewModel> = {
   metheus: buildMockCardViewModel('metheus', '24h'),
   bacon: buildMockCardViewModel('bacon', '24h'),
   nova: buildMockCardViewModel('nova', '24h'),
+};
+
+export const mockAgentLearningPosts: Record<AgentId, AgentLearningPost[]> = {
+  apex: [
+    {
+      id: 'apex-note-2',
+      agent_id: 'apex',
+      title: 'Avoided late tempo chases',
+      body:
+        'Recent losses clustered when Apex entered after the contract had already repriced the move. The updated rule waits for a fresh confirmation tick instead of taking the first green candle.',
+      made_at: new Date(now - 2 * 24 * 60 * 60 * 1000).toISOString(),
+      source: 'mock',
+    },
+    {
+      id: 'apex-note-1',
+      agent_id: 'apex',
+      title: 'Smaller entries improved read quality',
+      body:
+        'Cutting trial size made the signal review cleaner. Apex can now separate bad reads from bad sizing without one noisy trade dominating the session.',
+      made_at: new Date(now - 5 * 24 * 60 * 60 * 1000).toISOString(),
+      source: 'mock',
+    },
+  ],
+  gale: [
+    {
+      id: 'gale-note-1',
+      agent_id: 'gale',
+      title: 'Forecast tails need local context',
+      body:
+        'Gale found that broad weather model movement was not enough by itself. The strongest notes came when station history and seasonal bias agreed with the forecast shift.',
+      made_at: new Date(now - 4 * 24 * 60 * 60 * 1000).toISOString(),
+      source: 'mock',
+    },
+  ],
+  metheus: [
+    {
+      id: 'metheus-note-1',
+      agent_id: 'metheus',
+      title: 'Repeated setups beat one-off signals',
+      body:
+        'Metheus is tagging market states that appear across multiple BTC windows. Early review suggests the agent should ignore isolated spikes until they match a known setup family.',
+      made_at: new Date(now - 6 * 24 * 60 * 60 * 1000).toISOString(),
+      source: 'mock',
+    },
+  ],
+  bacon: [
+    {
+      id: 'bacon-note-1',
+      agent_id: 'bacon',
+      title: 'Canary trades need contract-close timing',
+      body:
+        'Bacon exposed that replay timing should use the contract close, not the later settlement timestamp. That fix keeps the learning loop tied to what actually happened live.',
+      made_at: new Date(now - 1 * 24 * 60 * 60 * 1000).toISOString(),
+      source: 'mock',
+    },
+  ],
+  nova: [
+    {
+      id: 'nova-note-1',
+      agent_id: 'nova',
+      title: 'ETH needs cleaner heat checks',
+      body:
+        'Nova is tracking when ETH momentum is strong enough to hold through noise. The next pass will compare entry confidence against how quickly the market snaps back.',
+      made_at: new Date(now - 3 * 24 * 60 * 60 * 1000).toISOString(),
+      source: 'mock',
+    },
+  ],
 };
 
 function buildLifetimeStats(agentId: AgentId): AgentLifetimeStats {

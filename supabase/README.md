@@ -34,6 +34,13 @@ live dashboard.
   ticks, joined through `agent_trades_public` so a tick is only visible when
   both the trade and the tick satisfy the public delay boundary. Anon `SELECT`
   GRANTED.
+- **`agent_learning_posts`** — privileged bot-written public learning notes
+  for the Living World "Learn More" cards. Bots insert rows with `agent_id`,
+  `title`, `body`, optional `source`, and `made_at`; unpublished drafts can be
+  hidden with `is_published = false`. Anon access is revoked on the base table.
+- **`agent_learning_posts_public`** — read-only public view over published
+  learning posts. The frontend polls this view while a Learn More card is open
+  so new notes appear without a deploy. Anon `SELECT` GRANTED.
 - **`pm_bets`** — canonical per-trade table the trading daemons already
   write to. Untouched by this frontend. Anon/authenticated/public privileges
   are revoked; writes belong only to privileged daemon credentials.
@@ -114,6 +121,7 @@ credentials used by the trading daemons.
 | `20260512001000_tighten_public_view_grants.sql` | Revoke inherited/previous non-SELECT privileges on delayed public views; re-grant anon SELECT only |
 | `20260522000000_agent_trade_replay_ticks.sql` | Create the privileged replay-ticks table and delayed public view |
 | `20260522001000_generalize_trade_replay_ticks.sql` | Add generic YES/NO probability + underlying fields for all markets |
+| `20260522002000_agent_learning_posts.sql` | Create privileged agent learning posts and public published view |
 
 ## Frontend read paths (current)
 
@@ -122,6 +130,7 @@ credentials used by the trading daemons.
 | 24h / 7d window | `agent_trades_public` filtered by `settled_at` range |
 | Lifetime | `agent_lifetime_stats` (one row per agent) |
 | Trade replay chart | `agent_trade_replay_ticks_public` for real ticks, modeled fallback when missing |
+| Learn More cards | `agent_learning_posts_public` filtered by selected `agent_id` |
 | Edge Function `leaderboard` | reads `agent_trades_public` |
 
 The frontend no longer queries `agent_trades` directly.

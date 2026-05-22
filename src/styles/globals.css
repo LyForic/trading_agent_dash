@@ -2685,9 +2685,15 @@ body[data-route="world-v2"] {
   gap: 12px;
 }
 
+.world-v2-stats-panel--learn {
+  width: min(760px, calc(100vw - 44px));
+  max-height: min(780px, calc(100dvh - 48px));
+  gap: 12px;
+}
+
 .world-v2-stats-head {
   display: grid;
-  grid-template-columns: 38px 58px minmax(0, 1fr) 38px;
+  grid-template-columns: 38px 58px minmax(0, 1fr) 38px 38px;
   align-items: center;
   gap: 11px;
 }
@@ -2922,6 +2928,91 @@ body[data-route="world-v2"] {
   background: color-mix(in srgb, var(--agent-accent) 18%, rgba(255, 247, 229, 0.08));
 }
 
+.agent-learning-panel {
+  display: grid;
+  gap: 12px;
+  min-height: 0;
+}
+
+.agent-learning-about {
+  display: grid;
+  gap: 6px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 238, 199, 0.14);
+}
+
+.agent-learning-about span,
+.agent-learning-posts-head span,
+.agent-learning-post time {
+  color: rgba(255, 239, 201, 0.58);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.agent-learning-about h3,
+.agent-learning-post h3 {
+  margin: 0;
+  font-family: var(--font-display);
+  color: #fff7e5;
+  line-height: 1.05;
+}
+
+.agent-learning-about h3 {
+  font-size: 24px;
+}
+
+.agent-learning-about p,
+.agent-learning-post p,
+.agent-learning-empty {
+  margin: 0;
+  color: rgba(255, 239, 201, 0.78);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.agent-learning-posts-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.agent-learning-posts-head strong {
+  color: rgba(255, 239, 201, 0.68);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.agent-learning-posts {
+  display: grid;
+  gap: 10px;
+}
+
+.agent-learning-post {
+  display: grid;
+  gap: 7px;
+  padding: 12px;
+  border: 1px solid rgba(255, 238, 199, 0.14);
+  border-radius: 7px;
+  background:
+    radial-gradient(circle at 88% 10%, color-mix(in srgb, var(--agent-accent) 14%, transparent), transparent 42%),
+    rgba(255, 247, 229, 0.07);
+}
+
+.agent-learning-post h3 {
+  font-size: 19px;
+}
+
+.agent-learning-empty {
+  padding: 12px;
+  border: 1px solid rgba(255, 238, 199, 0.12);
+  border-radius: 7px;
+  background: rgba(255, 247, 229, 0.06);
+}
+
 @media (max-width: 760px) {
   .world-v2-menu {
     left: 10px;
@@ -3071,8 +3162,13 @@ body[data-route="world-v2"] {
     width: min(430px, calc(100vw - 20px));
   }
 
+  .world-v2-stats-panel--learn {
+    width: min(430px, calc(100vw - 20px));
+    max-height: calc(100dvh - 24px);
+  }
+
   .world-v2-stats-head {
-    grid-template-columns: 36px 50px minmax(0, 1fr) 36px;
+    grid-template-columns: 36px 50px minmax(0, 1fr) 36px 36px;
     gap: 8px;
   }
 
@@ -3091,6 +3187,16 @@ body[data-route="world-v2"] {
 
   .world-v2-replay-head .world-v2-stats-title h2 {
     font-size: 22px;
+  }
+
+  .agent-learning-about h3 {
+    font-size: 22px;
+  }
+
+  .agent-learning-about p,
+  .agent-learning-post p,
+  .agent-learning-empty {
+    font-size: 13px;
   }
 
   .world-v2-stat-grid {

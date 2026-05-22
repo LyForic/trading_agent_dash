@@ -2,15 +2,18 @@ import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import {
   ArrowLeft,
   BarChart3,
+  BookOpen,
   ChevronDown,
   Menu,
   PanelLeftClose,
   Sparkles,
   X,
 } from 'lucide-react';
+import { AgentLearnMorePanel } from '@/components/content/AgentLearnMorePanel';
 import { TimeFilterPill } from '@/components/content/TimeFilterPill';
 import { TradeLog } from '@/components/content/TradeLog';
 import { TradeReplayPanel } from '@/components/content/TradeReplayPanel';
+import { AGENT_META } from '@/lib/agentMeta';
 import { useAgentData } from '@/lib/useAgentData';
 import { useAgentWindow } from '@/lib/useAgentWindow';
 import { useBnfPortfolio } from '@/lib/useBnfPortfolio';
@@ -311,6 +314,7 @@ export function WorldV2Page() {
   const [balanceWindow, setBalanceWindow] = useState<BnfChangeWindow>('24h');
   const [balanceMenuOpen, setBalanceMenuOpen] = useState(false);
   const [selectedTrade, setSelectedTrade] = useState<TradeLogEntry | null>(null);
+  const [learnMoreOpen, setLearnMoreOpen] = useState(false);
   const dragStartY = useRef<number | null>(null);
   const balanceWrapRef = useRef<HTMLDivElement | null>(null);
 
@@ -344,6 +348,7 @@ export function WorldV2Page() {
   const selectedLiveAgentId = selectedAgentId;
   const selectedAgent = selectedLiveAgentId ? agentsById[selectedLiveAgentId] : undefined;
   const selectedVm = selectedLiveAgentId ? cardViewModels[selectedLiveAgentId] : undefined;
+  const selectedPanelMode = selectedTrade ? 'replay' : learnMoreOpen ? 'learn' : 'stats';
   const latestBnfPoint = bnf.data.points[bnf.data.points.length - 1];
   const bnfChanges = useMemo(
     () => BNF_CHANGE_WINDOWS.reduce<Record<BnfChangeWindow, BnfChange | null>>((acc, window) => {
@@ -409,6 +414,7 @@ export function WorldV2Page() {
   const closeFocus = () => {
     setSelectedAgentId(null);
     setSelectedTrade(null);
+    setLearnMoreOpen(false);
     setFocusRequestId((requestId) => requestId + 1);
     if (isMobileViewport()) setMenuHidden(false);
   };
@@ -416,10 +422,21 @@ export function WorldV2Page() {
   const selectAgent = (id: WorldMenuAgentId) => {
     setSelectedAgentId(id);
     setSelectedTrade(null);
+    setLearnMoreOpen(false);
     setFocusRequestId((requestId) => requestId + 1);
     setBalanceMenuOpen(false);
     setMenuExpanded(false);
     if (isMobileViewport()) setMenuHidden(true);
+  };
+
+  const openLearnMore = () => {
+    setSelectedTrade(null);
+    setLearnMoreOpen(true);
+  };
+
+  const openTradeReplay = (row: TradeLogEntry) => {
+    setLearnMoreOpen(false);
+    setSelectedTrade(row);
   };
 
   const handlePointerDown = (event: PointerEvent<HTMLElement>) => {
@@ -613,8 +630,14 @@ export function WorldV2Page() {
 
       {!isolatedTestMode && selectedLiveAgentId && selectedAgent && selectedVm && (
         <section
-          className={selectedTrade ? 'world-v2-stats-panel world-v2-stats-panel--replay' : 'world-v2-stats-panel'}
-          aria-label={selectedTrade ? `${selectedAgent.name} trade replay` : `${selectedAgent.name} trade stats`}
+          className={`world-v2-stats-panel world-v2-stats-panel--${selectedPanelMode}`}
+          aria-label={
+            selectedTrade
+              ? `${selectedAgent.name} trade replay`
+              : learnMoreOpen
+                ? `${selectedAgent.name} learn more`
+                : `${selectedAgent.name} trade stats`
+          }
           style={{ '--agent-accent': `var(--color-${selectedLiveAgentId})` } as React.CSSProperties}
         >
           {selectedTrade ? (
@@ -645,6 +668,37 @@ export function WorldV2Page() {
 
               <TradeReplayPanel key={selectedTrade.id} row={selectedTrade} />
             </>
+          ) : learnMoreOpen ? (
+            <>
+              <div className="world-v2-stats-head world-v2-replay-head">
+                <button
+                  type="button"
+                  className="world-v2-back-button"
+                  onClick={() => setLearnMoreOpen(false)}
+                  aria-label="Back to trade stats"
+                >
+                  <ArrowLeft size={18} aria-hidden />
+                </button>
+                <div className="world-v2-stats-title">
+                  <p>{selectedAgent.name}</p>
+                  <h2>Learn More</h2>
+                  <span>{selectedAgent.nickname}</span>
+                </div>
+                <button
+                  type="button"
+                  className="world-v2-icon-button world-v2-close-button"
+                  onClick={closeFocus}
+                  aria-label="Close stats panel"
+                >
+                  <X size={18} aria-hidden />
+                </button>
+              </div>
+
+              <AgentLearnMorePanel
+                agentId={selectedLiveAgentId}
+                about={AGENT_META[selectedLiveAgentId].strategy_about}
+              />
+            </>
           ) : (
             <>
               <div className="world-v2-stats-head">
@@ -667,6 +721,14 @@ export function WorldV2Page() {
                   <h2>{selectedAgent.name}</h2>
                   <span>{selectedAgent.nickname}</span>
                 </div>
+                <button
+                  type="button"
+                  className="world-v2-icon-button world-v2-learn-button"
+                  onClick={openLearnMore}
+                  aria-label={`Learn more about ${selectedAgent.name}`}
+                >
+                  <BookOpen size={18} aria-hidden />
+                </button>
                 <button
                   type="button"
                   className="world-v2-icon-button world-v2-close-button"
@@ -712,7 +774,7 @@ export function WorldV2Page() {
                 window={windowsByAgent[selectedLiveAgentId]}
                 hasOpenPosition={selectedAgent.open_position !== null}
                 replayMode="external"
-                onTradeSelect={setSelectedTrade}
+                onTradeSelect={openTradeReplay}
               />
             </>
           )}

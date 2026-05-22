@@ -20,6 +20,7 @@ export interface AgentMeta {
   nickname: string;
   market_label: string;
   sprite_url: string;
+  strategy_about: string;
   cities_or_tags: string[];
   moves: Move[];
 }
@@ -31,6 +32,8 @@ export const AGENT_META: Record<AgentId, AgentMeta> = {
     nickname: 'Tempo Reader',
     market_label: 'Kalshi BTC (KXBTCD / KXBTC15M)',
     sprite_url: '/sprites/apex/rotations/south.png',
+    strategy_about:
+      'Apex reads short-term crypto tempo, looking for moments where price movement, volume, and contract pricing disagree. The strategy favors disciplined entries over constant action: wait for momentum to confirm, size small, and avoid chasing when the market already repriced.',
     cities_or_tags: ['BTC', 'ETH'],
     moves: [
       { name: 'VR Gate', locked: false },
@@ -45,6 +48,8 @@ export const AGENT_META: Record<AgentId, AgentMeta> = {
     nickname: 'Weather Whisperer',
     market_label: 'Kalshi weather (KXHIGH)',
     sprite_url: '/sprites/gale/rotations/south.png',
+    strategy_about:
+      'Gale studies weather markets by comparing forecast distribution, seasonal patterns, and local station behavior. The strategy is slower than the crypto agents: find mispriced tails, respect model uncertainty, and update only when the forecast meaningfully changes.',
     cities_or_tags: ['MIA', 'LAX', 'NYC', 'CHI', 'DEN'],
     moves: [
       { name: 'Normal CDF', locked: false },
@@ -59,6 +64,8 @@ export const AGENT_META: Record<AgentId, AgentMeta> = {
     nickname: 'Long Arc',
     market_label: 'Kalshi BTC 15m (KXBTC15M)',
     sprite_url: '/sprites/metheus/rotations/south.png',
+    strategy_about:
+      'Metheus focuses on structure before action. It looks for repeated BTC 15-minute setups, tracks which entries fail, and prefers cleaner market context over noisy signals. The goal is to turn small observations into rules that survive more than one session.',
     cities_or_tags: ['BTC'],
     moves: [
       { name: 'Snipe: New', locked: false },
@@ -73,6 +80,8 @@ export const AGENT_META: Record<AgentId, AgentMeta> = {
     nickname: 'Chef Pig',
     market_label: 'Kalshi BTC 15m live canary',
     sprite_url: '/world-v2/actors/bacon-idle.png',
+    strategy_about:
+      'Bacon is the live canary for fast BTC 15-minute experiments. It keeps size small, tests new ingredients quickly, and turns every win or loss into a recipe note before a strategy graduates to the main kitchen.',
     cities_or_tags: ['BTC', 'Canary'],
     moves: [
       { name: 'Kitchen Edge', locked: false },
@@ -87,6 +96,8 @@ export const AGENT_META: Record<AgentId, AgentMeta> = {
     nickname: 'Celestial Phoenix',
     market_label: 'Kalshi ETH 15m (Nova)',
     sprite_url: '/world-v2/actors/nova-idle.png',
+    strategy_about:
+      'Nova watches ETH 15-minute markets for clean directional alignment and exhaustion. The strategy is built around patience: enter when the signal has enough heat, step aside when the move is crowded, and learn from each cycle.',
     cities_or_tags: ['ETH', '15m'],
     moves: [
       { name: 'Astral Drift', locked: false },
