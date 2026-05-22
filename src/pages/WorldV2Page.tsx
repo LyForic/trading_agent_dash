@@ -514,7 +514,7 @@ export function WorldV2Page() {
 
       {!isolatedTestMode && <div className="world-v2-vignette" />}
 
-      {!isolatedTestMode && menuHidden && (
+      {!isolatedTestMode && menuHidden && !selectedAgentId && (
         <button
           type="button"
           className="world-v2-menu-peek"
