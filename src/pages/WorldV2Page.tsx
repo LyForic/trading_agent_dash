@@ -368,6 +368,16 @@ export function WorldV2Page() {
     };
   };
 
+  const setBalanceAndAgentWindows = (window: BnfChangeWindow) => {
+    setBalanceWindow(window);
+    setSelectedTrade(null);
+    windowSetters.apex(window);
+    windowSetters.gale(window);
+    windowSetters.metheus(window);
+    windowSetters.bacon(window);
+    windowSetters.nova(window);
+  };
+
   useEffect(() => {
     document.body.dataset.route = 'world-v2';
     return () => {
@@ -553,7 +563,7 @@ export function WorldV2Page() {
                       role="menuitemradio"
                       aria-checked={active}
                       onClick={() => {
-                        setBalanceWindow(changeWindow);
+                        setBalanceAndAgentWindows(changeWindow);
                         setBalanceMenuOpen(false);
                       }}
                     >

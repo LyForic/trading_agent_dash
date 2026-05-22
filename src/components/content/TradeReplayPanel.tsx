@@ -212,25 +212,6 @@ function segmentPoints(points: ReplayPoint[], elapsedMs: number, activeYesProbab
     .filter((point, index, list) => index === 0 || point.elapsedMs !== list[index - 1].elapsedMs);
 }
 
-function labelYPositions(yesY: number, noY: number) {
-  const top = CHART.padTop + 22;
-  const bottom = CHART.height - CHART.padBottom - 34;
-  let yes = clamp(yesY, top, bottom);
-  let no = clamp(noY, top, bottom);
-
-  if (Math.abs(yes - no) < 58) {
-    if (yes <= no) {
-      yes = Math.max(top, yes - 28);
-      no = Math.min(bottom, no + 28);
-    } else {
-      yes = Math.min(bottom, yes + 28);
-      no = Math.max(top, no - 28);
-    }
-  }
-
-  return { yes, no };
-}
-
 export function TradeReplayPanel({ row }: Props) {
   const replay = useMemo(() => buildReplay(row), [row]);
   const [elapsedMs, setElapsedMs] = useState(replay.durationMs);
@@ -279,7 +260,10 @@ export function TradeReplayPanel({ row }: Props) {
   const probabilityMove = activeSideProbability - entrySideProbability;
   const pctMove = entrySideProbability === 0 ? 0 : (probabilityMove / entrySideProbability) * 100;
   const isUpFromEntry = valueChange >= 0;
-  const labelY = labelYPositions(yFor(activeYesProbability), yFor(activeNoProbability));
+  const labelY = {
+    yes: CHART.padTop + 54,
+    no: CHART.height - CHART.padBottom - 58,
+  };
   const labelX = CHART.width - CHART.padRight + 20;
   const won = row.pnl >= 0;
 

@@ -1105,7 +1105,18 @@ body[data-room="metheus"] .room-agent--metheus {
   fill: var(--trade-replay-no-color);
 }
 .trade-replay-readout {
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 44px minmax(86px, auto) minmax(0, 1fr);
+  justify-content: stretch;
+}
+.trade-replay-readout strong {
+  min-width: 86px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.trade-replay-readout span:last-child {
+  min-width: 0;
+  text-align: right;
 }
 .trade-replay-readout--gain {
   color: var(--color-gain) !important;
@@ -2317,7 +2328,7 @@ body[data-route="world-v2"] {
 .world-v2-total-bal {
   display: grid;
   justify-items: end;
-  min-width: 112px;
+  min-width: 124px;
   gap: 4px;
   padding: 7px 9px;
   border: 1px solid rgba(255, 238, 199, 0.16);
@@ -2339,7 +2350,7 @@ body[data-route="world-v2"] {
 }
 
 .world-v2-total-bal strong {
-  max-width: 92px;
+  max-width: 104px;
   overflow-wrap: anywhere;
   color: #fff7e5;
   font-size: 15px;
@@ -2353,7 +2364,8 @@ body[data-route="world-v2"] {
   align-items: center;
   justify-content: flex-end;
   gap: 4px;
-  max-width: 112px;
+  max-width: 100%;
+  min-width: 0;
   white-space: nowrap;
   font-style: normal;
   font-size: 10px;
@@ -2955,17 +2967,17 @@ body[data-route="world-v2"] {
   }
 
   .world-v2-total-bal {
-    min-width: 104px;
+    min-width: 116px;
     padding: 6px 7px;
   }
 
   .world-v2-total-bal strong {
-    max-width: 90px;
+    max-width: 102px;
     font-size: 13px;
   }
 
   .world-v2-total-bal em {
-    max-width: 102px;
+    max-width: 100%;
     gap: 3px;
     font-size: 9px;
   }
