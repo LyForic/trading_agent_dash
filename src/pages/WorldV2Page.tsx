@@ -10,11 +10,12 @@ import {
 } from 'lucide-react';
 import { TimeFilterPill } from '@/components/content/TimeFilterPill';
 import { TradeLog } from '@/components/content/TradeLog';
+import { TradeReplayPanel } from '@/components/content/TradeReplayPanel';
 import { useAgentData } from '@/lib/useAgentData';
 import { useAgentWindow } from '@/lib/useAgentWindow';
 import { useBnfPortfolio } from '@/lib/useBnfPortfolio';
 import { formatPnl, formatWinRate } from '@/lib/formatting';
-import type { Agent, AgentId, BnfPortfolioPoint, PerformanceWindow } from '@/lib/types';
+import type { Agent, AgentId, BnfPortfolioPoint, PerformanceWindow, TradeLogEntry } from '@/lib/types';
 import type { ZoneId } from '@/world-v2/worldMapData';
 
 type LivingWorldSceneInstance = InstanceType<typeof import('@/world-v2/LivingWorldScene').LivingWorldScene>;
@@ -309,6 +310,7 @@ export function WorldV2Page() {
   const [menuExpanded, setMenuExpanded] = useState(false);
   const [balanceWindow, setBalanceWindow] = useState<BnfChangeWindow>('24h');
   const [balanceMenuOpen, setBalanceMenuOpen] = useState(false);
+  const [selectedTrade, setSelectedTrade] = useState<TradeLogEntry | null>(null);
   const dragStartY = useRef<number | null>(null);
   const balanceWrapRef = useRef<HTMLDivElement | null>(null);
 
@@ -360,7 +362,10 @@ export function WorldV2Page() {
         : 'Pending';
 
   const setWindowForAgent = (id: AgentId): ((w: PerformanceWindow) => void) => {
-    return windowSetters[id];
+    return (window) => {
+      setSelectedTrade(null);
+      windowSetters[id](window);
+    };
   };
 
   useEffect(() => {
@@ -393,12 +398,14 @@ export function WorldV2Page() {
 
   const closeFocus = () => {
     setSelectedAgentId(null);
+    setSelectedTrade(null);
     setFocusRequestId((requestId) => requestId + 1);
     if (isMobileViewport()) setMenuHidden(false);
   };
 
   const selectAgent = (id: WorldMenuAgentId) => {
     setSelectedAgentId(id);
+    setSelectedTrade(null);
     setFocusRequestId((requestId) => requestId + 1);
     setBalanceMenuOpen(false);
     setMenuExpanded(false);
@@ -596,75 +603,109 @@ export function WorldV2Page() {
 
       {!isolatedTestMode && selectedLiveAgentId && selectedAgent && selectedVm && (
         <section
-          className="world-v2-stats-panel"
-          aria-label={`${selectedAgent.name} trade stats`}
+          className={selectedTrade ? 'world-v2-stats-panel world-v2-stats-panel--replay' : 'world-v2-stats-panel'}
+          aria-label={selectedTrade ? `${selectedAgent.name} trade replay` : `${selectedAgent.name} trade stats`}
           style={{ '--agent-accent': `var(--color-${selectedLiveAgentId})` } as React.CSSProperties}
         >
-          <div className="world-v2-stats-head">
-            <button
-              type="button"
-              className="world-v2-back-button"
-              onClick={closeFocus}
-              aria-label="Back to full world"
-            >
-              <ArrowLeft size={18} aria-hidden />
-            </button>
-            <img
-              className="world-v2-stats-portrait"
-              src={PORTRAITS[selectedLiveAgentId]}
-              alt=""
-              draggable={false}
-            />
-            <div className="world-v2-stats-title">
-              <p>{statusCopy(selectedAgent, loading)}</p>
-              <h2>{selectedAgent.name}</h2>
-              <span>{selectedAgent.nickname}</span>
-            </div>
-            <button
-              type="button"
-              className="world-v2-icon-button world-v2-close-button"
-              onClick={closeFocus}
-              aria-label="Close stats panel"
-            >
-              <X size={18} aria-hidden />
-            </button>
-          </div>
+          {selectedTrade ? (
+            <>
+              <div className="world-v2-stats-head world-v2-replay-head">
+                <button
+                  type="button"
+                  className="world-v2-back-button"
+                  onClick={() => setSelectedTrade(null)}
+                  aria-label="Back to trade stats"
+                >
+                  <ArrowLeft size={18} aria-hidden />
+                </button>
+                <div className="world-v2-stats-title">
+                  <p>{selectedAgent.name}</p>
+                  <h2>Trade Replay</h2>
+                  <span>{selectedTrade.contract_ticker}</span>
+                </div>
+                <button
+                  type="button"
+                  className="world-v2-icon-button world-v2-close-button"
+                  onClick={closeFocus}
+                  aria-label="Close stats panel"
+                >
+                  <X size={18} aria-hidden />
+                </button>
+              </div>
 
-          <div className="world-v2-stat-grid">
-            <div>
-              <span>P&L</span>
-              <strong className={selectedVm.total_pnl >= 0 ? 'world-v2-gain' : 'world-v2-loss'}>
-                {formatPnl(selectedVm.total_pnl)}
-              </strong>
-            </div>
-            <div>
-              <span>Win Rate</span>
-              <strong>{formatWinRate(selectedVm.record.W, selectedVm.record.settled)}</strong>
-            </div>
-            <div>
-              <span>Settled</span>
-              <strong>{selectedVm.record.settled}</strong>
-            </div>
-          </div>
+              <TradeReplayPanel row={selectedTrade} />
+            </>
+          ) : (
+            <>
+              <div className="world-v2-stats-head">
+                <button
+                  type="button"
+                  className="world-v2-back-button"
+                  onClick={closeFocus}
+                  aria-label="Back to full world"
+                >
+                  <ArrowLeft size={18} aria-hidden />
+                </button>
+                <img
+                  className="world-v2-stats-portrait"
+                  src={PORTRAITS[selectedLiveAgentId]}
+                  alt=""
+                  draggable={false}
+                />
+                <div className="world-v2-stats-title">
+                  <p>{statusCopy(selectedAgent, loading)}</p>
+                  <h2>{selectedAgent.name}</h2>
+                  <span>{selectedAgent.nickname}</span>
+                </div>
+                <button
+                  type="button"
+                  className="world-v2-icon-button world-v2-close-button"
+                  onClick={closeFocus}
+                  aria-label="Close stats panel"
+                >
+                  <X size={18} aria-hidden />
+                </button>
+              </div>
 
-          <div className="world-v2-market-line">
-            <BarChart3 size={15} aria-hidden />
-            <span>{selectedAgent.market_label}</span>
-          </div>
+              <div className="world-v2-stat-grid">
+                <div>
+                  <span>P&L</span>
+                  <strong className={selectedVm.total_pnl >= 0 ? 'world-v2-gain' : 'world-v2-loss'}>
+                    {formatPnl(selectedVm.total_pnl)}
+                  </strong>
+                </div>
+                <div>
+                  <span>Win Rate</span>
+                  <strong>{formatWinRate(selectedVm.record.W, selectedVm.record.settled)}</strong>
+                </div>
+                <div>
+                  <span>Settled</span>
+                  <strong>{selectedVm.record.settled}</strong>
+                </div>
+              </div>
 
-          <TimeFilterPill
-            agentId={selectedLiveAgentId}
-            agentName={selectedAgent.name}
-            currentWindow={windowsByAgent[selectedLiveAgentId]}
-            setWindow={setWindowForAgent(selectedLiveAgentId)}
-          />
+              <div className="world-v2-market-line">
+                <BarChart3 size={15} aria-hidden />
+                <span>{selectedAgent.market_label}</span>
+              </div>
 
-          <TradeLog
-            rows={selectedVm.tradeLog}
-            windowSettledCount={selectedVm.windowSettledCount}
-            window={windowsByAgent[selectedLiveAgentId]}
-            hasOpenPosition={selectedAgent.open_position !== null}
-          />
+              <TimeFilterPill
+                agentId={selectedLiveAgentId}
+                agentName={selectedAgent.name}
+                currentWindow={windowsByAgent[selectedLiveAgentId]}
+                setWindow={setWindowForAgent(selectedLiveAgentId)}
+              />
+
+              <TradeLog
+                rows={selectedVm.tradeLog}
+                windowSettledCount={selectedVm.windowSettledCount}
+                window={windowsByAgent[selectedLiveAgentId]}
+                hasOpenPosition={selectedAgent.open_position !== null}
+                replayMode="external"
+                onTradeSelect={setSelectedTrade}
+              />
+            </>
+          )}
         </section>
       )}
 

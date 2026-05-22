@@ -8,6 +8,9 @@ interface Props {
   windowSettledCount: number;
   window: PerformanceWindow;
   hasOpenPosition: boolean;
+  replayMode?: 'inline' | 'external';
+  selectedTradeId?: string | null;
+  onTradeSelect?: (row: TradeLogEntry) => void;
 }
 
 const WINDOW_LABEL: Record<PerformanceWindow, string> = {
@@ -89,8 +92,16 @@ function LedgerRow({ row, selected, onSelect }: { row: TradeLogEntry; selected: 
   );
 }
 
-export function TradeLog({ rows, windowSettledCount, window, hasOpenPosition }: Props) {
-  const [selectedTradeId, setSelectedTradeId] = useState<string | null>(null);
+export function TradeLog({
+  rows,
+  windowSettledCount,
+  window,
+  hasOpenPosition,
+  replayMode = 'inline',
+  selectedTradeId: controlledSelectedTradeId,
+  onTradeSelect,
+}: Props) {
+  const [internalSelectedTradeId, setInternalSelectedTradeId] = useState<string | null>(null);
   // Defensive: also fall through to empty state if rows is empty even when
   // windowSettledCount > 0 (cross-query skew, RLS edge case, transient sync).
   // Avoids `<FirstRow row={undefined}>` deref on `row.pnl` / `row.id`.
@@ -107,10 +118,16 @@ export function TradeLog({ rows, windowSettledCount, window, hasOpenPosition }: 
   }
 
   const [first, ...rest] = rows;
+  const selectedTradeId = controlledSelectedTradeId ?? internalSelectedTradeId;
   const selectedRow = rows.find((row) => row.id === selectedTradeId) ?? null;
   const showFooter = windowSettledCount > 25;
+  const showInlineReplay = replayMode === 'inline';
   const selectTrade = (row: TradeLogEntry) => {
-    setSelectedTradeId((current) => (current === row.id ? null : row.id));
+    if (replayMode === 'external') {
+      onTradeSelect?.(row);
+      return;
+    }
+    setInternalSelectedTradeId((current) => (current === row.id ? null : row.id));
   };
 
   return (
@@ -120,13 +137,13 @@ export function TradeLog({ rows, windowSettledCount, window, hasOpenPosition }: 
         <span>{windowSettledCount} settled</span>
       </div>
       <FirstRow row={first} selected={selectedTradeId === first.id} onSelect={() => selectTrade(first)} />
-      {selectedRow?.id === first.id && <TradeReplayPanel key={selectedRow.id} row={selectedRow} />}
+      {showInlineReplay && selectedRow?.id === first.id && <TradeReplayPanel key={selectedRow.id} row={selectedRow} />}
       {rest.length > 0 && (
         <div className="trade-log-ledger">
           {rest.map((row) => (
             <Fragment key={row.id}>
               <LedgerRow row={row} selected={selectedTradeId === row.id} onSelect={() => selectTrade(row)} />
-              {selectedRow?.id === row.id && <TradeReplayPanel key={selectedRow.id} row={selectedRow} />}
+              {showInlineReplay && selectedRow?.id === row.id && <TradeReplayPanel key={selectedRow.id} row={selectedRow} />}
             </Fragment>
           ))}
         </div>

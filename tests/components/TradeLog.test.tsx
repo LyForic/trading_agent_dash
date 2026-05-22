@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { TradeLog } from '@/components/content/TradeLog';
@@ -77,6 +77,27 @@ describe('TradeLog', () => {
     await user.click(screen.getByRole('button', { name: /2YES/i }));
     expect(screen.getByText(/^KXBTC-26MAY22-B70000$/)).toBeInTheDocument();
     expect(screen.queryByText(/^KXFEDDECISION-26MAY$/)).not.toBeInTheDocument();
+  });
+
+  it('delegates trade selection without rendering inline replay in external mode', async () => {
+    const user = userEvent.setup();
+    const rows = [makeEntry('apex-1', 2)];
+    const onTradeSelect = vi.fn();
+    render(
+      <TradeLog
+        rows={rows}
+        windowSettledCount={1}
+        window="24h"
+        hasOpenPosition={false}
+        replayMode="external"
+        onTradeSelect={onTradeSelect}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: /KXFEDDECISION-26MAY/i }));
+
+    expect(onTradeSelect).toHaveBeenCalledWith(rows[0]);
+    expect(screen.queryByLabelText(/15 minute trade replay chart/i)).not.toBeInTheDocument();
   });
 
   it('shows empty state copy when no rows', () => {
