@@ -2325,16 +2325,43 @@ body[data-route="world-v2"] {
 
 .world-v2-agent-metrics .world-v2-gain,
 .world-v2-stat-grid .world-v2-gain {
-  text-shadow:
-    0 0 7px rgba(129, 208, 141, 0.78),
-    0 0 18px rgba(129, 208, 141, 0.34);
+  position: relative;
+  z-index: 0;
+  display: inline-block;
+  padding: 1px 4px;
+  text-shadow: none;
 }
 
 .world-v2-agent-metrics .world-v2-loss,
 .world-v2-stat-grid .world-v2-loss {
-  text-shadow:
-    0 0 7px rgba(255, 147, 139, 0.82),
-    0 0 18px rgba(255, 147, 139, 0.36);
+  position: relative;
+  z-index: 0;
+  display: inline-block;
+  padding: 1px 4px;
+  text-shadow: none;
+}
+
+.world-v2-agent-metrics .world-v2-gain::before,
+.world-v2-agent-metrics .world-v2-loss::before,
+.world-v2-stat-grid .world-v2-gain::before,
+.world-v2-stat-grid .world-v2-loss::before {
+  content: "";
+  position: absolute;
+  inset: -4px -7px;
+  z-index: -1;
+  border-radius: 999px;
+  opacity: 0.78;
+  filter: blur(7px);
+}
+
+.world-v2-agent-metrics .world-v2-gain::before,
+.world-v2-stat-grid .world-v2-gain::before {
+  background: rgba(129, 208, 141, 0.34);
+}
+
+.world-v2-agent-metrics .world-v2-loss::before,
+.world-v2-stat-grid .world-v2-loss::before {
+  background: rgba(255, 147, 139, 0.36);
 }
 
 .world-v2-data-status,
