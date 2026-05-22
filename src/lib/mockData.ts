@@ -101,6 +101,55 @@ export const mockLeaderboard: LeaderboardResponse = {
       latest_receipt: null,
       state: 'arriving_soon',
     },
+    {
+      id: 'bacon',
+      name: 'Bacon',
+      nickname: 'Chef Pig',
+      market_label: 'Kalshi BTC 15m live canary',
+      sprite_url: '/world-v2/actors/bacon-idle.png',
+      total_pnl: 0,
+      record: { W: 0, L: 0, BE: 0, settled: 0 },
+      brier_7d: { value: 0, n: 0 },
+      cities_or_tags: ['BTC', 'Canary'],
+      moves: [
+        { name: 'Kitchen Edge', locked: false },
+        { name: 'Produce Prep', locked: false },
+        { name: '???', locked: true },
+        { name: '???', locked: true },
+      ],
+      open_position: null,
+      latest_receipt: null,
+      state: 'pending',
+    },
+    {
+      id: 'nova',
+      name: 'Nova',
+      nickname: 'Celestial Phoenix',
+      market_label: 'Kalshi ETH 15m (Nova)',
+      sprite_url: '/world-v2/actors/nova-idle.png',
+      total_pnl: 12.8,
+      record: { W: 8, L: 5, BE: 0, settled: 13 },
+      brier_7d: { value: 0, n: 0 },
+      cities_or_tags: ['ETH', '15m'],
+      moves: [
+        { name: 'Astral Drift', locked: false },
+        { name: 'Moonline Read', locked: false },
+        { name: '???', locked: true },
+        { name: '???', locked: true },
+      ],
+      open_position: null,
+      latest_receipt: {
+        id: 'NOV-20260522-013',
+        contract_ticker: 'KXETH-26MAY22-B3750',
+        side: 'yes',
+        entry_price_cents: 45,
+        settle_price_cents: 100,
+        size: 2,
+        pnl: 1.1,
+        settled_at: new Date(now - 2 * 60 * 60 * 1000).toISOString(),
+      },
+      state: 'live',
+    },
   ],
 };
 
@@ -153,6 +202,8 @@ export const mockTradeLog: Record<AgentId, TradeLogEntry[]> = {
   apex: generateLog('apex'),
   gale: generateLog('gale'),
   metheus: generateLog('metheus'),
+  bacon: generateLog('bacon'),
+  nova: generateLog('nova'),
 };
 
 function aggregate(rows: TradeLogEntry[], hoursWindow: number | null) {
@@ -199,6 +250,8 @@ export const mockCardViewModels: Record<AgentId, AgentCardViewModel> = {
   apex: buildMockCardViewModel('apex', '24h'),
   gale: buildMockCardViewModel('gale', '24h'),
   metheus: buildMockCardViewModel('metheus', '24h'),
+  bacon: buildMockCardViewModel('bacon', '24h'),
+  nova: buildMockCardViewModel('nova', '24h'),
 };
 
 function buildLifetimeStats(agentId: AgentId): AgentLifetimeStats {
@@ -222,6 +275,8 @@ export const mockLifetimeStats: Record<AgentId, AgentLifetimeStats> = {
   apex: buildLifetimeStats('apex'),
   gale: buildLifetimeStats('gale'),
   metheus: buildLifetimeStats('metheus'),
+  bacon: buildLifetimeStats('bacon'),
+  nova: buildLifetimeStats('nova'),
 };
 
 function generateBnfSeries(): BnfPortfolioSeries {

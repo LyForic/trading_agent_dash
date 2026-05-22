@@ -9,7 +9,15 @@ vi.mock('@/lib/supabase', () => ({
 }));
 
 import { useAgentData } from '@/lib/useAgentData';
+import { AGENT_IDS } from '@/lib/agentMeta';
 import type { AgentId, PerformanceWindow } from '@/lib/types';
+
+function windows(overrides: Partial<Record<AgentId, PerformanceWindow>> = {}): Record<AgentId, PerformanceWindow> {
+  return AGENT_IDS.reduce<Record<AgentId, PerformanceWindow>>((acc, id) => {
+    acc[id] = overrides[id] ?? '24h';
+    return acc;
+  }, {} as Record<AgentId, PerformanceWindow>);
+}
 
 describe('useAgentData errorKind', () => {
   beforeEach(() => {
@@ -17,12 +25,7 @@ describe('useAgentData errorKind', () => {
   });
 
   it('reports errorKind="not-configured" when Supabase is not configured', () => {
-    const windows: Record<AgentId, PerformanceWindow> = {
-      apex: '24h',
-      gale: '24h',
-      metheus: '24h',
-    };
-    const { result } = renderHook(() => useAgentData(windows));
+    const { result } = renderHook(() => useAgentData(windows()));
     expect(result.current.error).toEqual({
       kind: 'not-configured',
       message: expect.any(String),
@@ -42,17 +45,14 @@ describe('useAgentData mock-mode window honoring', () => {
         useAgentData(windows),
       {
         initialProps: {
-          windows: { apex: '24h', gale: '24h', metheus: '24h' } as Record<
-            AgentId,
-            PerformanceWindow
-          >,
+          windows: windows(),
         },
       },
     );
 
     const apex24h = result.current.cardViewModels.apex;
 
-    rerender({ windows: { apex: 'lifetime', gale: '24h', metheus: '24h' } });
+    rerender({ windows: windows({ apex: 'lifetime' }) });
 
     const apexLifetime = result.current.cardViewModels.apex;
 

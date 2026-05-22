@@ -20,7 +20,7 @@ import type { RoomAgentState } from '@/components/world/RoomAgentLayer';
 /**
  * GymPage — the communal interior + agent focus mode, URL-driven.
  *
- *   /gym       → roster of 3 cards (no focus)
+ *   /gym       → roster of agent cards (no focus)
  *   /apex      → Apex card focused + Apex room active
  *   /gale      → Gale card focused + Gale room active
  *   /metheus   → Metheus card focused + Metheus room active
@@ -52,16 +52,26 @@ export function GymPage() {
   const [apexWindow, setApexWindow] = useAgentWindow('apex');
   const [galeWindow, setGaleWindow] = useAgentWindow('gale');
   const [metheusWindow, setMetheusWindow] = useAgentWindow('metheus');
+  const [baconWindow, setBaconWindow] = useAgentWindow('bacon');
+  const [novaWindow, setNovaWindow] = useAgentWindow('nova');
 
   const windowsByAgent = useMemo<Record<AgentId, PerformanceWindow>>(
-    () => ({ apex: apexWindow, gale: galeWindow, metheus: metheusWindow }),
-    [apexWindow, galeWindow, metheusWindow],
+    () => ({ apex: apexWindow, gale: galeWindow, metheus: metheusWindow, bacon: baconWindow, nova: novaWindow }),
+    [apexWindow, galeWindow, metheusWindow, baconWindow, novaWindow],
+  );
+  const windowSetters = useMemo<Record<AgentId, (w: PerformanceWindow) => void>>(
+    () => ({
+      apex: setApexWindow,
+      gale: setGaleWindow,
+      metheus: setMetheusWindow,
+      bacon: setBaconWindow,
+      nova: setNovaWindow,
+    }),
+    [setApexWindow, setGaleWindow, setMetheusWindow, setBaconWindow, setNovaWindow],
   );
 
   const setWindowForAgent = (id: AgentId): ((w: PerformanceWindow) => void) => {
-    if (id === 'apex') return setApexWindow;
-    if (id === 'gale') return setGaleWindow;
-    return setMetheusWindow;
+    return windowSetters[id];
   };
 
   const { data, cardViewModels, source, error, loading } = useAgentData(windowsByAgent);
@@ -164,7 +174,7 @@ export function GymPage() {
               The Trading Gym
             </h1>
             <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-muted)' }}>
-              Three agents. Live markets. Documented in public.
+              Live agents. Live markets. Documented in public.
             </p>
           </header>
 
@@ -186,7 +196,7 @@ export function GymPage() {
               <p>
                 {error?.kind === 'fetch-failed'
                   ? 'The public 30-minute-delayed data view did not respond. No private live trade data is exposed in this browser.'
-                  : 'Reading the public 30-minute-delayed views for Apex, Gale, and Metheus.'}
+                  : 'Reading the public 30-minute-delayed agent views.'}
               </p>
               {error?.kind === 'fetch-failed' && (
                 <p className="gym-data-state-muted">

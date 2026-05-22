@@ -2,9 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { TownAmbientLayer } from '@/components/world/TownAmbientLayer';
+import { AGENT_IDS } from '@/lib/agentMeta';
 import { useAgentData } from '@/lib/useAgentData';
 import { useVisitDelta } from '@/lib/useVisitDelta';
-import type { AgentId } from '@/lib/types';
+import type { AgentId, PerformanceWindow } from '@/lib/types';
 
 const WORLD_W = 960;
 const WORLD_H = 540;
@@ -12,8 +13,12 @@ const AVATAR_SIZE = 48;
 const AVATAR_SPAWN = { x: 480, y: 365 };
 const WALK_SPEED_WORLD_PX_PER_SEC = 118;
 const ROUTE_DELAY_MS = 240;
+const DEFAULT_AGENT_WINDOWS = AGENT_IDS.reduce<Record<AgentId, PerformanceWindow>>((acc, id) => {
+  acc[id] = '24h';
+  return acc;
+}, {} as Record<AgentId, PerformanceWindow>);
 
-type DestinationId = 'gym' | AgentId | 'comingSoon';
+type DestinationId = 'gym' | 'apex' | 'gale' | 'metheus' | 'comingSoon';
 type Facing = 'north' | 'south' | 'east' | 'west';
 type Point = { x: number; y: number };
 
@@ -128,7 +133,7 @@ function durationForSegment(from: Point, to: Point): number {
 
 export function TownSquarePage() {
   const navigate = useNavigate();
-  const { data, source } = useAgentData({ apex: '24h', gale: '24h', metheus: '24h' });
+  const { data, source } = useAgentData(DEFAULT_AGENT_WINDOWS);
   const { delta } = useVisitDelta(data, source);
 
   const viewportRef = useRef<HTMLDivElement>(null);

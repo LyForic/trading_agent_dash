@@ -1,6 +1,6 @@
 import type { AgentId } from '@/lib/types';
 
-export type ZoneId = AgentId | 'bacon' | 'nova';
+export type ZoneId = AgentId;
 
 export interface WorldPoint {
   x: number;

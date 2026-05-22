@@ -1,4 +1,4 @@
-export type AgentId = 'apex' | 'gale' | 'metheus';
+export type AgentId = 'apex' | 'gale' | 'metheus' | 'bacon' | 'nova';
 
 export type PerformanceWindow = '24h' | '7d' | 'lifetime';
 

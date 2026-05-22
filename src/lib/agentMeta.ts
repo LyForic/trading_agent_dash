@@ -67,6 +67,34 @@ export const AGENT_META: Record<AgentId, AgentMeta> = {
       { name: '???', locked: true },
     ],
   },
+  bacon: {
+    id: 'bacon',
+    name: 'Bacon',
+    nickname: 'Chef Pig',
+    market_label: 'Kalshi BTC 15m live canary',
+    sprite_url: '/world-v2/actors/bacon-idle.png',
+    cities_or_tags: ['BTC', 'Canary'],
+    moves: [
+      { name: 'Kitchen Edge', locked: false },
+      { name: 'Produce Prep', locked: false },
+      { name: '???', locked: true },
+      { name: '???', locked: true },
+    ],
+  },
+  nova: {
+    id: 'nova',
+    name: 'Nova',
+    nickname: 'Celestial Phoenix',
+    market_label: 'Kalshi ETH 15m (Nova)',
+    sprite_url: '/world-v2/actors/nova-idle.png',
+    cities_or_tags: ['ETH', '15m'],
+    moves: [
+      { name: 'Astral Drift', locked: false },
+      { name: 'Moonline Read', locked: false },
+      { name: '???', locked: true },
+      { name: '???', locked: true },
+    ],
+  },
 };
 
-export const AGENT_IDS: AgentId[] = ['apex', 'gale', 'metheus'];
+export const AGENT_IDS: AgentId[] = ['apex', 'gale', 'metheus', 'bacon', 'nova'];

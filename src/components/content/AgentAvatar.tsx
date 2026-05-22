@@ -11,6 +11,8 @@ const ACCENT_COLOR: Record<AgentId, string> = {
   apex: 'var(--color-apex)',
   gale: 'var(--color-gale)',
   metheus: 'var(--color-metheus)',
+  bacon: 'var(--color-bacon)',
+  nova: 'var(--color-nova)',
 };
 
 /**

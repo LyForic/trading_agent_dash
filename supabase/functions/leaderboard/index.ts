@@ -22,7 +22,7 @@ interface Move {
 }
 
 interface AgentMeta {
-  id: 'apex' | 'gale' | 'metheus';
+  id: 'apex' | 'gale' | 'metheus' | 'bacon' | 'nova';
   name: string;
   nickname: string;
   market_label: string;
@@ -77,9 +77,37 @@ const AGENT_META: Record<string, AgentMeta> = {
       { name: '???', locked: true },
     ],
   },
+  bacon: {
+    id: 'bacon',
+    name: 'Bacon',
+    nickname: 'Chef Pig',
+    market_label: 'Kalshi BTC 15m live canary',
+    sprite_url: '/world-v2/actors/bacon-idle.png',
+    cities_or_tags: ['BTC', 'Canary'],
+    moves: [
+      { name: 'Kitchen Edge', locked: false },
+      { name: 'Produce Prep', locked: false },
+      { name: '???', locked: true },
+      { name: '???', locked: true },
+    ],
+  },
+  nova: {
+    id: 'nova',
+    name: 'Nova',
+    nickname: 'Celestial Phoenix',
+    market_label: 'Kalshi ETH 15m (Nova)',
+    sprite_url: '/world-v2/actors/nova-idle.png',
+    cities_or_tags: ['ETH', '15m'],
+    moves: [
+      { name: 'Astral Drift', locked: false },
+      { name: 'Moonline Read', locked: false },
+      { name: '???', locked: true },
+      { name: '???', locked: true },
+    ],
+  },
 };
 
-const AGENT_IDS = ['apex', 'gale', 'metheus'] as const;
+const AGENT_IDS = ['apex', 'gale', 'metheus', 'bacon', 'nova'] as const;
 
 interface AgentTradeRow {
   id: string;

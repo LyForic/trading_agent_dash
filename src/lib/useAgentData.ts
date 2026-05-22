@@ -156,6 +156,8 @@ const EMPTY_CARD_VIEW_MODELS: Record<AgentId, AgentCardViewModel> = {
   apex: EMPTY_VM,
   gale: EMPTY_VM,
   metheus: EMPTY_VM,
+  bacon: EMPTY_VM,
+  nova: EMPTY_VM,
 };
 
 function makeEmptyLeaderboard(): LeaderboardResponse {
@@ -185,17 +187,18 @@ export function useAgentData(
         : { kind: 'not-configured', message: 'Supabase not configured — using mock data' },
   );
   const [loading, setLoading] = useState<boolean>(() => isSupabaseConfigured);
+  const windowSignature = AGENT_IDS.map((id) => windowsByAgent[id] ?? '24h').join('|');
 
   // Mock-mode: card view models recompute reactively when windowsByAgent changes.
   // In live mode this memo is unused (liveCardViewModels comes from the async effect).
   const mockCardViewModelsByWindow = useMemo<Record<AgentId, AgentCardViewModel>>(() => {
     if (isSupabaseConfigured) return EMPTY_CARD_VIEW_MODELS;
-    return {
-      apex: buildMockCardViewModel('apex', windowsByAgent.apex),
-      gale: buildMockCardViewModel('gale', windowsByAgent.gale),
-      metheus: buildMockCardViewModel('metheus', windowsByAgent.metheus),
-    };
-  }, [windowsByAgent.apex, windowsByAgent.gale, windowsByAgent.metheus]);
+    return AGENT_IDS.reduce<Record<AgentId, AgentCardViewModel>>((acc, id) => {
+      acc[id] = buildMockCardViewModel(id, windowsByAgent[id] ?? '24h');
+      return acc;
+    }, {} as Record<AgentId, AgentCardViewModel>);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [windowSignature]);
 
   const cardViewModels = isSupabaseConfigured ? liveCardViewModels : mockCardViewModelsByWindow;
 
@@ -313,10 +316,10 @@ export function useAgentData(
     };
     // Effect re-runs when ANY agent's window changes; the per-agent cache
     // ensures we only refetch the agent whose window actually flipped.
-    // windowsByAgent object ref changes every render (built in useMemo above);
-    // we intentionally subscribe to individual string values, not the object.
+    // windowsByAgent object ref changes every render in callers; windowSignature
+    // keeps this dependency stable unless an agent's selected window changes.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [windowsByAgent.apex, windowsByAgent.gale, windowsByAgent.metheus]);
+  }, [windowSignature]);
 
   return { data, cardViewModels, source, error, loading };
 }

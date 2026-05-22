@@ -15,7 +15,15 @@ vi.mock('@/lib/supabase', () => ({
 }));
 
 import { useAgentData } from '@/lib/useAgentData';
+import { AGENT_IDS } from '@/lib/agentMeta';
 import type { AgentId, PerformanceWindow } from '@/lib/types';
+
+function windows(): Record<AgentId, PerformanceWindow> {
+  return AGENT_IDS.reduce<Record<AgentId, PerformanceWindow>>((acc, id) => {
+    acc[id] = '24h';
+    return acc;
+  }, {} as Record<AgentId, PerformanceWindow>);
+}
 
 describe('useAgentData errorKind — fetch-failed', () => {
   beforeEach(() => {
@@ -23,10 +31,7 @@ describe('useAgentData errorKind — fetch-failed', () => {
   });
 
   it('reports errorKind="fetch-failed" when Supabase queries throw', async () => {
-    const windows: Record<AgentId, PerformanceWindow> = {
-      apex: '24h', gale: '24h', metheus: '24h',
-    };
-    const { result } = renderHook(() => useAgentData(windows));
+    const { result } = renderHook(() => useAgentData(windows()));
 
     await waitFor(() => {
       expect(result.current.error).not.toBeNull();

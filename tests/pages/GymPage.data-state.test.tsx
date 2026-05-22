@@ -18,6 +18,8 @@ const emptyCardViewModels: Record<AgentId, AgentCardViewModel> = {
   apex: EMPTY_VM,
   gale: EMPTY_VM,
   metheus: EMPTY_VM,
+  bacon: EMPTY_VM,
+  nova: EMPTY_VM,
 };
 
 const fetchFailed: AgentDataError = {
