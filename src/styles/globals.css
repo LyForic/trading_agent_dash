@@ -817,11 +817,24 @@ body[data-room="metheus"] .room-agent--metheus {
   text-transform: uppercase;
 }
 .trade-log-featured {
+  width: 100%;
   padding: 9px;
   border: 1px solid color-mix(in srgb, var(--agent-accent, var(--color-gain)) 35%, var(--color-border-default));
   border-radius: 5px;
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--agent-accent, var(--color-gain)) 10%, var(--color-paper)), var(--color-paper));
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 150ms ease, box-shadow 150ms ease, transform 150ms ease;
+}
+.trade-log-featured:hover,
+.trade-log-featured:focus-visible,
+.trade-log-featured--active {
+  outline: none;
+  border-color: color-mix(in srgb, var(--agent-accent, var(--color-gain)) 68%, var(--color-border-default));
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--agent-accent, var(--color-gain)) 16%, transparent);
 }
 .trade-log-featured-head {
   display: flex;
@@ -872,12 +885,29 @@ body[data-room="metheus"] .room-agent--metheus {
   grid-template-columns: 60px minmax(0, 1fr) 30px minmax(54px, auto) 44px;
   align-items: center;
   gap: 6px;
+  width: 100%;
   padding: 6px 0;
   border-bottom: 1px solid color-mix(in srgb, var(--color-border-default) 72%, transparent);
+  border-top: 0;
+  border-right: 0;
+  border-left: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
   font-size: 11px;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 150ms ease, padding-inline 150ms ease;
 }
 .trade-log-row:last-child {
   border-bottom: none;
+}
+.trade-log-row:hover,
+.trade-log-row:focus-visible,
+.trade-log-row--active {
+  outline: none;
+  padding-inline: 5px;
+  background: color-mix(in srgb, var(--agent-accent, var(--color-gain)) 10%, transparent);
 }
 .trade-log-row-main {
   min-width: 0;
@@ -913,6 +943,161 @@ body[data-room="metheus"] .room-agent--metheus {
   font-size: 12px;
   line-height: 1.3;
   text-align: center;
+}
+.trade-replay-panel {
+  display: grid;
+  gap: 9px;
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, var(--agent-accent, var(--color-gain)) 34%, var(--color-border-default));
+  border-radius: 6px;
+  background:
+    radial-gradient(circle at 82% 12%, color-mix(in srgb, var(--agent-accent, var(--color-gain)) 17%, transparent), transparent 42%),
+    color-mix(in srgb, var(--color-paper-raised) 94%, white);
+}
+.trade-replay-head,
+.trade-replay-readout,
+.trade-replay-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.trade-replay-head {
+  justify-content: space-between;
+}
+.trade-replay-head div:first-child {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+.trade-replay-head span,
+.trade-replay-timebox,
+.trade-replay-readout span {
+  color: var(--color-ink-muted);
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+}
+.trade-replay-head strong,
+.trade-replay-readout strong {
+  color: var(--color-ink);
+  font-size: 13px;
+  line-height: 1;
+}
+.trade-replay-timebox {
+  flex: 0 0 auto;
+  max-width: 46%;
+  line-height: 1.25;
+  text-align: right;
+}
+.trade-replay-chart {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--color-border-default) 74%, transparent);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--color-ink) 7%, transparent);
+}
+.trade-replay-chart svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+.trade-replay-chart rect {
+  fill: color-mix(in srgb, var(--color-paper) 72%, white);
+}
+.trade-replay-grid-line {
+  stroke: color-mix(in srgb, var(--color-ink-muted) 58%, transparent);
+  stroke-dasharray: 5 5;
+  stroke-width: 1.2;
+}
+.trade-replay-full-path {
+  fill: none;
+  stroke: color-mix(in srgb, var(--color-ink-muted) 44%, transparent);
+  stroke-width: 2;
+}
+.trade-replay-active-path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 3.4;
+}
+.trade-replay-active-path--gain {
+  stroke: var(--color-gain);
+}
+.trade-replay-active-path--loss {
+  stroke: var(--color-loss);
+}
+.trade-replay-entry-line,
+.trade-replay-final-line,
+.trade-replay-playhead {
+  stroke-width: 1.2;
+}
+.trade-replay-entry-line {
+  stroke: color-mix(in srgb, var(--agent-accent, var(--color-gain)) 68%, transparent);
+}
+.trade-replay-final-line {
+  stroke: color-mix(in srgb, var(--color-ink-muted) 52%, transparent);
+}
+.trade-replay-playhead {
+  stroke: var(--color-ink);
+}
+.trade-replay-marker {
+  stroke: var(--color-paper-raised);
+  stroke-width: 1.5;
+}
+.trade-replay-marker--entry,
+.trade-replay-marker--live {
+  fill: var(--agent-accent, var(--color-gain));
+}
+.trade-replay-marker--gain {
+  fill: var(--color-gain);
+}
+.trade-replay-marker--loss {
+  fill: var(--color-loss);
+}
+.trade-replay-axis-label {
+  fill: var(--color-ink-muted);
+  font-size: 10px;
+  font-weight: 800;
+}
+.trade-replay-readout {
+  justify-content: space-between;
+}
+.trade-replay-controls {
+  display: grid;
+  grid-template-columns: 30px 30px minmax(0, 1fr) auto;
+}
+.trade-replay-controls button {
+  display: inline-grid;
+  place-items: center;
+  min-width: 30px;
+  height: 30px;
+  border: 1px solid color-mix(in srgb, var(--agent-accent, var(--color-gain)) 35%, var(--color-border-default));
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--agent-accent, var(--color-gain)) 10%, var(--color-paper));
+  color: var(--color-ink);
+  cursor: pointer;
+}
+.trade-replay-controls button:hover,
+.trade-replay-controls button:focus-visible,
+.trade-replay-speed-button--active {
+  outline: none;
+  border-color: color-mix(in srgb, var(--agent-accent, var(--color-gain)) 64%, var(--color-border-default));
+  background: color-mix(in srgb, var(--agent-accent, var(--color-gain)) 18%, var(--color-paper));
+}
+.trade-replay-controls input {
+  min-width: 0;
+  accent-color: var(--agent-accent, var(--color-gain));
+}
+.trade-replay-speed {
+  display: flex;
+  gap: 4px;
+}
+.trade-replay-speed .trade-replay-speed-button {
+  min-width: 34px;
+  padding: 0 7px;
+  font-size: 10px;
+  font-weight: 800;
 }
 
 @media (max-width: 430px) {
@@ -2542,6 +2727,62 @@ body[data-route="world-v2"] {
 .world-v2-stats-panel .trade-log-featured .trade-log-featured-line,
 .world-v2-stats-panel .trade-log-featured .trade-log-pnl {
   color: #17130d !important;
+}
+
+.world-v2-stats-panel .trade-replay-panel {
+  border-color: rgba(255, 238, 199, 0.16);
+  background:
+    radial-gradient(circle at 82% 12%, color-mix(in srgb, var(--agent-accent) 18%, transparent), transparent 42%),
+    rgba(255, 247, 229, 0.08);
+}
+
+.world-v2-stats-panel .trade-replay-chart {
+  border-color: rgba(255, 238, 199, 0.14);
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.world-v2-stats-panel .trade-replay-chart rect {
+  fill: rgba(255, 247, 229, 0.07);
+}
+
+.world-v2-stats-panel .trade-replay-head strong,
+.world-v2-stats-panel .trade-replay-readout strong,
+.world-v2-stats-panel .trade-replay-playhead {
+  color: #fff7e5;
+  stroke: #fff7e5;
+}
+
+.world-v2-stats-panel .trade-replay-head span,
+.world-v2-stats-panel .trade-replay-timebox,
+.world-v2-stats-panel .trade-replay-readout span,
+.world-v2-stats-panel .trade-replay-axis-label {
+  color: rgba(255, 239, 201, 0.66);
+  fill: rgba(255, 239, 201, 0.66);
+}
+
+.world-v2-stats-panel .trade-replay-full-path {
+  stroke: rgba(255, 239, 201, 0.32);
+}
+
+.world-v2-stats-panel .trade-replay-grid-line {
+  stroke: rgba(255, 239, 201, 0.34);
+}
+
+.world-v2-stats-panel .trade-replay-final-line {
+  stroke: rgba(255, 239, 201, 0.38);
+}
+
+.world-v2-stats-panel .trade-replay-controls button {
+  border-color: rgba(255, 238, 199, 0.18);
+  background: rgba(255, 247, 229, 0.09);
+  color: #fff7e5;
+}
+
+.world-v2-stats-panel .trade-replay-controls button:hover,
+.world-v2-stats-panel .trade-replay-controls button:focus-visible,
+.world-v2-stats-panel .trade-replay-speed-button--active {
+  border-color: color-mix(in srgb, var(--agent-accent) 58%, rgba(255, 238, 199, 0.26));
+  background: color-mix(in srgb, var(--agent-accent) 18%, rgba(255, 247, 229, 0.08));
 }
 
 @media (max-width: 760px) {

@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { TradeLog } from '@/components/content/TradeLog';
 import type { TradeLogEntry } from '@/lib/types';
 
@@ -35,6 +36,18 @@ describe('TradeLog', () => {
     const rows = [makeEntry('apex-1', 2)];
     render(<TradeLog rows={rows} windowSettledCount={1} window="24h" hasOpenPosition={false} />);
     expect(screen.queryByText(/Latest \d+ of/)).not.toBeInTheDocument();
+  });
+
+  it('opens a replay chart when a trade is clicked', async () => {
+    const user = userEvent.setup();
+    const rows = [makeEntry('apex-1', 2)];
+    render(<TradeLog rows={rows} windowSettledCount={1} window="24h" hasOpenPosition={false} />);
+
+    await user.click(screen.getByRole('button', { name: /KXFEDDECISION-26MAY/i }));
+
+    expect(screen.getByLabelText(/15 minute trade replay chart/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Play replay/i })).toBeInTheDocument();
+    expect(screen.getByLabelText(/Replay timeline/i)).toHaveAttribute('max', '900000');
   });
 
   it('shows empty state copy when no rows', () => {

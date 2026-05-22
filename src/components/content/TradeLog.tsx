@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import type { PerformanceWindow, TradeLogEntry } from '@/lib/types';
 import { formatPnl } from '@/lib/formatting';
+import { TradeReplayPanel } from './TradeReplayPanel';
 
 interface Props {
   rows: TradeLogEntry[];
@@ -29,10 +31,15 @@ function shortReceiptId(id: string) {
   return hex.slice(0, 8).toUpperCase();
 }
 
-function FirstRow({ row }: { row: TradeLogEntry }) {
+function FirstRow({ row, selected, onSelect }: { row: TradeLogEntry; selected: boolean; onSelect: () => void }) {
   const isGain = row.pnl >= 0;
   return (
-    <div className="trade-log-featured">
+    <button
+      type="button"
+      className={selected ? 'trade-log-featured trade-log-featured--active' : 'trade-log-featured'}
+      onClick={onSelect}
+      aria-expanded={selected}
+    >
       <div className="trade-log-featured-head">
         <span className="trade-log-receipt-id">
           {shortReceiptId(row.id)}
@@ -47,14 +54,19 @@ function FirstRow({ row }: { row: TradeLogEntry }) {
       <div className="trade-log-featured-line tabular-nums">
         {row.contract_ticker} · {row.side.toUpperCase()} {row.entry_price_cents}¢→{row.settle_price_cents}¢ · size {row.size} · {fmtTime(row.settled_at)}
       </div>
-    </div>
+    </button>
   );
 }
 
-function LedgerRow({ row }: { row: TradeLogEntry }) {
+function LedgerRow({ row, selected, onSelect }: { row: TradeLogEntry; selected: boolean; onSelect: () => void }) {
   const isGain = row.pnl >= 0;
   return (
-    <div className="trade-log-row tabular-nums">
+    <button
+      type="button"
+      className={selected ? 'trade-log-row trade-log-row--active tabular-nums' : 'trade-log-row tabular-nums'}
+      onClick={onSelect}
+      aria-expanded={selected}
+    >
       <span className="trade-log-receipt-id">
         {shortReceiptId(row.id)}
       </span>
@@ -73,11 +85,12 @@ function LedgerRow({ row }: { row: TradeLogEntry }) {
       <span className="trade-log-row-time">
         {fmtTime(row.settled_at)}
       </span>
-    </div>
+    </button>
   );
 }
 
 export function TradeLog({ rows, windowSettledCount, window, hasOpenPosition }: Props) {
+  const [selectedTradeId, setSelectedTradeId] = useState<string | null>(null);
   // Defensive: also fall through to empty state if rows is empty even when
   // windowSettledCount > 0 (cross-query skew, RLS edge case, transient sync).
   // Avoids `<FirstRow row={undefined}>` deref on `row.pnl` / `row.id`.
@@ -94,7 +107,11 @@ export function TradeLog({ rows, windowSettledCount, window, hasOpenPosition }: 
   }
 
   const [first, ...rest] = rows;
+  const selectedRow = rows.find((row) => row.id === selectedTradeId) ?? null;
   const showFooter = windowSettledCount > 25;
+  const selectTrade = (row: TradeLogEntry) => {
+    setSelectedTradeId((current) => (current === row.id ? null : row.id));
+  };
 
   return (
     <div className="trade-log">
@@ -102,11 +119,12 @@ export function TradeLog({ rows, windowSettledCount, window, hasOpenPosition }: 
         <span>Trades · {WINDOW_LABEL[window]}</span>
         <span>{windowSettledCount} settled</span>
       </div>
-      <FirstRow row={first} />
+      <FirstRow row={first} selected={selectedTradeId === first.id} onSelect={() => selectTrade(first)} />
+      {selectedRow && <TradeReplayPanel key={selectedRow.id} row={selectedRow} />}
       {rest.length > 0 && (
         <div className="trade-log-ledger">
           {rest.map((row) => (
-            <LedgerRow key={row.id} row={row} />
+            <LedgerRow key={row.id} row={row} selected={selectedTradeId === row.id} onSelect={() => selectTrade(row)} />
           ))}
         </div>
       )}
