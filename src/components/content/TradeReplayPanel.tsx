@@ -24,10 +24,10 @@ interface ReplayModel {
 }
 
 const CHART = {
-  width: 560,
+  width: 600,
   height: 278,
   padLeft: 34,
-  padRight: 104,
+  padRight: 140,
   padTop: 22,
   padBottom: 34,
 };
@@ -280,7 +280,7 @@ export function TradeReplayPanel({ row }: Props) {
   const pctMove = entrySideProbability === 0 ? 0 : (probabilityMove / entrySideProbability) * 100;
   const isUpFromEntry = valueChange >= 0;
   const labelY = labelYPositions(yFor(activeYesProbability), yFor(activeNoProbability));
-  const labelX = CHART.width - CHART.padRight + 18;
+  const labelX = CHART.width - CHART.padRight + 20;
   const won = row.pnl >= 0;
 
   const toggleReplay = () => {

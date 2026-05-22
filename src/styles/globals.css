@@ -945,6 +945,8 @@ body[data-room="metheus"] .room-agent--metheus {
   text-align: center;
 }
 .trade-replay-panel {
+  --trade-replay-yes-color: var(--agent-accent, var(--color-apex));
+  --trade-replay-no-color: #fff7e5;
   display: grid;
   gap: 9px;
   padding: 10px;
@@ -1020,11 +1022,11 @@ body[data-room="metheus"] .room-agent--metheus {
   stroke-width: 2;
 }
 .trade-replay-probability-path--yes {
-  stroke: #ff6b1a;
+  stroke: var(--trade-replay-yes-color);
   stroke-width: 4;
 }
 .trade-replay-probability-path--no {
-  stroke: #d8aa19;
+  stroke: var(--trade-replay-no-color);
   stroke-width: 4;
 }
 .trade-replay-full-path {
@@ -1067,10 +1069,10 @@ body[data-room="metheus"] .room-agent--metheus {
   fill: var(--agent-accent, var(--color-gain));
 }
 .trade-replay-marker--yes {
-  fill: #ff6b1a;
+  fill: var(--trade-replay-yes-color);
 }
 .trade-replay-marker--no {
-  fill: #d8aa19;
+  fill: var(--trade-replay-no-color);
 }
 .trade-replay-marker--gain {
   fill: var(--color-gain);
@@ -1096,11 +1098,11 @@ body[data-room="metheus"] .room-agent--metheus {
 }
 .trade-replay-side-name--yes,
 .trade-replay-side-percent--yes {
-  fill: #ff6b1a;
+  fill: var(--trade-replay-yes-color);
 }
 .trade-replay-side-name--no,
 .trade-replay-side-percent--no {
-  fill: #d8aa19;
+  fill: var(--trade-replay-no-color);
 }
 .trade-replay-readout {
   justify-content: space-between;

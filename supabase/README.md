@@ -28,7 +28,8 @@ live dashboard.
   sampled timestamp with `trade_id`, `captured_at`, `yes_price_cents`,
   `no_price_cents`, and optional underlying metadata
   (`underlying_label`, `underlying_value`, `underlying_unit`). Anon access is
-  revoked on the base table.
+  revoked on the base table. Nova's 15-minute ETH contracts use this same
+  table with `underlying_label = 'ETH'` and `underlying_unit = 'USD'`.
 - **`agent_trade_replay_ticks_public`** — 30-min-delayed view over replay
   ticks, joined through `agent_trades_public` so a tick is only visible when
   both the trade and the tick satisfy the public delay boundary. Anon `SELECT`
