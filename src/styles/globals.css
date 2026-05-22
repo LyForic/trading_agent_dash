@@ -1997,12 +1997,6 @@ body[data-route="world-v2"] {
   gap: 8px;
 }
 
-.world-v2-menu-title {
-  min-width: 0;
-  text-align: center;
-}
-
-.world-v2-menu-head p,
 .world-v2-stats-title p {
   margin: 0;
   color: rgba(255, 239, 201, 0.68);
@@ -2013,12 +2007,42 @@ body[data-route="world-v2"] {
   letter-spacing: 0.08em;
 }
 
-.world-v2-menu-head h1 {
-  margin: 0;
-  font-family: var(--font-display);
-  font-size: 22px;
-  line-height: 1;
-  white-space: nowrap;
+.world-v2-social-links {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.world-v2-social-link {
+  display: inline-grid;
+  place-items: center;
+  width: 31px;
+  height: 31px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: rgba(255, 247, 229, 0.92);
+  transition: background-color 150ms ease, color 150ms ease, transform 150ms ease;
+}
+
+.world-v2-social-link:hover,
+.world-v2-social-link:focus-visible {
+  outline: none;
+  background: rgba(255, 247, 229, 0.11);
+  color: #fff7e5;
+  transform: translateY(-1px);
+}
+
+.world-v2-social-icon {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
 }
 
 .world-v2-balance-wrap {
@@ -2297,6 +2321,20 @@ body[data-route="world-v2"] {
 
 .world-v2-loss {
   color: #ff938b !important;
+}
+
+.world-v2-agent-metrics .world-v2-gain,
+.world-v2-stat-grid .world-v2-gain {
+  text-shadow:
+    0 0 7px rgba(129, 208, 141, 0.78),
+    0 0 18px rgba(129, 208, 141, 0.34);
+}
+
+.world-v2-agent-metrics .world-v2-loss,
+.world-v2-stat-grid .world-v2-loss {
+  text-shadow:
+    0 0 7px rgba(255, 147, 139, 0.82),
+    0 0 18px rgba(255, 147, 139, 0.36);
 }
 
 .world-v2-data-status,

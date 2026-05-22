@@ -60,6 +60,28 @@ const WORLD_MENU_AGENTS: Record<WorldMenuAgentId, WorldMenuAgent> = {
 };
 
 const WORLD_AGENT_ORDER: WorldMenuAgentId[] = ['apex', 'metheus', 'gale', 'bacon', 'nova'];
+
+const SOCIAL_LINKS = [
+  {
+    id: 'instagram',
+    label: 'Instagram',
+    href: 'https://www.instagram.com/brandonnfongg?igsh=NTc4MTIwNjQ2YQ%3D%3D&utm_source=qr',
+    Icon: InstagramOutlineIcon,
+  },
+  {
+    id: 'tiktok',
+    label: 'TikTok',
+    href: 'https://www.tiktok.com/@brandonnfongg?_r=1&_t=ZP-96Z6MTJdtl9',
+    Icon: TikTokOutlineIcon,
+  },
+  {
+    id: 'youtube',
+    label: 'YouTube',
+    href: 'https://youtube.com/@brandonnfongg?si=204J6kVu31_SXa31',
+    Icon: YouTubeOutlineIcon,
+  },
+] as const;
+
 const BNF_CHANGE_WINDOWS = ['24h', '7d', 'lifetime'] as const;
 type BnfChangeWindow = typeof BNF_CHANGE_WINDOWS[number];
 
@@ -127,6 +149,34 @@ const EXPANSION_AGENT_INFO: Record<Exclude<WorldMenuAgentId, AgentId>, Expansion
 interface PhaserWorldProps {
   selectedAgentId: ZoneId | null;
   focusRequestId: number;
+}
+
+function InstagramOutlineIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden className="world-v2-social-icon">
+      <rect x="5" y="5" width="14" height="14" rx="4" />
+      <circle cx="12" cy="12" r="3.2" />
+      <circle cx="16.4" cy="7.8" r="0.7" />
+    </svg>
+  );
+}
+
+function TikTokOutlineIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden className="world-v2-social-icon">
+      <path d="M14.5 4v9.45a4.25 4.25 0 1 1-4.25-4.25c.38 0 .75.05 1.1.15v3.05a1.5 1.5 0 1 0 1.05 1.43V4h2.1Z" />
+      <path d="M14.5 4c.5 2.45 2.05 4.05 4.5 4.45v3.05c-1.72-.03-3.24-.58-4.5-1.58" />
+    </svg>
+  );
+}
+
+function YouTubeOutlineIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden className="world-v2-social-icon">
+      <rect x="3.6" y="6.7" width="16.8" height="10.6" rx="3" />
+      <path d="M10.4 9.7 14.9 12l-4.5 2.3V9.7Z" />
+    </svg>
+  );
 }
 
 function PhaserWorld({ selectedAgentId, focusRequestId }: PhaserWorldProps) {
@@ -484,8 +534,19 @@ export function WorldV2Page() {
       >
         <div className="world-v2-sheet-handle" aria-hidden />
         <div className="world-v2-menu-head">
-          <div className="world-v2-menu-title">
-            <h1>Living World</h1>
+          <div className="world-v2-social-links" aria-label="Social links">
+            {SOCIAL_LINKS.map(({ id, href, label, Icon }) => (
+              <a
+                key={id}
+                className="world-v2-social-link"
+                href={href}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={label}
+              >
+                <Icon />
+              </a>
+            ))}
           </div>
           <div ref={balanceWrapRef} className="world-v2-balance-wrap">
             <button
