@@ -10,6 +10,7 @@ import type {
   PerformanceWindow,
   Receipt,
   TradeLogEntry,
+  TradeReplayTick,
 } from './types';
 
 type Source = 'live' | 'mock';
@@ -42,9 +43,22 @@ interface LifetimeStatsRow {
   open_count: number;
 }
 
+interface TradeReplayTickRow {
+  trade_id: string;
+  captured_at: string;
+  yes_price_cents: number | null;
+  no_price_cents: number | null;
+  underlying_label: string | null;
+  underlying_value: number | string | null;
+  underlying_unit: string | null;
+  source: string | null;
+}
+
 const COLUMNS =
   'id,agent_id,contract_ticker,side,entry_price,size,entered_at,settled_at,settle_price,pnl,move_used';
 const LIFETIME_COLUMNS = 'agent_id,settled,wins,losses,breakeven,total_pnl,open_count';
+const REPLAY_TICK_COLUMNS =
+  'trade_id,captured_at,yes_price_cents,no_price_cents,underlying_label,underlying_value,underlying_unit,source';
 
 const ZERO_LIFETIME: Omit<LifetimeStatsRow, 'agent_id'> = {
   settled: 0,
@@ -78,6 +92,55 @@ function rowToTradeLogEntry(r: AgentTradeRow): TradeLogEntry | null {
     pnl: r.pnl,
     move_used: r.move_used,
   };
+}
+
+function rowToReplayTick(row: TradeReplayTickRow): TradeReplayTick | null {
+  const yes = row.yes_price_cents ?? (row.no_price_cents === null ? null : 100 - row.no_price_cents);
+  const no = row.no_price_cents ?? (yes === null ? null : 100 - yes);
+  if (yes === null || no === null) return null;
+  const underlyingValue =
+    typeof row.underlying_value === 'string'
+      ? Number(row.underlying_value)
+      : row.underlying_value;
+
+  return {
+    captured_at: row.captured_at,
+    yes_price_cents: yes,
+    no_price_cents: no,
+    underlying_label: row.underlying_label,
+    underlying_value: typeof underlyingValue === 'number' && Number.isFinite(underlyingValue) ? underlyingValue : null,
+    underlying_unit: row.underlying_unit,
+    source: row.source ?? 'trading_bot',
+  };
+}
+
+async function attachReplayTicks(tradeLog: TradeLogEntry[]): Promise<TradeLogEntry[]> {
+  if (tradeLog.length === 0) return tradeLog;
+  const tradeIds = tradeLog.map((trade) => trade.id);
+  const { data, error } = await supabase!
+    .from('agent_trade_replay_ticks_public')
+    .select(REPLAY_TICK_COLUMNS)
+    .in('trade_id', tradeIds)
+    .order('captured_at', { ascending: true });
+
+  if (error) {
+    console.warn(`[useAgentData] replay ticks unavailable; falling back to modeled replay: ${error.message}`);
+    return tradeLog;
+  }
+
+  const ticksByTrade = new Map<string, TradeReplayTick[]>();
+  for (const row of (data ?? []) as TradeReplayTickRow[]) {
+    const tick = rowToReplayTick(row);
+    if (!tick) continue;
+    const existing = ticksByTrade.get(row.trade_id) ?? [];
+    existing.push(tick);
+    ticksByTrade.set(row.trade_id, existing);
+  }
+
+  return tradeLog.map((trade) => {
+    const replay_ticks = ticksByTrade.get(trade.id);
+    return replay_ticks && replay_ticks.length > 0 ? { ...trade, replay_ticks } : trade;
+  });
 }
 
 function buildAgent(
@@ -345,7 +408,7 @@ async function fetchCardViewModel(
     return {
       total_pnl: lifetime.total_pnl,
       record: { W: lifetime.wins, L: lifetime.losses, BE: lifetime.breakeven, settled: lifetime.settled },
-      tradeLog,
+      tradeLog: await attachReplayTicks(tradeLog),
       windowSettledCount: lifetime.settled,
     };
   }
@@ -381,7 +444,7 @@ async function fetchCardViewModel(
   return {
     total_pnl,
     record: { W, L, BE, settled: closed.length },
-    tradeLog,
+    tradeLog: await attachReplayTicks(tradeLog),
     windowSettledCount: closed.length,
   };
 }

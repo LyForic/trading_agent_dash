@@ -23,6 +23,16 @@ live dashboard.
   frontend's Lifetime mode. The 30-min delay floor is inherited from the
   underlying view. Anon `SELECT` GRANTED. No row is emitted for an agent
   with zero qualifying rows — clients must handle the missing-row case.
+- **`agent_trade_replay_ticks`** — privileged bot-written probability
+  snapshots for replaying an individual trade chart. Bots insert one row per
+  sampled timestamp with `trade_id`, `captured_at`, `yes_price_cents`,
+  `no_price_cents`, and optional underlying metadata
+  (`underlying_label`, `underlying_value`, `underlying_unit`). Anon access is
+  revoked on the base table.
+- **`agent_trade_replay_ticks_public`** — 30-min-delayed view over replay
+  ticks, joined through `agent_trades_public` so a tick is only visible when
+  both the trade and the tick satisfy the public delay boundary. Anon `SELECT`
+  GRANTED.
 - **`pm_bets`** — canonical per-trade table the trading daemons already
   write to. Untouched by this frontend. Anon/authenticated/public privileges
   are revoked; writes belong only to privileged daemon credentials.
@@ -101,6 +111,8 @@ credentials used by the trading daemons.
 | `20260426000001_revoke_base_anon_select.sql` | Revoke anon SELECT on base `agent_trades`; views are now the only anon-readable paths |
 | `20260512000000_harden_public_read_boundary.sql` | Revoke anon/authenticated/public access on base sensitive tables and legacy leaderboard; keep anon SELECT only on delayed/sanitized public views |
 | `20260512001000_tighten_public_view_grants.sql` | Revoke inherited/previous non-SELECT privileges on delayed public views; re-grant anon SELECT only |
+| `20260522000000_agent_trade_replay_ticks.sql` | Create the privileged replay-ticks table and delayed public view |
+| `20260522001000_generalize_trade_replay_ticks.sql` | Add generic YES/NO probability + underlying fields for all markets |
 
 ## Frontend read paths (current)
 
@@ -108,6 +120,7 @@ credentials used by the trading daemons.
 |------|-------------|
 | 24h / 7d window | `agent_trades_public` filtered by `settled_at` range |
 | Lifetime | `agent_lifetime_stats` (one row per agent) |
+| Trade replay chart | `agent_trade_replay_ticks_public` for real ticks, modeled fallback when missing |
 | Edge Function `leaderboard` | reads `agent_trades_public` |
 
 The frontend no longer queries `agent_trades` directly.

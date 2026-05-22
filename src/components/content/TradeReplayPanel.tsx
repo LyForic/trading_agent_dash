@@ -20,6 +20,7 @@ interface ReplayModel {
   entryYesProbability: number;
   finalYesProbability: number;
   points: ReplayPoint[];
+  sourceLabel: string;
 }
 
 const CHART = {
@@ -61,14 +62,52 @@ function sideProbabilityToYes(row: TradeLogEntry, sideProbability: number) {
   return row.side === 'yes' ? sideProbability : 100 - sideProbability;
 }
 
+function normalizePoints(points: ReplayPoint[]) {
+  return points
+    .sort((a, b) => a.elapsedMs - b.elapsedMs)
+    .reduce<ReplayPoint[]>((acc, point) => {
+      const previous = acc[acc.length - 1];
+      if (previous && Math.abs(previous.elapsedMs - point.elapsedMs) < 1) {
+        acc[acc.length - 1] = point;
+      } else {
+        acc.push(point);
+      }
+      return acc;
+    }, []);
+}
+
 function buildReplay(row: TradeLogEntry): ReplayModel {
-  const seed = seededNumber(`${row.id}:${row.contract_ticker}`);
   const contractEnd = new Date(row.settled_at);
   const contractStart = new Date(contractEnd.getTime() - CONTRACT_DURATION_MS);
   const enteredAt = new Date(row.entered_at);
   const entryElapsedMs = clamp(enteredAt.getTime() - contractStart.getTime(), 0, CONTRACT_DURATION_MS);
   const entryYesProbability = sideProbabilityToYes(row, clamp(row.entry_price_cents, 1, 99));
   const finalYesProbability = sideProbabilityToYes(row, clamp(row.settle_price_cents, 0, 100));
+
+  if (row.replay_ticks && row.replay_ticks.length >= 2) {
+    const tickPoints = row.replay_ticks.map((tick) => ({
+      elapsedMs: clamp(new Date(tick.captured_at).getTime() - contractStart.getTime(), 0, CONTRACT_DURATION_MS),
+      yesProbability: clamp(tick.yes_price_cents, 0, 100),
+    }));
+    const points = normalizePoints([
+      { elapsedMs: entryElapsedMs, yesProbability: entryYesProbability },
+      ...tickPoints,
+      { elapsedMs: CONTRACT_DURATION_MS, yesProbability: finalYesProbability },
+    ]);
+
+    return {
+      contractStart,
+      contractEnd,
+      durationMs: CONTRACT_DURATION_MS,
+      entryElapsedMs,
+      entryYesProbability,
+      finalYesProbability,
+      points,
+      sourceLabel: 'Market ticks',
+    };
+  }
+
+  const seed = seededNumber(`${row.id}:${row.contract_ticker}`);
   const startYesProbability = clamp(entryYesProbability + (seed - 0.5) * 28, 8, 92);
   const rawPoints: ReplayPoint[] = [];
 
@@ -97,17 +136,7 @@ function buildReplay(row: TradeLogEntry): ReplayModel {
   rawPoints.push({ elapsedMs: entryElapsedMs, yesProbability: entryYesProbability });
   rawPoints.push({ elapsedMs: CONTRACT_DURATION_MS, yesProbability: finalYesProbability });
 
-  const points = rawPoints
-    .sort((a, b) => a.elapsedMs - b.elapsedMs)
-    .reduce<ReplayPoint[]>((acc, point) => {
-      const previous = acc[acc.length - 1];
-      if (previous && Math.abs(previous.elapsedMs - point.elapsedMs) < 1) {
-        acc[acc.length - 1] = point;
-      } else {
-        acc.push(point);
-      }
-      return acc;
-    }, []);
+  const points = normalizePoints(rawPoints);
 
   return {
     contractStart,
@@ -117,6 +146,7 @@ function buildReplay(row: TradeLogEntry): ReplayModel {
     entryYesProbability,
     finalYesProbability,
     points,
+    sourceLabel: 'Modeled',
   };
 }
 
@@ -266,7 +296,7 @@ export function TradeReplayPanel({ row }: Props) {
           <strong>{row.side.toUpperCase()} probability replay</strong>
         </div>
         <div className="trade-replay-timebox">
-          Modeled · {formatClock(replay.contractStart)}-{formatClock(replay.contractEnd)}
+          {replay.sourceLabel} · {formatClock(replay.contractStart)}-{formatClock(replay.contractEnd)}
         </div>
       </div>
 

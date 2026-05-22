@@ -50,6 +50,17 @@ export interface TradeLogEntry {
   settle_price_cents: number;
   pnl: number;
   move_used: string | null;
+  replay_ticks?: TradeReplayTick[];
+}
+
+export interface TradeReplayTick {
+  captured_at: string;            // ISO timestamp, delayed by the public view
+  yes_price_cents: number;
+  no_price_cents: number;
+  underlying_label: string | null;
+  underlying_value: number | null;
+  underlying_unit: string | null;
+  source: string;
 }
 
 export interface AgentLifetimeStats {

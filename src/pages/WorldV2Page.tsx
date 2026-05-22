@@ -633,7 +633,7 @@ export function WorldV2Page() {
                 </button>
               </div>
 
-              <TradeReplayPanel row={selectedTrade} />
+              <TradeReplayPanel key={selectedTrade.id} row={selectedTrade} />
             </>
           ) : (
             <>

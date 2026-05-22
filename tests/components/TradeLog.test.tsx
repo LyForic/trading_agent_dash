@@ -50,6 +50,40 @@ describe('TradeLog', () => {
     expect(screen.getByLabelText(/Replay timeline/i)).toHaveAttribute('max', '900000');
   });
 
+  it('uses stored replay ticks when a trade provides them', async () => {
+    const user = userEvent.setup();
+    const rows = [
+      {
+        ...makeEntry('apex-1', 2),
+        replay_ticks: [
+          {
+            captured_at: new Date('2026-04-25T20:16:00Z').toISOString(),
+            yes_price_cents: 54,
+            no_price_cents: 46,
+            underlying_label: 'BTC',
+            underlying_value: 68000,
+            underlying_unit: 'USD',
+            source: 'test',
+          },
+          {
+            captured_at: new Date('2026-04-25T20:22:00Z').toISOString(),
+            yes_price_cents: 71,
+            no_price_cents: 29,
+            underlying_label: 'BTC',
+            underlying_value: 68420,
+            underlying_unit: 'USD',
+            source: 'test',
+          },
+        ],
+      },
+    ];
+    render(<TradeLog rows={rows} windowSettledCount={1} window="24h" hasOpenPosition={false} />);
+
+    await user.click(screen.getByRole('button', { name: /KXFEDDECISION-26MAY/i }));
+
+    expect(screen.getByText(/Market ticks/i)).toBeInTheDocument();
+  });
+
   it('closes the replay chart when the selected trade is clicked again', async () => {
     const user = userEvent.setup();
     const rows = [makeEntry('apex-1', 2)];
