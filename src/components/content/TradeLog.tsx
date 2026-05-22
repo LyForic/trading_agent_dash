@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Fragment, useState } from 'react';
 import type { PerformanceWindow, TradeLogEntry } from '@/lib/types';
 import { formatPnl } from '@/lib/formatting';
 import { TradeReplayPanel } from './TradeReplayPanel';
@@ -120,11 +120,14 @@ export function TradeLog({ rows, windowSettledCount, window, hasOpenPosition }: 
         <span>{windowSettledCount} settled</span>
       </div>
       <FirstRow row={first} selected={selectedTradeId === first.id} onSelect={() => selectTrade(first)} />
-      {selectedRow && <TradeReplayPanel key={selectedRow.id} row={selectedRow} />}
+      {selectedRow?.id === first.id && <TradeReplayPanel key={selectedRow.id} row={selectedRow} />}
       {rest.length > 0 && (
         <div className="trade-log-ledger">
           {rest.map((row) => (
-            <LedgerRow key={row.id} row={row} selected={selectedTradeId === row.id} onSelect={() => selectTrade(row)} />
+            <Fragment key={row.id}>
+              <LedgerRow row={row} selected={selectedTradeId === row.id} onSelect={() => selectTrade(row)} />
+              {selectedRow?.id === row.id && <TradeReplayPanel key={selectedRow.id} row={selectedRow} />}
+            </Fragment>
           ))}
         </div>
       )}

@@ -9,7 +9,7 @@ interface Props {
 
 interface ReplayPoint {
   elapsedMs: number;
-  price: number;
+  yesProbability: number;
 }
 
 interface ReplayModel {
@@ -17,19 +17,18 @@ interface ReplayModel {
   contractEnd: Date;
   durationMs: number;
   entryElapsedMs: number;
-  entryPrice: number;
-  finalPrice: number;
-  targetPrice: number;
+  entryYesProbability: number;
+  finalYesProbability: number;
   points: ReplayPoint[];
 }
 
 const CHART = {
-  width: 520,
-  height: 240,
-  padLeft: 52,
-  padRight: 20,
-  padTop: 20,
-  padBottom: 38,
+  width: 560,
+  height: 278,
+  padLeft: 34,
+  padRight: 104,
+  padTop: 22,
+  padBottom: 34,
 };
 
 const SPEEDS = [1, 2, 4] as const;
@@ -45,18 +44,21 @@ function seededNumber(seed: string) {
   return (hash >>> 0) / 4294967295;
 }
 
-function parseStrike(ticker: string, seed: number) {
-  const match = ticker.match(/B(\d{4,6})(?:\D|$)/);
-  if (match) return Number(match[1]);
-  return Math.round((66800 + seed * 1800) / 50) * 50;
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
 }
 
 function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t;
 }
 
-function clamp(value: number, min: number, max: number) {
-  return Math.min(max, Math.max(min, value));
+function smoothstep(t: number) {
+  const x = clamp(t, 0, 1);
+  return x * x * (3 - 2 * x);
+}
+
+function sideProbabilityToYes(row: TradeLogEntry, sideProbability: number) {
+  return row.side === 'yes' ? sideProbability : 100 - sideProbability;
 }
 
 function buildReplay(row: TradeLogEntry): ReplayModel {
@@ -65,51 +67,61 @@ function buildReplay(row: TradeLogEntry): ReplayModel {
   const contractStart = new Date(contractEnd.getTime() - CONTRACT_DURATION_MS);
   const enteredAt = new Date(row.entered_at);
   const entryElapsedMs = clamp(enteredAt.getTime() - contractStart.getTime(), 0, CONTRACT_DURATION_MS);
-  const targetPrice = parseStrike(row.contract_ticker, seed);
-  const resultWon = row.pnl >= 0;
-  const yesWins = row.side === 'yes' ? resultWon : !resultWon;
-  const settlementDistance = 80 + Math.abs(row.pnl) * 18 + seed * 95;
-  const finalPrice = targetPrice + (yesWins ? settlementDistance : -settlementDistance);
-  const entryBias = row.side === 'yes' ? -1 : 1;
-  const entryPrice = targetPrice + entryBias * (18 + seed * 46);
-  const startPrice = targetPrice + (seed - 0.5) * 220;
-  const points: ReplayPoint[] = [];
+  const entryYesProbability = sideProbabilityToYes(row, clamp(row.entry_price_cents, 1, 99));
+  const finalYesProbability = sideProbabilityToYes(row, clamp(row.settle_price_cents, 0, 100));
+  const startYesProbability = clamp(entryYesProbability + (seed - 0.5) * 28, 8, 92);
+  const rawPoints: ReplayPoint[] = [];
 
-  for (let i = 0; i <= 60; i += 1) {
-    const t = i / 60;
+  for (let i = 0; i <= 72; i += 1) {
+    const t = i / 72;
     const elapsedMs = t * CONTRACT_DURATION_MS;
-    const trend = lerp(startPrice, finalPrice, t);
-    const waveA = Math.sin((t * 5.4 + seed * 2.8) * Math.PI) * (54 + seed * 26);
-    const waveB = Math.sin((t * 14.2 + seed * 8.5) * Math.PI) * (17 + seed * 14);
-    const entryPull = Math.max(0, 1 - Math.abs(elapsedMs - entryElapsedMs) / 150000);
-    const settlementPull = t ** 2.2;
-    const price = lerp(trend + waveA + waveB, entryPrice, entryPull * 0.58);
-    points.push({
+    const beforeEntry = elapsedMs <= entryElapsedMs;
+    const localT = beforeEntry
+      ? (entryElapsedMs === 0 ? 1 : elapsedMs / entryElapsedMs)
+      : (elapsedMs - entryElapsedMs) / Math.max(1, CONTRACT_DURATION_MS - entryElapsedMs);
+    const anchor = beforeEntry
+      ? lerp(startYesProbability, entryYesProbability, smoothstep(localT))
+      : lerp(entryYesProbability, finalYesProbability, smoothstep(localT));
+    const entryPull = Math.max(0, 1 - Math.abs(elapsedMs - entryElapsedMs) / 92000);
+    const settlePull = Math.max(0, 1 - (CONTRACT_DURATION_MS - elapsedMs) / 88000);
+    const volatility = (1 - entryPull * 0.82 - settlePull * 0.72) * (4.8 + seed * 5.2);
+    const waveA = Math.sin((t * 6.2 + seed * 2.4) * Math.PI) * volatility;
+    const waveB = Math.sin((t * 18.5 + seed * 8.1) * Math.PI) * volatility * 0.42;
+
+    rawPoints.push({
       elapsedMs,
-      price: lerp(price, finalPrice, settlementPull * 0.72),
+      yesProbability: clamp(anchor + waveA + waveB, 2, 98),
     });
   }
 
-  points[points.length - 1] = { elapsedMs: CONTRACT_DURATION_MS, price: finalPrice };
+  rawPoints.push({ elapsedMs: entryElapsedMs, yesProbability: entryYesProbability });
+  rawPoints.push({ elapsedMs: CONTRACT_DURATION_MS, yesProbability: finalYesProbability });
+
+  const points = rawPoints
+    .sort((a, b) => a.elapsedMs - b.elapsedMs)
+    .reduce<ReplayPoint[]>((acc, point) => {
+      const previous = acc[acc.length - 1];
+      if (previous && Math.abs(previous.elapsedMs - point.elapsedMs) < 1) {
+        acc[acc.length - 1] = point;
+      } else {
+        acc.push(point);
+      }
+      return acc;
+    }, []);
 
   return {
     contractStart,
     contractEnd,
     durationMs: CONTRACT_DURATION_MS,
     entryElapsedMs,
-    entryPrice,
-    finalPrice,
-    targetPrice,
+    entryYesProbability,
+    finalYesProbability,
     points,
   };
 }
 
 function formatClock(date: Date) {
   return date.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
-}
-
-function formatPrice(value: number) {
-  return `$${Math.round(value).toLocaleString('en-US')}`;
 }
 
 function formatElapsed(ms: number) {
@@ -119,21 +131,74 @@ function formatElapsed(ms: number) {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
-function pathFor(points: ReplayPoint[], xFor: (elapsedMs: number) => number, yFor: (price: number) => number) {
+function formatMoney(value: number) {
+  return `$${Math.abs(value).toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
+function formatSignedMoney(value: number) {
+  const sign = value > 0 ? '+' : value < 0 ? '-' : '';
+  return `${sign}$${Math.abs(value).toLocaleString('en-US', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+}
+
+function formatPercent(value: number) {
+  const sign = value > 0 ? '+' : value < 0 ? '-' : '';
+  return `${sign}${Math.abs(value).toFixed(1)}%`;
+}
+
+function formatProbability(value: number) {
+  return `${Math.round(value)}%`;
+}
+
+function pathFor(
+  points: ReplayPoint[],
+  xFor: (elapsedMs: number) => number,
+  yFor: (probability: number) => number,
+  probabilityFor: (point: ReplayPoint) => number,
+) {
   if (points.length === 0) return '';
   return points
-    .map((point, index) => `${index === 0 ? 'M' : 'L'} ${xFor(point.elapsedMs).toFixed(2)} ${yFor(point.price).toFixed(2)}`)
+    .map((point, index) => `${index === 0 ? 'M' : 'L'} ${xFor(point.elapsedMs).toFixed(2)} ${yFor(probabilityFor(point)).toFixed(2)}`)
     .join(' ');
 }
 
-function interpolatePrice(points: ReplayPoint[], elapsedMs: number) {
+function interpolateYesProbability(points: ReplayPoint[], elapsedMs: number) {
   const nextIndex = points.findIndex((point) => point.elapsedMs >= elapsedMs);
-  if (nextIndex <= 0) return points[0]?.price ?? 0;
+  if (nextIndex <= 0) return points[0]?.yesProbability ?? 50;
   const prev = points[nextIndex - 1];
   const next = points[nextIndex];
-  if (!next) return points[points.length - 1]?.price ?? 0;
+  if (!next) return points[points.length - 1]?.yesProbability ?? 50;
   const span = next.elapsedMs - prev.elapsedMs;
-  return lerp(prev.price, next.price, span === 0 ? 0 : (elapsedMs - prev.elapsedMs) / span);
+  return lerp(prev.yesProbability, next.yesProbability, span === 0 ? 0 : (elapsedMs - prev.elapsedMs) / span);
+}
+
+function segmentPoints(points: ReplayPoint[], elapsedMs: number, activeYesProbability: number) {
+  return [...points.filter((point) => point.elapsedMs <= elapsedMs), { elapsedMs, yesProbability: activeYesProbability }]
+    .filter((point, index, list) => index === 0 || point.elapsedMs !== list[index - 1].elapsedMs);
+}
+
+function labelYPositions(yesY: number, noY: number) {
+  const top = CHART.padTop + 22;
+  const bottom = CHART.height - CHART.padBottom - 34;
+  let yes = clamp(yesY, top, bottom);
+  let no = clamp(noY, top, bottom);
+
+  if (Math.abs(yes - no) < 58) {
+    if (yes <= no) {
+      yes = Math.max(top, yes - 28);
+      no = Math.min(bottom, no + 28);
+    } else {
+      yes = Math.min(bottom, yes + 28);
+      no = Math.max(top, no - 28);
+    }
+  }
+
+  return { yes, no };
 }
 
 export function TradeReplayPanel({ row }: Props) {
@@ -163,29 +228,30 @@ export function TradeReplayPanel({ row }: Props) {
     return () => cancelAnimationFrame(frame);
   }, [playing, replay.durationMs, speed]);
 
-  const prices = replay.points.map((point) => point.price).concat([replay.targetPrice, replay.entryPrice, replay.finalPrice]);
-  const minPrice = Math.min(...prices) - 70;
-  const maxPrice = Math.max(...prices) + 70;
   const plotWidth = CHART.width - CHART.padLeft - CHART.padRight;
   const plotHeight = CHART.height - CHART.padTop - CHART.padBottom;
   const xFor = (elapsed: number) => CHART.padLeft + (elapsed / replay.durationMs) * plotWidth;
-  const yFor = (price: number) => CHART.padTop + (1 - ((price - minPrice) / (maxPrice - minPrice))) * plotHeight;
-  const fullPath = pathFor(replay.points, xFor, yFor);
-  const activePoints = replay.points.filter((point) => point.elapsedMs <= elapsedMs);
-  const activePrice = interpolatePrice(replay.points, elapsedMs);
-  const activePath = pathFor(
-    [...activePoints, { elapsedMs, price: activePrice }]
-      .filter((point, index, list) => index === 0 || point.elapsedMs !== list[index - 1].elapsedMs),
-    xFor,
-    yFor,
-  );
+  const yFor = (probability: number) => CHART.padTop + (1 - probability / 100) * plotHeight;
+  const yesPath = pathFor(replay.points, xFor, yFor, (point) => point.yesProbability);
+  const noPath = pathFor(replay.points, xFor, yFor, (point) => 100 - point.yesProbability);
+  const activeYesProbability = interpolateYesProbability(replay.points, elapsedMs);
+  const activeNoProbability = 100 - activeYesProbability;
+  const activePoints = segmentPoints(replay.points, elapsedMs, activeYesProbability);
+  const activeYesPath = pathFor(activePoints, xFor, yFor, (point) => point.yesProbability);
+  const activeNoPath = pathFor(activePoints, xFor, yFor, (point) => 100 - point.yesProbability);
   const entryX = xFor(replay.entryElapsedMs);
-  const finalX = xFor(replay.durationMs);
-  const targetY = yFor(replay.targetPrice);
   const playheadX = xFor(elapsedMs);
-  const playheadY = yFor(activePrice);
+  const activeSideProbability = row.side === 'yes' ? activeYesProbability : activeNoProbability;
+  const entrySideProbability = row.entry_price_cents;
+  const currentValue = (activeSideProbability / 100) * row.size;
+  const initialValue = (entrySideProbability / 100) * row.size;
+  const valueChange = currentValue - initialValue;
+  const probabilityMove = activeSideProbability - entrySideProbability;
+  const pctMove = entrySideProbability === 0 ? 0 : (probabilityMove / entrySideProbability) * 100;
+  const isUpFromEntry = valueChange >= 0;
+  const labelY = labelYPositions(yFor(activeYesProbability), yFor(activeNoProbability));
+  const labelX = CHART.width - CHART.padRight + 18;
   const won = row.pnl >= 0;
-  const resultLabel = won ? 'Win' : 'Loss';
 
   const toggleReplay = () => {
     setElapsedMs((current) => (current >= replay.durationMs ? 0 : current));
@@ -197,37 +263,66 @@ export function TradeReplayPanel({ row }: Props) {
       <div className="trade-replay-head">
         <div>
           <span>{row.contract_ticker}</span>
-          <strong>{resultLabel} {formatPnl(row.pnl)}</strong>
+          <strong>{row.side.toUpperCase()} probability replay</strong>
         </div>
         <div className="trade-replay-timebox">
-          Modeled replay · {formatClock(replay.contractStart)}-{formatClock(replay.contractEnd)}
+          Modeled · {formatClock(replay.contractStart)}-{formatClock(replay.contractEnd)}
         </div>
       </div>
 
-      <div className="trade-replay-chart" aria-label="15 minute trade replay chart">
+      <div className="trade-replay-chart" aria-label="15 minute trade replay chart showing probabilities">
         <svg viewBox={`0 0 ${CHART.width} ${CHART.height}`} role="img">
           <rect x={CHART.padLeft} y={CHART.padTop} width={plotWidth} height={plotHeight} rx="4" />
-          <line className="trade-replay-grid-line" x1={CHART.padLeft} x2={CHART.width - CHART.padRight} y1={targetY} y2={targetY} />
-          <text className="trade-replay-axis-label" x={CHART.padLeft - 8} y={targetY + 4} textAnchor="end">Target</text>
-          <path className="trade-replay-full-path" d={fullPath} />
-          <path className={won ? 'trade-replay-active-path trade-replay-active-path--gain' : 'trade-replay-active-path trade-replay-active-path--loss'} d={activePath} />
+          <line className="trade-replay-grid-line" x1={CHART.padLeft} x2={CHART.width - CHART.padRight} y1={yFor(50)} y2={yFor(50)} />
+          <text className="trade-replay-axis-label" x={CHART.padLeft - 8} y={yFor(100) + 4} textAnchor="end">100</text>
+          <text className="trade-replay-axis-label" x={CHART.padLeft - 8} y={yFor(50) + 4} textAnchor="end">50</text>
+          <text className="trade-replay-axis-label" x={CHART.padLeft - 8} y={yFor(0) + 4} textAnchor="end">0</text>
+          <path className="trade-replay-probability-path trade-replay-probability-path--muted" d={yesPath} />
+          <path className="trade-replay-probability-path trade-replay-probability-path--muted" d={noPath} />
+          <path className="trade-replay-probability-path trade-replay-probability-path--yes" d={activeYesPath} />
+          <path className="trade-replay-probability-path trade-replay-probability-path--no" d={activeNoPath} />
           <line className="trade-replay-entry-line" x1={entryX} x2={entryX} y1={CHART.padTop} y2={CHART.height - CHART.padBottom} />
-          <line className="trade-replay-final-line" x1={finalX} x2={finalX} y1={CHART.padTop} y2={CHART.height - CHART.padBottom} />
           <line className="trade-replay-playhead" x1={playheadX} x2={playheadX} y1={CHART.padTop} y2={CHART.height - CHART.padBottom} />
-          <circle className="trade-replay-marker trade-replay-marker--entry" cx={entryX} cy={yFor(replay.entryPrice)} r="5" />
-          <circle className={won ? 'trade-replay-marker trade-replay-marker--gain' : 'trade-replay-marker trade-replay-marker--loss'} cx={finalX} cy={yFor(replay.finalPrice)} r="5" />
-          <circle className="trade-replay-marker trade-replay-marker--live" cx={playheadX} cy={playheadY} r="4" />
+          <circle className="trade-replay-marker trade-replay-marker--entry" cx={entryX} cy={yFor(replay.entryYesProbability)} r="4.5" />
+          <circle className="trade-replay-marker trade-replay-marker--yes" cx={playheadX} cy={yFor(activeYesProbability)} r="4.5" />
+          <circle className="trade-replay-marker trade-replay-marker--no" cx={playheadX} cy={yFor(activeNoProbability)} r="4.5" />
           <text className="trade-replay-axis-label" x={entryX + 6} y={CHART.padTop + 13}>Entry</text>
-          <text className="trade-replay-axis-label" x={finalX - 6} y={CHART.padTop + 13} textAnchor="end">Settle</text>
-          <text className="trade-replay-axis-label" x={CHART.padLeft} y={CHART.height - 12}>0:00</text>
-          <text className="trade-replay-axis-label" x={CHART.width - CHART.padRight} y={CHART.height - 12} textAnchor="end">15:00</text>
+          <text className="trade-replay-axis-label" x={CHART.padLeft} y={CHART.height - 10}>0:00</text>
+          <text className="trade-replay-axis-label" x={CHART.width - CHART.padRight} y={CHART.height - 10} textAnchor="end">15:00</text>
+          <text className="trade-replay-side-name trade-replay-side-name--yes" x={labelX} y={labelY.yes}>YES</text>
+          <text className="trade-replay-side-percent trade-replay-side-percent--yes" x={labelX} y={labelY.yes + 34}>{formatProbability(activeYesProbability)}</text>
+          <text className="trade-replay-side-name trade-replay-side-name--no" x={labelX} y={labelY.no}>NO</text>
+          <text className="trade-replay-side-percent trade-replay-side-percent--no" x={labelX} y={labelY.no + 34}>{formatProbability(activeNoProbability)}</text>
         </svg>
       </div>
 
       <div className="trade-replay-readout">
         <span>{formatElapsed(elapsedMs)}</span>
-        <strong>{formatPrice(activePrice)}</strong>
-        <span>{row.side.toUpperCase()} {row.entry_price_cents}¢{' -> '}{row.settle_price_cents}¢</span>
+        <strong className={isUpFromEntry ? 'trade-replay-readout--gain' : 'trade-replay-readout--loss'}>
+          {formatSignedMoney(valueChange)}
+        </strong>
+        <span>{formatPercent(pctMove)} from {row.side.toUpperCase()} entry</span>
+      </div>
+
+      <div className="trade-replay-value-grid">
+        <div>
+          <span>Held side</span>
+          <strong>{row.side.toUpperCase()} {formatProbability(activeSideProbability)}</strong>
+        </div>
+        <div>
+          <span>Contract value</span>
+          <strong>{formatMoney(currentValue)}</strong>
+        </div>
+        <div>
+          <span>Entry</span>
+          <strong>{row.entry_price_cents}% · {formatMoney(initialValue)}</strong>
+        </div>
+        <div>
+          <span>Settled</span>
+          <strong className={won ? 'trade-replay-readout--gain' : 'trade-replay-readout--loss'}>
+            {row.settle_price_cents}% · {formatPnl(row.pnl)}
+          </strong>
+        </div>
       </div>
 
       <div className="trade-replay-controls">

@@ -50,6 +50,35 @@ describe('TradeLog', () => {
     expect(screen.getByLabelText(/Replay timeline/i)).toHaveAttribute('max', '900000');
   });
 
+  it('closes the replay chart when the selected trade is clicked again', async () => {
+    const user = userEvent.setup();
+    const rows = [makeEntry('apex-1', 2)];
+    render(<TradeLog rows={rows} windowSettledCount={1} window="24h" hasOpenPosition={false} />);
+
+    const tradeButton = screen.getByRole('button', { name: /KXFEDDECISION-26MAY/i });
+    await user.click(tradeButton);
+    expect(screen.getByLabelText(/15 minute trade replay chart/i)).toBeInTheDocument();
+
+    await user.click(tradeButton);
+    expect(screen.queryByLabelText(/15 minute trade replay chart/i)).not.toBeInTheDocument();
+  });
+
+  it('switches the open replay chart when another trade is clicked', async () => {
+    const user = userEvent.setup();
+    const rows = [
+      makeEntry('apex-1', 2),
+      { ...makeEntry('apex-2', -1), contract_ticker: 'KXBTC-26MAY22-B70000' },
+    ];
+    render(<TradeLog rows={rows} windowSettledCount={2} window="24h" hasOpenPosition={false} />);
+
+    await user.click(screen.getByRole('button', { name: /KXFEDDECISION-26MAY/i }));
+    expect(screen.getByText(/^KXFEDDECISION-26MAY$/)).toBeInTheDocument();
+
+    await user.click(screen.getByRole('button', { name: /2YES/i }));
+    expect(screen.getByText(/^KXBTC-26MAY22-B70000$/)).toBeInTheDocument();
+    expect(screen.queryByText(/^KXFEDDECISION-26MAY$/)).not.toBeInTheDocument();
+  });
+
   it('shows empty state copy when no rows', () => {
     render(<TradeLog rows={[]} windowSettledCount={0} window="24h" hasOpenPosition={false} />);
     expect(screen.getByText(/No settled trades in 24h\. Try 7d\./i)).toBeInTheDocument();

@@ -1010,6 +1010,23 @@ body[data-room="metheus"] .room-agent--metheus {
   stroke-dasharray: 5 5;
   stroke-width: 1.2;
 }
+.trade-replay-probability-path {
+  fill: none;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+.trade-replay-probability-path--muted {
+  stroke: color-mix(in srgb, var(--color-ink-muted) 28%, transparent);
+  stroke-width: 2;
+}
+.trade-replay-probability-path--yes {
+  stroke: #ff6b1a;
+  stroke-width: 4;
+}
+.trade-replay-probability-path--no {
+  stroke: #d8aa19;
+  stroke-width: 4;
+}
 .trade-replay-full-path {
   fill: none;
   stroke: color-mix(in srgb, var(--color-ink-muted) 44%, transparent);
@@ -1049,6 +1066,12 @@ body[data-room="metheus"] .room-agent--metheus {
 .trade-replay-marker--live {
   fill: var(--agent-accent, var(--color-gain));
 }
+.trade-replay-marker--yes {
+  fill: #ff6b1a;
+}
+.trade-replay-marker--no {
+  fill: #d8aa19;
+}
 .trade-replay-marker--gain {
   fill: var(--color-gain);
 }
@@ -1060,8 +1083,62 @@ body[data-room="metheus"] .room-agent--metheus {
   font-size: 10px;
   font-weight: 800;
 }
+.trade-replay-side-name,
+.trade-replay-side-percent {
+  font-weight: 900;
+}
+.trade-replay-side-name {
+  font-size: 12px;
+  letter-spacing: 0;
+}
+.trade-replay-side-percent {
+  font-size: 32px;
+}
+.trade-replay-side-name--yes,
+.trade-replay-side-percent--yes {
+  fill: #ff6b1a;
+}
+.trade-replay-side-name--no,
+.trade-replay-side-percent--no {
+  fill: #d8aa19;
+}
 .trade-replay-readout {
   justify-content: space-between;
+}
+.trade-replay-readout--gain {
+  color: var(--color-gain) !important;
+}
+.trade-replay-readout--loss {
+  color: var(--color-loss) !important;
+}
+.trade-replay-value-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.trade-replay-value-grid div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+  padding: 7px 8px;
+  border: 1px solid color-mix(in srgb, var(--color-border-default) 72%, transparent);
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--color-paper) 62%, transparent);
+}
+.trade-replay-value-grid span {
+  color: var(--color-ink-muted);
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+  text-transform: uppercase;
+}
+.trade-replay-value-grid strong {
+  overflow: hidden;
+  color: var(--color-ink);
+  font-size: 12px;
+  line-height: 1;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .trade-replay-controls {
   display: grid;
@@ -2584,6 +2661,8 @@ body[data-route="world-v2"] {
   background: rgba(33, 24, 15, 0.94);
   color: #fff7e5;
   box-shadow: 0 26px 70px rgba(0, 0, 0, 0.52);
+  overflow: auto;
+  overscroll-behavior: contain;
   transform: translate(-50%, -50%);
 }
 
@@ -2678,8 +2757,7 @@ body[data-route="world-v2"] {
 .world-v2-stats-panel .trade-log,
 .world-v2-stats-panel .trade-log-empty {
   min-height: 0;
-  max-height: 278px;
-  overflow: auto;
+  max-height: none;
   border: 1px solid rgba(255, 238, 199, 0.14);
   border-radius: 7px;
   background: rgba(255, 247, 229, 0.08);
@@ -2764,12 +2842,29 @@ body[data-route="world-v2"] {
   stroke: rgba(255, 239, 201, 0.32);
 }
 
+.world-v2-stats-panel .trade-replay-probability-path--muted {
+  stroke: rgba(255, 239, 201, 0.18);
+}
+
 .world-v2-stats-panel .trade-replay-grid-line {
   stroke: rgba(255, 239, 201, 0.34);
 }
 
 .world-v2-stats-panel .trade-replay-final-line {
   stroke: rgba(255, 239, 201, 0.38);
+}
+
+.world-v2-stats-panel .trade-replay-value-grid div {
+  border-color: rgba(255, 238, 199, 0.12);
+  background: rgba(255, 247, 229, 0.07);
+}
+
+.world-v2-stats-panel .trade-replay-value-grid span {
+  color: rgba(255, 239, 201, 0.58);
+}
+
+.world-v2-stats-panel .trade-replay-value-grid strong {
+  color: #fff7e5;
 }
 
 .world-v2-stats-panel .trade-replay-controls button {
@@ -2954,7 +3049,7 @@ body[data-route="world-v2"] {
 
   .world-v2-stats-panel .trade-log,
   .world-v2-stats-panel .trade-log-empty {
-    max-height: 236px;
+    max-height: none;
   }
 }
 
