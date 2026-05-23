@@ -498,6 +498,7 @@ export class LivingWorldScene extends Phaser.Scene {
     worldPoint: WorldPoint;
   } | null = null;
   private cameraInteractionMoved = false;
+  private cameraInteractionHadMultiplePointers = false;
 
   constructor() {
     super('LivingWorldScene');
@@ -567,7 +568,6 @@ export class LivingWorldScene extends Phaser.Scene {
       if (REFERENCE_WORLD) this.createReferenceOverlay();
     }
     this.enableCameraControls();
-    this.createAgentAreaHotspots();
     this.sceneReady = true;
     if (this.pendingFocusAgent !== undefined) {
       const pendingFocusAgent = this.pendingFocusAgent;
@@ -834,33 +834,20 @@ export class LivingWorldScene extends Phaser.Scene {
     this.input.on(Phaser.Input.Events.POINTER_WHEEL, this.handleCameraWheel, this);
   }
 
-  private createAgentAreaHotspots() {
-    if (DEBUG_MANIFEST_WORLD || DEBUG_ISOLATED_TEST) return;
-
-    for (const [zone, hotspot] of Object.entries(AGENT_AREA_HOTSPOTS) as Array<[ZoneId, (typeof AGENT_AREA_HOTSPOTS)[ZoneId]]>) {
-      if (!this.worldData.zones[zone]) continue;
-      const { rect } = hotspot;
-      this.add.zone(rect.x + rect.width / 2, rect.y + rect.height / 2, rect.width, rect.height)
-        .setOrigin(0.5)
-        .setDepth(DEPTH.reference + 20)
-        .setData('zone', zone)
-        .setInteractive({ useHandCursor: true })
-        .on('pointerup', (pointer: Phaser.Input.Pointer) => {
-          if (pointer.button !== 0 || this.cameraInteractionMoved) return;
-          window.dispatchEvent(new CustomEvent('world-v2-agent-area-select', { detail: { agentId: zone } }));
-        });
-    }
-  }
-
   private handleCameraPointerDown(pointer: Phaser.Input.Pointer) {
     if (pointer.button !== 0) return;
+    if (!this.isCanvasPointerEvent(pointer.event)) return;
     const pointerId = pointer.id;
     const point = this.screenPointFromPointer(pointer);
     this.stopCameraMotion();
     this.cameraMode = 'manual';
-    this.cameraInteractionMoved = false;
+    if (this.activeCameraPointers.size === 0) {
+      this.cameraInteractionMoved = false;
+      this.cameraInteractionHadMultiplePointers = false;
+    }
     this.activeCameraPointers.set(pointerId, point);
     if (this.activeCameraPointers.size >= 2) {
+      this.cameraInteractionHadMultiplePointers = true;
       this.beginCameraPinch();
       return;
     }
@@ -900,6 +887,15 @@ export class LivingWorldScene extends Phaser.Scene {
   }
 
   private handleCameraPointerUp(pointer: Phaser.Input.Pointer) {
+    const wasActivePointer = this.activeCameraPointers.has(pointer.id);
+    const shouldCheckAgentHotspot =
+      wasActivePointer
+      && this.activeCameraPointers.size === 1
+      && !this.cameraInteractionMoved
+      && !this.cameraInteractionHadMultiplePointers
+      && this.isCanvasPointerEvent(pointer.event);
+    const tapPoint = shouldCheckAgentHotspot ? this.screenPointFromPointer(pointer) : null;
+
     this.activeCameraPointers.delete(pointer.id);
     this.cameraDrag = null;
     this.cameraPinch = null;
@@ -915,6 +911,10 @@ export class LivingWorldScene extends Phaser.Scene {
         startScrollY: this.cameras.main.scrollY,
       };
     }
+
+    if (tapPoint && !remainingPointer) {
+      this.emitAgentAreaSelectAt(tapPoint);
+    }
   }
 
   private handleCameraWheel(
@@ -923,6 +923,7 @@ export class LivingWorldScene extends Phaser.Scene {
     _deltaX: number,
     deltaY: number,
   ) {
+    if (!this.isCanvasPointerEvent(pointer.event)) return;
     this.stopCameraMotion();
     this.cameraMode = 'manual';
     const point = this.screenPointFromPointer(pointer);
@@ -981,9 +982,36 @@ export class LivingWorldScene extends Phaser.Scene {
     this.clampCameraToWorld();
   }
 
+  private emitAgentAreaSelectAt(screenPoint: WorldPoint) {
+    if (DEBUG_MANIFEST_WORLD || DEBUG_ISOLATED_TEST) return;
+    const zone = this.agentHotspotAt(this.screenPointToWorld(screenPoint.x, screenPoint.y));
+    if (!zone) return;
+    window.dispatchEvent(new CustomEvent('world-v2-agent-area-select', { detail: { agentId: zone } }));
+  }
+
+  private agentHotspotAt(point: WorldPoint): ZoneId | null {
+    for (const [zone, hotspot] of Object.entries(AGENT_AREA_HOTSPOTS) as Array<[ZoneId, (typeof AGENT_AREA_HOTSPOTS)[ZoneId]]>) {
+      if (!this.worldData.zones[zone]) continue;
+      const { rect } = hotspot;
+      if (
+        point.x >= rect.x
+        && point.x <= rect.x + rect.width
+        && point.y >= rect.y
+        && point.y <= rect.y + rect.height
+      ) {
+        return zone;
+      }
+    }
+    return null;
+  }
+
   private screenPointToWorld(screenX: number, screenY: number): WorldPoint {
     const point = this.cameras.main.getWorldPoint(screenX, screenY);
     return { x: point.x, y: point.y };
+  }
+
+  private isCanvasPointerEvent(event: Event | undefined) {
+    return event?.target === this.game.canvas;
   }
 
   private screenPointFromPointer(pointer: Phaser.Input.Pointer): WorldPoint {
