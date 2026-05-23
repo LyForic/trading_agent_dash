@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Trading Gym crest">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="38%" r="65%">
+      <stop offset="0%" stop-color="#34301d"/>
+      <stop offset="58%" stop-color="#17130d"/>
+      <stop offset="100%" stop-color="#0b0806"/>
+    </radialGradient>
+    <linearGradient id="coin" x1="112" y1="76" x2="398" y2="440" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffe49b"/>
+      <stop offset="42%" stop-color="#d99b3a"/>
+      <stop offset="100%" stop-color="#7a4522"/>
+    </linearGradient>
+    <linearGradient id="inner" x1="144" y1="124" x2="360" y2="398" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#fff0b9"/>
+      <stop offset="100%" stop-color="#a7642d"/>
+    </linearGradient>
+    <linearGradient id="blade" x1="226" y1="108" x2="290" y2="358" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffffff"/>
+      <stop offset="48%" stop-color="#80d8ff"/>
+      <stop offset="100%" stop-color="#2a79d8"/>
+    </linearGradient>
+    <filter id="blueGlow" x="-60%" y="-60%" width="220%" height="220%">
+      <feGaussianBlur stdDeviation="10" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+  <circle cx="256" cy="256" r="214" fill="#73d9ff" opacity="0.18"/>
+  <path
+    d="M256 28 366 60 452 150 484 256 452 362 366 452 256 484 146 452 60 362 28 256 60 150 146 60Z"
+    fill="url(#coin)"
+    stroke="#4f2818"
+    stroke-width="18"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M256 72 345 98 414 171 440 256 414 341 345 414 256 440 167 414 98 341 72 256 98 171 167 98Z"
+    fill="#21160e"
+    stroke="url(#inner)"
+    stroke-width="18"
+    stroke-linejoin="round"
+  />
+  <circle cx="256" cy="256" r="142" fill="#2c1c11" stroke="#6f3d20" stroke-width="10"/>
+
+  <path d="M150 184 256 110 362 184 340 208 256 150 172 208Z" fill="#f5c56a" stroke="#62351f" stroke-width="10" stroke-linejoin="round"/>
+  <path d="M172 332h168l30 48H142Z" fill="#724326" stroke="#f1bf68" stroke-width="10" stroke-linejoin="round"/>
+  <path d="M166 318h180" stroke="#fff2bd" stroke-width="18" stroke-linecap="round"/>
+  <path d="M184 282h144" stroke="#9b5d2e" stroke-width="16" stroke-linecap="round"/>
+
+  <g filter="url(#blueGlow)">
+    <path d="M256 96v72" stroke="#dff8ff" stroke-width="14" stroke-linecap="round"/>
+    <path d="M196 242h120" stroke="#dff8ff" stroke-width="24" stroke-linecap="round"/>
+    <rect x="224" y="142" width="64" height="184" rx="20" fill="url(#blade)" stroke="#e9fbff" stroke-width="10"/>
+    <path d="M256 150v168" stroke="#ffffff" stroke-width="8" stroke-linecap="round" opacity="0.62"/>
+  </g>
+
+  <path d="M178 294v-50m-14 20h28" stroke="#ffd86d" stroke-width="14" stroke-linecap="round"/>
+  <path d="M334 294v-72m-18 28h36" stroke="#ffd86d" stroke-width="14" stroke-linecap="round"/>
+  <path d="M214 370h84" stroke="#73d9ff" stroke-width="12" stroke-linecap="round" opacity="0.8"/>
+  <path d="M126 250h42M344 250h42" stroke="#f4c266" stroke-width="12" stroke-linecap="round"/>
+</svg>

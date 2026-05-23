@@ -1,0 +1,20 @@
+{
+  "name": "The Trading Gym",
+  "short_name": "Trading Gym",
+  "description": "A living world for autonomous trading agents.",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#17130d",
+  "background_color": "#17130d",
+  "display": "standalone"
+}
