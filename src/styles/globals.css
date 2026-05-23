@@ -2520,6 +2520,7 @@ body[data-route="world-v2"] {
   min-height: 0;
   flex-direction: column;
   gap: 10px;
+  overflow-x: hidden;
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
@@ -2563,7 +2564,6 @@ body[data-route="world-v2"] {
   background:
     linear-gradient(90deg, color-mix(in srgb, var(--agent-accent) 25%, transparent), transparent 48%),
     rgba(255, 247, 229, 0.13);
-  transform: translateX(2px);
 }
 
 .world-v2-agent-portrait {
