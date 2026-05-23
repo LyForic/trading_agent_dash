@@ -390,6 +390,29 @@ const DEBUG_DEPTH_CHECKPOINTS = [
   { key: '-', label: 'front of small cherry', x: 708, y: 170 },
 ] as const;
 
+const AGENT_AREA_HOTSPOTS: Record<ZoneId, { label: string; rect: { x: number; y: number; width: number; height: number } }> = {
+  apex: {
+    label: 'Open Apex trading card',
+    rect: { x: 32, y: 36, width: 676, height: 430 },
+  },
+  metheus: {
+    label: 'Open Metheus trading card',
+    rect: { x: 744, y: 32, width: 760, height: 470 },
+  },
+  gale: {
+    label: 'Open Gale trading card',
+    rect: { x: 24, y: 492, width: 640, height: 386 },
+  },
+  bacon: {
+    label: 'Open Bacon trading card',
+    rect: { x: -512, y: 32, width: 512, height: 930 },
+  },
+  nova: {
+    label: 'Open Nova trading card',
+    rect: { x: 64, y: 960, width: 1376, height: 576 },
+  },
+};
+
 function groundPreviewZoneFromQuery(zone: string | null | undefined) {
   if (GROUND_PREVIEW_ZONES.includes(zone as (typeof GROUND_PREVIEW_ZONES)[number])) {
     return zone as (typeof GROUND_PREVIEW_ZONES)[number];
@@ -544,6 +567,7 @@ export class LivingWorldScene extends Phaser.Scene {
       if (REFERENCE_WORLD) this.createReferenceOverlay();
     }
     this.enableCameraControls();
+    this.createAgentAreaHotspots();
     this.sceneReady = true;
     if (this.pendingFocusAgent !== undefined) {
       const pendingFocusAgent = this.pendingFocusAgent;
@@ -808,6 +832,24 @@ export class LivingWorldScene extends Phaser.Scene {
     this.input.on(Phaser.Input.Events.POINTER_UP, this.handleCameraPointerUp, this);
     this.input.on(Phaser.Input.Events.POINTER_UP_OUTSIDE, this.handleCameraPointerUp, this);
     this.input.on(Phaser.Input.Events.POINTER_WHEEL, this.handleCameraWheel, this);
+  }
+
+  private createAgentAreaHotspots() {
+    if (DEBUG_MANIFEST_WORLD || DEBUG_ISOLATED_TEST) return;
+
+    for (const [zone, hotspot] of Object.entries(AGENT_AREA_HOTSPOTS) as Array<[ZoneId, (typeof AGENT_AREA_HOTSPOTS)[ZoneId]]>) {
+      if (!this.worldData.zones[zone]) continue;
+      const { rect } = hotspot;
+      this.add.zone(rect.x + rect.width / 2, rect.y + rect.height / 2, rect.width, rect.height)
+        .setOrigin(0.5)
+        .setDepth(DEPTH.reference + 20)
+        .setData('zone', zone)
+        .setInteractive({ useHandCursor: true })
+        .on('pointerup', (pointer: Phaser.Input.Pointer) => {
+          if (pointer.button !== 0 || this.cameraInteractionMoved) return;
+          window.dispatchEvent(new CustomEvent('world-v2-agent-area-select', { detail: { agentId: zone } }));
+        });
+    }
   }
 
   private handleCameraPointerDown(pointer: Phaser.Input.Pointer) {

@@ -4,6 +4,7 @@ import {
   BarChart3,
   BookOpen,
   ChevronDown,
+  CircleHelp,
   Menu,
   PanelLeftClose,
   Sparkles,
@@ -13,6 +14,7 @@ import { AgentLearnMorePanel } from '@/components/content/AgentLearnMorePanel';
 import { TimeFilterPill } from '@/components/content/TimeFilterPill';
 import { TradeLog } from '@/components/content/TradeLog';
 import { TradeReplayPanel } from '@/components/content/TradeReplayPanel';
+import { WorldIntroPanel } from '@/components/content/WorldIntroPanel';
 import { AGENT_META } from '@/lib/agentMeta';
 import { useAgentData } from '@/lib/useAgentData';
 import { useAgentWindow } from '@/lib/useAgentWindow';
@@ -120,6 +122,7 @@ interface BnfChange {
 interface PhaserWorldProps {
   selectedAgentId: ZoneId | null;
   focusRequestId: number;
+  onAgentAreaSelect: (agentId: ZoneId) => void;
 }
 
 function InstagramOutlineIcon() {
@@ -150,7 +153,7 @@ function YouTubeOutlineIcon() {
   );
 }
 
-function PhaserWorld({ selectedAgentId, focusRequestId }: PhaserWorldProps) {
+function PhaserWorld({ selectedAgentId, focusRequestId, onAgentAreaSelect }: PhaserWorldProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const sceneRef = useRef<LivingWorldSceneInstance | null>(null);
 
@@ -208,6 +211,16 @@ function PhaserWorld({ selectedAgentId, focusRequestId }: PhaserWorldProps) {
   useEffect(() => {
     sceneRef.current?.focusAgent(selectedAgentId);
   }, [selectedAgentId, focusRequestId]);
+
+  useEffect(() => {
+    const handleAgentAreaSelect = (event: Event) => {
+      const agentId = (event as CustomEvent<{ agentId?: ZoneId }>).detail?.agentId;
+      if (agentId) onAgentAreaSelect(agentId);
+    };
+
+    window.addEventListener('world-v2-agent-area-select', handleAgentAreaSelect);
+    return () => window.removeEventListener('world-v2-agent-area-select', handleAgentAreaSelect);
+  }, [onAgentAreaSelect]);
 
   return <div ref={hostRef} className="world-v2-game" aria-hidden />;
 }
@@ -315,6 +328,7 @@ export function WorldV2Page() {
   const [balanceMenuOpen, setBalanceMenuOpen] = useState(false);
   const [selectedTrade, setSelectedTrade] = useState<TradeLogEntry | null>(null);
   const [learnMoreOpen, setLearnMoreOpen] = useState(false);
+  const [worldIntroOpen, setWorldIntroOpen] = useState(false);
   const dragStartY = useRef<number | null>(null);
   const balanceWrapRef = useRef<HTMLDivElement | null>(null);
 
@@ -423,6 +437,7 @@ export function WorldV2Page() {
     setSelectedAgentId(id);
     setSelectedTrade(null);
     setLearnMoreOpen(false);
+    setWorldIntroOpen(false);
     setFocusRequestId((requestId) => requestId + 1);
     setBalanceMenuOpen(false);
     setMenuExpanded(false);
@@ -436,7 +451,24 @@ export function WorldV2Page() {
 
   const openTradeReplay = (row: TradeLogEntry) => {
     setLearnMoreOpen(false);
+    setWorldIntroOpen(false);
     setSelectedTrade(row);
+  };
+
+  const openWorldIntro = () => {
+    setSelectedAgentId(null);
+    setSelectedTrade(null);
+    setLearnMoreOpen(false);
+    setWorldIntroOpen(true);
+    setFocusRequestId((requestId) => requestId + 1);
+    setBalanceMenuOpen(false);
+    setMenuExpanded(false);
+    if (isMobileViewport()) setMenuHidden(true);
+  };
+
+  const closeWorldIntro = () => {
+    setWorldIntroOpen(false);
+    if (isMobileViewport()) setMenuHidden(false);
   };
 
   const handlePointerDown = (event: PointerEvent<HTMLElement>) => {
@@ -510,11 +542,23 @@ export function WorldV2Page() {
 
   return (
     <main className="world-v2-page">
-      <PhaserWorld selectedAgentId={selectedAgentId} focusRequestId={focusRequestId} />
+      <PhaserWorld selectedAgentId={selectedAgentId} focusRequestId={focusRequestId} onAgentAreaSelect={selectAgent} />
 
       {!isolatedTestMode && <div className="world-v2-vignette" />}
 
-      {!isolatedTestMode && menuHidden && !selectedAgentId && (
+      {!isolatedTestMode && (
+        <button
+          type="button"
+          className="world-v2-help-button"
+          onClick={worldIntroOpen ? closeWorldIntro : openWorldIntro}
+          aria-label="About the Living World"
+          aria-pressed={worldIntroOpen}
+        >
+          <CircleHelp size={20} aria-hidden />
+        </button>
+      )}
+
+      {!isolatedTestMode && menuHidden && !selectedAgentId && !worldIntroOpen && (
         <button
           type="button"
           className="world-v2-menu-peek"
@@ -778,6 +822,32 @@ export function WorldV2Page() {
               />
             </>
           )}
+        </section>
+      )}
+
+      {!isolatedTestMode && worldIntroOpen && (
+        <section
+          className="world-v2-stats-panel world-v2-stats-panel--world-intro"
+          aria-label="About the Living World"
+          style={{ '--agent-accent': 'var(--color-nova)' } as React.CSSProperties}
+        >
+          <div className="world-v2-stats-head world-v2-intro-head">
+            <div className="world-v2-stats-title">
+              <p>Living World</p>
+              <h2>About the World</h2>
+              <span>Trading agents, delayed data, and strategy notes</span>
+            </div>
+            <button
+              type="button"
+              className="world-v2-icon-button world-v2-close-button"
+              onClick={closeWorldIntro}
+              aria-label="Close world introduction"
+            >
+              <X size={18} aria-hidden />
+            </button>
+          </div>
+
+          <WorldIntroPanel />
         </section>
       )}
 
