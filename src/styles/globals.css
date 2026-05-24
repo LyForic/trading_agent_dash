@@ -2233,8 +2233,284 @@ body[data-route="world-v2"] {
 .world-v2-menu,
 .world-v2-stats-panel,
 .world-v2-menu-peek,
-.world-v2-help-button {
+.world-v2-help-button,
+.world-v2-lab-stack,
+.world-v2-episode-stack {
   z-index: 10;
+}
+
+.world-v2-lab-stack {
+  position: absolute;
+  left: 370px;
+  top: 18px;
+  width: min(430px, calc(100vw - 720px));
+  min-width: 360px;
+  display: grid;
+  gap: 10px;
+  pointer-events: auto;
+}
+
+.world-v2-episode-stack {
+  position: absolute;
+  right: 18px;
+  top: 72px;
+  width: 318px;
+  pointer-events: auto;
+}
+
+.public-lab-tracker,
+.todays-episode-panel,
+.follow-experiment {
+  border: 1px solid rgba(255, 238, 199, 0.22);
+  border-radius: 8px;
+  background: rgba(25, 18, 12, 0.86);
+  color: #fff7e5;
+  box-shadow: 0 18px 52px rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(10px);
+}
+
+.public-lab-tracker {
+  display: grid;
+  gap: 10px;
+  padding: 13px;
+}
+
+.public-lab-tracker__head,
+.public-lab-tracker__moves,
+.public-lab-tracker__question,
+.todays-episode-panel__actions,
+.todays-episode-panel__links,
+.follow-experiment,
+.follow-experiment__actions,
+.follow-experiment__links {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.public-lab-tracker__head {
+  justify-content: space-between;
+}
+
+.public-lab-tracker__head span,
+.public-lab-tracker__grid span,
+.public-lab-tracker__moves span,
+.public-lab-tracker__season span,
+.todays-episode-panel__body span,
+.follow-experiment__copy span {
+  color: rgba(255, 239, 201, 0.64);
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.public-lab-tracker__head h1,
+.todays-episode-panel__body h2 {
+  margin: 4px 0 0;
+  font-family: var(--font-display);
+  line-height: 1;
+}
+
+.public-lab-tracker__head h1 {
+  font-size: 22px;
+}
+
+.public-lab-tracker__statement,
+.todays-episode-panel__body p,
+.follow-experiment__copy p {
+  margin: 0;
+  color: rgba(255, 239, 201, 0.78);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.public-lab-tracker__grid,
+.public-lab-tracker__season {
+  display: grid;
+  gap: 7px;
+}
+
+.public-lab-tracker__grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.public-lab-tracker__season {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.public-lab-tracker__grid > div,
+.public-lab-tracker__season > div,
+.public-lab-tracker__moves button,
+.public-lab-tracker__moves > div {
+  min-width: 0;
+  padding: 8px;
+  border: 1px solid rgba(255, 238, 199, 0.12);
+  border-radius: 7px;
+  background: rgba(255, 247, 229, 0.07);
+}
+
+.public-lab-tracker__grid strong,
+.public-lab-tracker__season strong,
+.public-lab-tracker__moves strong {
+  display: block;
+  margin-top: 4px;
+  overflow-wrap: anywhere;
+  color: #fff7e5;
+  font-size: 14px;
+  font-weight: 900;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.public-lab-tracker__moves button {
+  flex: 1;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.public-lab-tracker__moves > div {
+  flex: 0 0 auto;
+}
+
+.public-lab-tracker__question {
+  padding-top: 2px;
+  color: rgba(255, 239, 201, 0.7);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.todays-episode-panel {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 10px;
+  padding: 11px;
+}
+
+.todays-episode-panel__thumb {
+  display: grid;
+  place-items: center;
+  width: 64px;
+  height: 86px;
+  border: 1px solid rgba(255, 238, 199, 0.14);
+  border-radius: 7px;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(129, 216, 255, 0.24), transparent 58%),
+    rgba(255, 247, 229, 0.08);
+  color: #fff7e5;
+}
+
+.todays-episode-panel__body {
+  min-width: 0;
+}
+
+.todays-episode-panel__body h2 {
+  font-size: 18px;
+}
+
+.todays-episode-panel__body p {
+  margin-top: 6px;
+}
+
+.todays-episode-panel__actions,
+.todays-episode-panel__links {
+  grid-column: 1 / -1;
+}
+
+.todays-episode-panel__actions button,
+.todays-episode-panel__links a,
+.follow-experiment__primary,
+.follow-experiment__links a,
+.trade-replay-capture-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-height: 30px;
+  border: 1px solid rgba(255, 238, 199, 0.18);
+  border-radius: 7px;
+  background: rgba(255, 247, 229, 0.09);
+  color: #fff7e5;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.todays-episode-panel__actions button {
+  flex: 1;
+}
+
+.todays-episode-panel__links a,
+.follow-experiment__links a {
+  flex: 1;
+  min-height: 26px;
+  color: rgba(255, 239, 201, 0.78);
+}
+
+.todays-episode-panel__actions button:hover,
+.todays-episode-panel__actions button:focus-visible,
+.todays-episode-panel__links a:hover,
+.todays-episode-panel__links a:focus-visible,
+.follow-experiment__primary:hover,
+.follow-experiment__primary:focus-visible,
+.follow-experiment__links a:hover,
+.follow-experiment__links a:focus-visible,
+.trade-replay-capture-toggle:hover,
+.trade-replay-capture-toggle:focus-visible,
+.trade-replay-capture-toggle--active {
+  outline: none;
+  border-color: rgba(255, 238, 199, 0.44);
+  background: rgba(255, 247, 229, 0.16);
+}
+
+.follow-experiment {
+  justify-content: space-between;
+  padding: 10px;
+}
+
+.follow-experiment--compact {
+  border-color: rgba(255, 238, 199, 0.14);
+  background: rgba(255, 247, 229, 0.07);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.follow-experiment__copy {
+  min-width: 0;
+}
+
+.follow-experiment__copy p {
+  margin-top: 4px;
+}
+
+.follow-experiment__actions {
+  flex: 0 0 auto;
+}
+
+.follow-experiment__primary {
+  min-width: 88px;
+  background:
+    linear-gradient(90deg, rgba(129, 216, 255, 0.2), rgba(255, 216, 109, 0.14)),
+    rgba(255, 247, 229, 0.1);
+}
+
+.follow-experiment__links {
+  gap: 4px;
+}
+
+.follow-experiment__links a {
+  min-width: 34px;
+  padding: 0 6px;
 }
 
 .world-v2-help-button {
@@ -2712,6 +2988,11 @@ body[data-route="world-v2"] {
   gap: 12px;
 }
 
+.world-v2-stats-panel--capture {
+  width: min(430px, calc(100vw - 28px));
+  max-height: min(820px, calc(100dvh - 28px));
+}
+
 .world-v2-stats-panel--learn {
   width: min(760px, calc(100vw - 44px));
   max-height: min(780px, calc(100dvh - 48px));
@@ -2965,6 +3246,92 @@ body[data-route="world-v2"] {
   background: color-mix(in srgb, var(--agent-accent) 18%, rgba(255, 247, 229, 0.08));
 }
 
+.trade-replay-capture-toggle {
+  flex: 0 0 auto;
+  min-height: 28px;
+  padding: 0 8px;
+  color: inherit;
+}
+
+.trade-replay-panel--capture {
+  min-height: 0;
+  aspect-ratio: 9 / 14;
+  align-content: start;
+  gap: 12px;
+  padding: 14px !important;
+  background:
+    radial-gradient(circle at 50% 16%, color-mix(in srgb, var(--agent-accent) 22%, transparent), transparent 48%),
+    rgba(25, 18, 12, 0.96) !important;
+}
+
+.trade-replay-panel--capture .trade-replay-head {
+  align-items: start;
+}
+
+.trade-replay-panel--capture .trade-replay-timebox {
+  display: none;
+}
+
+.trade-replay-capture-caption {
+  display: grid;
+  gap: 5px;
+  padding: 10px;
+  border: 1px solid rgba(255, 238, 199, 0.14);
+  border-radius: 7px;
+  background: rgba(255, 247, 229, 0.08);
+}
+
+.trade-replay-capture-caption span {
+  color: rgba(255, 239, 201, 0.62);
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.trade-replay-capture-caption strong {
+  color: #fff7e5;
+  font-family: var(--font-display);
+  font-size: 24px;
+  line-height: 1.05;
+}
+
+.trade-replay-panel--capture .trade-replay-chart {
+  border-radius: 8px;
+}
+
+.trade-replay-panel--capture .trade-replay-side-percent {
+  font-size: 38px;
+}
+
+.trade-replay-panel--capture .trade-replay-readout {
+  grid-template-columns: 58px minmax(110px, auto) minmax(0, 1fr);
+  padding: 10px;
+  border: 1px solid rgba(255, 238, 199, 0.14);
+  border-radius: 7px;
+  background: rgba(0, 0, 0, 0.16);
+}
+
+.trade-replay-panel--capture .trade-replay-readout strong {
+  min-width: 110px;
+  font-size: 20px;
+}
+
+.trade-replay-panel--capture .trade-replay-value-grid {
+  grid-template-columns: 1fr;
+}
+
+.trade-replay-panel--capture .trade-replay-value-grid div {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.trade-replay-panel--capture .trade-replay-value-grid span,
+.trade-replay-panel--capture .trade-replay-value-grid strong {
+  font-size: 13px;
+}
+
 .agent-learning-panel {
   display: grid;
   gap: 12px;
@@ -3043,6 +3410,79 @@ body[data-route="world-v2"] {
   font-size: 19px;
 }
 
+.agent-strategy-brief {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 9px;
+}
+
+.agent-strategy-brief > div,
+.agent-representative-trades {
+  min-width: 0;
+  padding: 11px;
+  border: 1px solid rgba(255, 238, 199, 0.13);
+  border-radius: 7px;
+  background: rgba(255, 247, 229, 0.06);
+}
+
+.agent-strategy-brief__wide {
+  grid-column: 1 / -1;
+}
+
+.agent-strategy-brief span {
+  display: block;
+  margin-bottom: 6px;
+  color: rgba(255, 239, 201, 0.58);
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.agent-strategy-brief p {
+  margin: 0;
+  color: rgba(255, 239, 201, 0.78);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.agent-representative-trades {
+  display: grid;
+  gap: 10px;
+}
+
+.agent-representative-trades ul {
+  display: grid;
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.agent-representative-trades li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.14);
+}
+
+.agent-representative-trades li span {
+  overflow: hidden;
+  color: rgba(255, 239, 201, 0.78);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agent-representative-trades li strong {
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
 .agent-learning-empty {
   padding: 12px;
   border: 1px solid rgba(255, 238, 199, 0.12);
@@ -3109,7 +3549,101 @@ body[data-route="world-v2"] {
   line-height: 1.05;
 }
 
+@media (max-width: 1180px) and (min-width: 761px) {
+  .world-v2-lab-stack {
+    left: 370px;
+    right: 18px;
+    width: auto;
+    min-width: 0;
+  }
+
+  .world-v2-episode-stack {
+    display: none;
+  }
+}
+
 @media (max-width: 760px) {
+  .world-v2-lab-stack {
+    left: 10px;
+    right: 58px;
+    top: 10px;
+    width: auto;
+    min-width: 0;
+    gap: 7px;
+  }
+
+  .world-v2-episode-stack {
+    right: 10px;
+    top: auto;
+    bottom: calc(25dvh + 22px);
+    width: min(310px, calc(100vw - 20px));
+  }
+
+  .public-lab-tracker {
+    max-height: 32dvh;
+    gap: 8px;
+    padding: 10px;
+    overflow: hidden;
+  }
+
+  .public-lab-tracker__head h1 {
+    font-size: 18px;
+  }
+
+  .public-lab-tracker__statement {
+    font-size: 11px;
+  }
+
+  .public-lab-tracker__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .public-lab-tracker__season,
+  .public-lab-tracker__question {
+    display: none;
+  }
+
+  .public-lab-tracker__moves {
+    display: none;
+  }
+
+  .todays-episode-panel {
+    grid-template-columns: 48px minmax(0, 1fr);
+    gap: 8px;
+    padding: 9px;
+  }
+
+  .todays-episode-panel__thumb {
+    width: 48px;
+    height: 62px;
+  }
+
+  .todays-episode-panel__body h2 {
+    font-size: 16px;
+  }
+
+  .todays-episode-panel__body p {
+    font-size: 11px;
+  }
+
+  .todays-episode-panel__links {
+    display: none;
+  }
+
+  .follow-experiment:not(.follow-experiment--compact) {
+    align-items: start;
+    padding: 9px;
+  }
+
+  .follow-experiment:not(.follow-experiment--compact) .follow-experiment__copy p,
+  .follow-experiment:not(.follow-experiment--compact) .follow-experiment__links {
+    display: none;
+  }
+
+  .follow-experiment__primary {
+    min-width: 82px;
+  }
+
   .world-v2-menu {
     left: 10px;
     right: 10px;
@@ -3265,6 +3799,11 @@ body[data-route="world-v2"] {
     width: min(430px, calc(100vw - 20px));
   }
 
+  .world-v2-stats-panel--capture {
+    width: min(430px, calc(100vw - 14px));
+    max-height: calc(100dvh - 14px);
+  }
+
   .world-v2-stats-panel--learn {
     width: min(430px, calc(100vw - 20px));
     max-height: calc(100dvh - 24px);
@@ -3308,9 +3847,14 @@ body[data-route="world-v2"] {
   .agent-learning-about p,
   .agent-learning-post p,
   .agent-learning-empty,
+  .agent-strategy-brief p,
   .world-v2-intro-lede p,
   .world-v2-intro-section p {
     font-size: 13px;
+  }
+
+  .agent-strategy-brief {
+    grid-template-columns: 1fr;
   }
 
   .world-v2-intro-sections {

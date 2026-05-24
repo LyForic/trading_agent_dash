@@ -1,9 +1,12 @@
 import { useAgentLearning } from '@/lib/useAgentLearning';
-import type { AgentId, AgentLearningPost } from '@/lib/types';
+import { AGENT_STRATEGY_PROFILES } from '@/lib/publicLab';
+import { formatPnl } from '@/lib/formatting';
+import type { AgentId, AgentLearningPost, TradeLogEntry } from '@/lib/types';
 
 interface Props {
   agentId: AgentId;
   about: string;
+  representativeTrades?: TradeLogEntry[];
 }
 
 function formatPostDate(value: string) {
@@ -33,8 +36,20 @@ function LearningPostCard({ post }: { post: AgentLearningPost }) {
   );
 }
 
-export function AgentLearnMorePanel({ agentId, about }: Props) {
+function RepresentativeTrade({ trade }: { trade: TradeLogEntry }) {
+  return (
+    <li>
+      <span>{trade.side.toUpperCase()} {trade.contract_ticker}</span>
+      <strong className={trade.pnl >= 0 ? 'trade-replay-readout--gain' : 'trade-replay-readout--loss'}>
+        {formatPnl(trade.pnl)}
+      </strong>
+    </li>
+  );
+}
+
+export function AgentLearnMorePanel({ agentId, about, representativeTrades = [] }: Props) {
   const { posts, loading, error } = useAgentLearning(agentId);
+  const strategy = AGENT_STRATEGY_PROFILES[agentId];
 
   return (
     <div className="agent-learning-panel">
@@ -42,6 +57,47 @@ export function AgentLearnMorePanel({ agentId, about }: Props) {
         <span>About Me</span>
         <h3 id={`agent-learning-about-${agentId}`}>Strategy</h3>
         <p>{about}</p>
+      </section>
+
+      <section className="agent-strategy-brief" aria-label="Agent strategy brief">
+        <div>
+          <span>Plain-English Thesis</span>
+          <p>{strategy.plainThesis}</p>
+        </div>
+        <div>
+          <span>Markets Traded</span>
+          <p>{strategy.marketsTraded}</p>
+        </div>
+        <div>
+          <span>Risk Posture</span>
+          <p>{strategy.riskPosture}</p>
+        </div>
+        <div>
+          <span>When It Fails</span>
+          <p>{strategy.failureMode}</p>
+        </div>
+        <div className="agent-strategy-brief__wide">
+          <span>Current Learning</span>
+          <p>{strategy.currentLearning}</p>
+        </div>
+      </section>
+
+      <section className="agent-representative-trades" aria-label="Representative trades">
+        <div className="agent-learning-posts-head">
+          <span>Representative Trades</span>
+          <strong>{representativeTrades.length > 0 ? `${representativeTrades.length} recent` : 'Pending'}</strong>
+        </div>
+        {representativeTrades.length > 0 ? (
+          <ul>
+            {representativeTrades.map((trade) => (
+              <RepresentativeTrade key={trade.id} trade={trade} />
+            ))}
+          </ul>
+        ) : (
+          <div className="agent-learning-empty">
+            Representative trades will appear after this agent settles more public trades.
+          </div>
+        )}
       </section>
 
       <div className="agent-learning-posts-head">

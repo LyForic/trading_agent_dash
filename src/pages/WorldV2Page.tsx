@@ -11,11 +11,20 @@ import {
   X,
 } from 'lucide-react';
 import { AgentLearnMorePanel } from '@/components/content/AgentLearnMorePanel';
+import { FollowExperimentCta } from '@/components/content/FollowExperimentCta';
+import { PublicLabTracker } from '@/components/content/PublicLabTracker';
 import { TimeFilterPill } from '@/components/content/TimeFilterPill';
+import { TodaysEpisodePanel } from '@/components/content/TodaysEpisodePanel';
 import { TradeLog } from '@/components/content/TradeLog';
 import { TradeReplayPanel } from '@/components/content/TradeReplayPanel';
 import { WorldIntroPanel } from '@/components/content/WorldIntroPanel';
 import { AGENT_META } from '@/lib/agentMeta';
+import {
+  biggestMoveAcrossAgents,
+  latestTradeAcrossAgents,
+  SOCIAL_LINKS,
+  trackPublicLabEvent,
+} from '@/lib/publicLab';
 import { useAgentData } from '@/lib/useAgentData';
 import { useAgentWindow } from '@/lib/useAgentWindow';
 import { useBnfPortfolio } from '@/lib/useBnfPortfolio';
@@ -73,23 +82,17 @@ const WORLD_MENU_AGENTS: Record<WorldMenuAgentId, WorldMenuAgent> = {
 
 const WORLD_AGENT_ORDER: WorldMenuAgentId[] = ['apex', 'metheus', 'gale', 'bacon', 'nova'];
 
-const SOCIAL_LINKS = [
+const SOCIAL_LINK_ICONS = [
   {
     id: 'instagram',
-    label: 'Instagram',
-    href: 'https://www.instagram.com/brandonnfongg?igsh=NTc4MTIwNjQ2YQ%3D%3D&utm_source=qr',
     Icon: InstagramOutlineIcon,
   },
   {
     id: 'tiktok',
-    label: 'TikTok',
-    href: 'https://www.tiktok.com/@brandonnfongg?_r=1&_t=ZP-96Z6MTJdtl9',
     Icon: TikTokOutlineIcon,
   },
   {
     id: 'youtube',
-    label: 'YouTube',
-    href: 'https://youtube.com/@brandonnfongg?si=204J6kVu31_SXa31',
     Icon: YouTubeOutlineIcon,
   },
 ] as const;
@@ -310,6 +313,24 @@ function calculateBnfChange(points: BnfPortfolioPoint[], window: BnfChangeWindow
   };
 }
 
+function calculateAccountHigh(points: BnfPortfolioPoint[]) {
+  if (points.length === 0) return null;
+  return points.reduce((high, point) => Math.max(high, point.combined_cleared_cents), points[0].combined_cleared_cents);
+}
+
+function calculateBiggestDrawdown(points: BnfPortfolioPoint[]) {
+  let peak: number | null = null;
+  let drawdown = 0;
+
+  for (const point of points) {
+    const value = point.combined_cleared_cents;
+    peak = peak === null ? value : Math.max(peak, value);
+    drawdown = Math.max(drawdown, peak - value);
+  }
+
+  return points.length > 0 ? drawdown : null;
+}
+
 function isMobileViewport() {
   return window.matchMedia('(max-width: 760px)').matches;
 }
@@ -327,6 +348,7 @@ export function WorldV2Page() {
   const [balanceWindow, setBalanceWindow] = useState<BnfChangeWindow>('24h');
   const [balanceMenuOpen, setBalanceMenuOpen] = useState(false);
   const [selectedTrade, setSelectedTrade] = useState<TradeLogEntry | null>(null);
+  const [replayCaptureMode, setReplayCaptureMode] = useState(false);
   const [learnMoreOpen, setLearnMoreOpen] = useState(false);
   const [worldIntroOpen, setWorldIntroOpen] = useState(false);
   const dragStartY = useRef<number | null>(null);
@@ -363,6 +385,15 @@ export function WorldV2Page() {
   const selectedAgent = selectedLiveAgentId ? agentsById[selectedLiveAgentId] : undefined;
   const selectedVm = selectedLiveAgentId ? cardViewModels[selectedLiveAgentId] : undefined;
   const selectedPanelMode = selectedTrade ? 'replay' : learnMoreOpen ? 'learn' : 'stats';
+  const tradeLogsByAgent = useMemo(
+    () => WORLD_AGENT_ORDER.reduce<Partial<Record<AgentId, TradeLogEntry[]>>>((acc, id) => {
+      acc[id] = cardViewModels[id]?.tradeLog ?? [];
+      return acc;
+    }, {}),
+    [cardViewModels],
+  );
+  const latestTrade = useMemo(() => latestTradeAcrossAgents(tradeLogsByAgent), [tradeLogsByAgent]);
+  const biggestMove = useMemo(() => biggestMoveAcrossAgents(tradeLogsByAgent), [tradeLogsByAgent]);
   const latestBnfPoint = bnf.data.points[bnf.data.points.length - 1];
   const bnfChanges = useMemo(
     () => BNF_CHANGE_WINDOWS.reduce<Record<BnfChangeWindow, BnfChange | null>>((acc, window) => {
@@ -372,6 +403,13 @@ export function WorldV2Page() {
     [bnf.data.points],
   );
   const selectedBnfChange = bnfChanges[balanceWindow];
+  const accountHighCents = useMemo(() => calculateAccountHigh(bnf.data.points), [bnf.data.points]);
+  const biggestDrawdownCents = useMemo(() => calculateBiggestDrawdown(bnf.data.points), [bnf.data.points]);
+  const bestAgent = useMemo(() => {
+    const liveAgents = data.agents.filter((agent) => agent.record.settled > 0);
+    if (liveAgents.length === 0) return null;
+    return liveAgents.reduce((best, agent) => (agent.total_pnl > best.total_pnl ? agent : best), liveAgents[0]);
+  }, [data.agents]);
   const totalBalanceCopy = latestBnfPoint
     ? formatTotalBalance(latestBnfPoint.combined_cleared_cents)
     : bnf.loading
@@ -399,6 +437,7 @@ export function WorldV2Page() {
 
   useEffect(() => {
     document.body.dataset.route = 'world-v2';
+    trackPublicLabEvent('page_view', { surface: 'root', path: window.location.pathname });
     return () => {
       delete document.body.dataset.route;
     };
@@ -428,14 +467,17 @@ export function WorldV2Page() {
   const closeFocus = () => {
     setSelectedAgentId(null);
     setSelectedTrade(null);
+    setReplayCaptureMode(false);
     setLearnMoreOpen(false);
     setFocusRequestId((requestId) => requestId + 1);
     if (isMobileViewport()) setMenuHidden(false);
   };
 
-  const selectAgent = (id: WorldMenuAgentId) => {
+  const selectAgent = (id: WorldMenuAgentId, surface = 'agent_menu') => {
+    trackPublicLabEvent('agent_open', { surface, agent_id: id });
     setSelectedAgentId(id);
     setSelectedTrade(null);
+    setReplayCaptureMode(false);
     setLearnMoreOpen(false);
     setWorldIntroOpen(false);
     setFocusRequestId((requestId) => requestId + 1);
@@ -445,19 +487,50 @@ export function WorldV2Page() {
   };
 
   const openLearnMore = () => {
+    if (selectedLiveAgentId) {
+      trackPublicLabEvent('strategy_open', { surface: 'agent_card', agent_id: selectedLiveAgentId });
+    }
     setSelectedTrade(null);
+    setReplayCaptureMode(false);
     setLearnMoreOpen(true);
   };
 
   const openTradeReplay = (row: TradeLogEntry) => {
+    trackPublicLabEvent('replay_open', {
+      surface: 'agent_card',
+      agent_id: selectedLiveAgentId,
+      trade_id: row.id,
+      contract_ticker: row.contract_ticker,
+    });
     setLearnMoreOpen(false);
     setWorldIntroOpen(false);
+    setReplayCaptureMode(false);
     setSelectedTrade(row);
   };
 
+  const openTradeForAgent = (id: WorldMenuAgentId, row: TradeLogEntry, surface: string) => {
+    trackPublicLabEvent('replay_open', {
+      surface,
+      agent_id: id,
+      trade_id: row.id,
+      contract_ticker: row.contract_ticker,
+    });
+    setSelectedAgentId(id);
+    setLearnMoreOpen(false);
+    setWorldIntroOpen(false);
+    setReplayCaptureMode(false);
+    setSelectedTrade(row);
+    setFocusRequestId((requestId) => requestId + 1);
+    setBalanceMenuOpen(false);
+    setMenuExpanded(false);
+    if (isMobileViewport()) setMenuHidden(true);
+  };
+
   const openWorldIntro = () => {
+    trackPublicLabEvent('intro_open', { surface: 'help_button' });
     setSelectedAgentId(null);
     setSelectedTrade(null);
+    setReplayCaptureMode(false);
     setLearnMoreOpen(false);
     setWorldIntroOpen(true);
     setFocusRequestId((requestId) => requestId + 1);
@@ -546,6 +619,36 @@ export function WorldV2Page() {
 
       {!isolatedTestMode && <div className="world-v2-vignette" />}
 
+      {!isolatedTestMode && !selectedAgentId && !worldIntroOpen && (
+        <div className="world-v2-lab-stack">
+          <PublicLabTracker
+            currentBalanceCents={latestBnfPoint?.combined_cleared_cents ?? null}
+            change24hCents={bnfChanges['24h']?.cents ?? null}
+            lifetimePnlCents={bnfChanges.lifetime?.cents ?? null}
+            agentCount={data.agents.filter((agent) => agent.state !== 'arriving_soon').length || WORLD_AGENT_ORDER.length}
+            biggestMove={biggestMove}
+            accountHighCents={accountHighCents}
+            biggestDrawdownCents={biggestDrawdownCents}
+            bestAgentName={bestAgent?.name ?? null}
+            points={bnf.data.points}
+            onOpenAgent={(agentId) => selectAgent(agentId, 'public_lab_tracker')}
+          />
+          <FollowExperimentCta surface="public_lab_tracker" />
+        </div>
+      )}
+
+      {!isolatedTestMode && !selectedAgentId && !worldIntroOpen && (
+        <div className="world-v2-episode-stack">
+          <TodaysEpisodePanel
+            agentId={latestTrade?.agentId ?? null}
+            agentName={latestTrade ? WORLD_MENU_AGENTS[latestTrade.agentId].name : null}
+            trade={latestTrade?.trade ?? null}
+            onOpenAgent={(agentId) => selectAgent(agentId, 'todays_episode')}
+            onOpenTrade={(agentId, trade) => openTradeForAgent(agentId, trade, 'todays_episode')}
+          />
+        </div>
+      )}
+
       {!isolatedTestMode && (
         <button
           type="button"
@@ -581,7 +684,9 @@ export function WorldV2Page() {
         <div className="world-v2-sheet-handle" aria-hidden />
         <div className="world-v2-menu-head">
           <div className="world-v2-social-links" aria-label="Social links">
-            {SOCIAL_LINKS.map(({ id, href, label, Icon }) => (
+            {SOCIAL_LINKS.map(({ id, href, label }) => {
+              const Icon = SOCIAL_LINK_ICONS.find((item) => item.id === id)?.Icon ?? InstagramOutlineIcon;
+              return (
               <a
                 key={id}
                 className="world-v2-social-link"
@@ -589,10 +694,12 @@ export function WorldV2Page() {
                 target="_blank"
                 rel="noreferrer"
                 aria-label={label}
+                onClick={() => trackPublicLabEvent('follow_click', { surface: 'agent_menu_icons', platform: id })}
               >
                 <Icon />
               </a>
-            ))}
+              );
+            })}
           </div>
           <div ref={balanceWrapRef} className="world-v2-balance-wrap">
             <button
@@ -665,6 +772,8 @@ export function WorldV2Page() {
           )}
         </div>
 
+        <FollowExperimentCta surface="agent_menu" compact />
+
         <div className="world-v2-data-status">
           <Sparkles size={14} aria-hidden />
           <span>{dataSourceLabel}</span>
@@ -674,7 +783,7 @@ export function WorldV2Page() {
 
       {!isolatedTestMode && selectedLiveAgentId && selectedAgent && selectedVm && (
         <section
-          className={`world-v2-stats-panel world-v2-stats-panel--${selectedPanelMode}`}
+          className={`world-v2-stats-panel world-v2-stats-panel--${selectedPanelMode}${replayCaptureMode ? ' world-v2-stats-panel--capture' : ''}`}
           aria-label={
             selectedTrade
               ? `${selectedAgent.name} trade replay`
@@ -710,7 +819,20 @@ export function WorldV2Page() {
                 </button>
               </div>
 
-              <TradeReplayPanel key={selectedTrade.id} row={selectedTrade} />
+              <TradeReplayPanel
+                key={selectedTrade.id}
+                row={selectedTrade}
+                captureMode={replayCaptureMode}
+                onCaptureModeChange={(enabled) => {
+                  trackPublicLabEvent('replay_capture_toggle', {
+                    agent_id: selectedLiveAgentId,
+                    trade_id: selectedTrade.id,
+                    enabled,
+                  });
+                  setReplayCaptureMode(enabled);
+                }}
+              />
+              <FollowExperimentCta surface="replay_modal" compact />
             </>
           ) : learnMoreOpen ? (
             <>
@@ -741,7 +863,9 @@ export function WorldV2Page() {
               <AgentLearnMorePanel
                 agentId={selectedLiveAgentId}
                 about={AGENT_META[selectedLiveAgentId].strategy_about}
+                representativeTrades={selectedVm.tradeLog.slice(0, 4)}
               />
+              <FollowExperimentCta surface="strategy_panel" compact />
             </>
           ) : (
             <>
@@ -820,6 +944,7 @@ export function WorldV2Page() {
                 replayMode="external"
                 onTradeSelect={openTradeReplay}
               />
+              <FollowExperimentCta surface="agent_card" compact />
             </>
           )}
         </section>

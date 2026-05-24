@@ -1,4 +1,4 @@
-import { Pause, Play, RotateCcw } from 'lucide-react';
+import { Pause, Play, RotateCcw, Smartphone } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { formatPnl } from '@/lib/formatting';
 import { buildReplay } from '@/lib/tradeReplay';
@@ -7,6 +7,8 @@ import type { TradeLogEntry } from '@/lib/types';
 
 interface Props {
   row: TradeLogEntry;
+  captureMode?: boolean;
+  onCaptureModeChange?: (enabled: boolean) => void;
 }
 
 const CHART = {
@@ -87,7 +89,7 @@ function segmentPoints(points: ReplayPoint[], elapsedMs: number, activeYesProbab
     .filter((point, index, list) => index === 0 || point.elapsedMs !== list[index - 1].elapsedMs);
 }
 
-export function TradeReplayPanel({ row }: Props) {
+export function TradeReplayPanel({ row, captureMode = false, onCaptureModeChange }: Props) {
   const replay = useMemo(() => buildReplay(row), [row]);
   const [elapsedMs, setElapsedMs] = useState(replay.durationMs);
   const [playing, setPlaying] = useState(false);
@@ -148,16 +150,35 @@ export function TradeReplayPanel({ row }: Props) {
   };
 
   return (
-    <div className="trade-replay-panel">
+    <div className={captureMode ? 'trade-replay-panel trade-replay-panel--capture' : 'trade-replay-panel'}>
       <div className="trade-replay-head">
         <div>
           <span>{row.contract_ticker}</span>
           <strong>{row.side.toUpperCase()} probability replay</strong>
         </div>
+        {onCaptureModeChange && (
+          <button
+            type="button"
+            className={captureMode ? 'trade-replay-capture-toggle trade-replay-capture-toggle--active' : 'trade-replay-capture-toggle'}
+            onClick={() => onCaptureModeChange(!captureMode)}
+            aria-pressed={captureMode}
+            aria-label={captureMode ? 'Exit vertical capture mode' : 'Open vertical capture mode'}
+          >
+            <Smartphone size={13} aria-hidden />
+            <span>9:16</span>
+          </button>
+        )}
         <div className="trade-replay-timebox">
           {replay.sourceLabel} · {formatClock(replay.contractStart)}-{formatClock(replay.contractEnd)}
         </div>
       </div>
+
+      {captureMode && (
+        <div className="trade-replay-capture-caption">
+          <span>BNF Public Lab</span>
+          <strong>{row.side.toUpperCase()} moved {formatPercent(pctMove)} from entry</strong>
+        </div>
+      )}
 
       <div className="trade-replay-chart" aria-label="15 minute trade replay chart showing probabilities">
         <svg viewBox={`0 0 ${CHART.width} ${CHART.height}`} role="img">
