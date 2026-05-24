@@ -5,6 +5,7 @@ import {
   BookOpen,
   ChevronDown,
   CircleHelp,
+  FlaskConical,
   Menu,
   PanelLeftClose,
   Sparkles,
@@ -347,6 +348,7 @@ export function WorldV2Page() {
   const [menuExpanded, setMenuExpanded] = useState(false);
   const [balanceWindow, setBalanceWindow] = useState<BnfChangeWindow>('24h');
   const [balanceMenuOpen, setBalanceMenuOpen] = useState(false);
+  const [labMinimized, setLabMinimized] = useState(false);
   const [selectedTrade, setSelectedTrade] = useState<TradeLogEntry | null>(null);
   const [replayCaptureMode, setReplayCaptureMode] = useState(false);
   const [learnMoreOpen, setLearnMoreOpen] = useState(false);
@@ -619,21 +621,35 @@ export function WorldV2Page() {
 
       {!isolatedTestMode && <div className="world-v2-vignette" />}
 
-      {!isolatedTestMode && !selectedAgentId && !worldIntroOpen && (
+      {!isolatedTestMode && !selectedAgentId && !worldIntroOpen && labMinimized && (
+        <button
+          type="button"
+          className="world-v2-lab-toggle-button"
+          onClick={() => setLabMinimized(false)}
+          aria-label="Show public lab tracker"
+        >
+          <FlaskConical size={19} aria-hidden />
+        </button>
+      )}
+
+      {!isolatedTestMode && !selectedAgentId && !worldIntroOpen && !labMinimized && (
         <div className="world-v2-lab-stack">
-          <PublicLabTracker
-            currentBalanceCents={latestBnfPoint?.combined_cleared_cents ?? null}
-            change24hCents={bnfChanges['24h']?.cents ?? null}
-            lifetimePnlCents={bnfChanges.lifetime?.cents ?? null}
-            agentCount={data.agents.filter((agent) => agent.state !== 'arriving_soon').length || WORLD_AGENT_ORDER.length}
-            biggestMove={biggestMove}
-            accountHighCents={accountHighCents}
-            biggestDrawdownCents={biggestDrawdownCents}
-            bestAgentName={bestAgent?.name ?? null}
-            points={bnf.data.points}
-            onOpenAgent={(agentId) => selectAgent(agentId, 'public_lab_tracker')}
-          />
-          <FollowExperimentCta surface="public_lab_tracker" />
+          <div className="world-v2-lab-card">
+            <PublicLabTracker
+              currentBalanceCents={latestBnfPoint?.combined_cleared_cents ?? null}
+              change24hCents={bnfChanges['24h']?.cents ?? null}
+              lifetimePnlCents={bnfChanges.lifetime?.cents ?? null}
+              agentCount={data.agents.filter((agent) => agent.state !== 'arriving_soon').length || WORLD_AGENT_ORDER.length}
+              biggestMove={biggestMove}
+              accountHighCents={accountHighCents}
+              biggestDrawdownCents={biggestDrawdownCents}
+              bestAgentName={bestAgent?.name ?? null}
+              points={bnf.data.points}
+              onOpenAgent={(agentId) => selectAgent(agentId, 'public_lab_tracker')}
+              onMinimize={() => setLabMinimized(true)}
+            />
+            <FollowExperimentCta surface="public_lab_tracker" />
+          </div>
         </div>
       )}
 
@@ -771,8 +787,6 @@ export function WorldV2Page() {
             </div>
           )}
         </div>
-
-        <FollowExperimentCta surface="agent_menu" compact />
 
         <div className="world-v2-data-status">
           <Sparkles size={14} aria-hidden />

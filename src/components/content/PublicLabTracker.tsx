@@ -1,4 +1,4 @@
-import { FlaskConical, TrendingDown, TrendingUp, Users } from 'lucide-react';
+import { FlaskConical, Minimize2, TrendingDown, TrendingUp, Users } from 'lucide-react';
 import { formatPnl } from '@/lib/formatting';
 import {
   PUBLIC_LAB_EXPERIMENT,
@@ -24,6 +24,7 @@ interface Props {
   bestAgentName: string | null;
   onOpenAgent: (agentId: AgentId) => void;
   points: BnfPortfolioPoint[];
+  onMinimize?: () => void;
 }
 
 function formatDollars(cents: number | null) {
@@ -52,6 +53,7 @@ export function PublicLabTracker({
   bestAgentName,
   onOpenAgent,
   points,
+  onMinimize,
 }: Props) {
   const day = publicLabDay();
   const latestPoint = points[points.length - 1];
@@ -63,7 +65,14 @@ export function PublicLabTracker({
           <span>Public Lab</span>
           <h1>Day {day}: real agents, real trades.</h1>
         </div>
-        <FlaskConical size={20} aria-hidden />
+        <div className="public-lab-tracker__head-actions">
+          <FlaskConical size={20} aria-hidden />
+          {onMinimize && (
+            <button type="button" onClick={onMinimize} aria-label="Minimize public lab tracker">
+              <Minimize2 size={14} aria-hidden />
+            </button>
+          )}
+        </div>
       </div>
 
       <p className="public-lab-tracker__statement">{PUBLIC_LAB_EXPERIMENT}</p>
