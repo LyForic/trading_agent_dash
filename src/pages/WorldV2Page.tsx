@@ -471,7 +471,6 @@ export function WorldV2Page() {
     setSelectedTrade(null);
     setReplayCaptureMode(false);
     setLearnMoreOpen(false);
-    setLabMinimized(false);
     setFocusRequestId((requestId) => requestId + 1);
     if (isMobileViewport()) setMenuHidden(false);
   };
@@ -544,7 +543,6 @@ export function WorldV2Page() {
 
   const closeWorldIntro = () => {
     setWorldIntroOpen(false);
-    setLabMinimized(false);
     if (isMobileViewport()) setMenuHidden(false);
   };
 
