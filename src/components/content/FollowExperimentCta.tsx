@@ -22,10 +22,11 @@ export function FollowExperimentCta({ surface, compact = false }: Props) {
           href={primary.href}
           target="_blank"
           rel="noreferrer"
+          aria-label="Follow @brandonnfongg"
           onClick={() => trackPublicLabEvent('follow_click', { surface, platform: primary.id })}
         >
           <Bell size={15} aria-hidden />
-          <span>Follow @brandonnfongg</span>
+          <span>@brandonnfongg</span>
         </a>
         <div className="follow-experiment__links" aria-label="Follow platforms">
           {SOCIAL_LINKS.map((link) => (
