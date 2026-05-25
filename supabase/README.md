@@ -42,9 +42,10 @@ live dashboard.
   learning posts. The frontend polls this view while a Learn More card is open
   so new notes appear without a deploy. Anon `SELECT` GRANTED.
 - **`public_lab_episodes`** — privileged sync-written feed for short-form
-  public lab posts. The `sync-public-lab-episodes` Edge Function writes TikTok
-  uploads here with optional `agent_id` and `trade_id` tags inferred from the
-  caption/title. Anon access is revoked on the base table.
+  public lab posts. The `sync-public-lab-episodes` Edge Function writes the
+  latest public YouTube upload/Short here with optional `agent_id` and
+  `trade_id` tags inferred from the title/description. Anon access is revoked
+  on the base table.
 - **`public_lab_episodes_public`** — read-only published episode projection
   used by the Watch Today's Episode card. Anon `SELECT` GRANTED.
 - **`pm_bets`** — canonical per-trade table the trading daemons already
@@ -76,8 +77,9 @@ supabase functions deploy leaderboard
 supabase functions deploy weather
 supabase functions deploy sync-public-lab-episodes
 
-# 5. Optional: enable auto-updating Watch Today's Episode from TikTok
-supabase secrets set TIKTOK_ACCESS_TOKEN=...
+# 5. Optional: enable auto-updating Watch Today's Episode from YouTube
+supabase secrets set YOUTUBE_CHANNEL_ID=UCaf4uNVOcxm25xou7lLw4pQ
+supabase secrets set YOUTUBE_HANDLE=brandonnfongg
 supabase secrets set PUBLIC_LAB_SYNC_SECRET=...
 supabase secrets set PUBLIC_LAB_EPISODE_LIMIT=12
 
@@ -157,23 +159,31 @@ The frontend no longer queries `agent_trades` directly.
 
 ## Watch Today's Episode sync
 
-The browser cannot safely call TikTok or Instagram APIs directly because the
-creator access token would be exposed. Use the server-side episode feed instead:
+The episode card updates from Brandon's public YouTube uploads. The sync
+function tries the official public YouTube Atom feed first and falls back to
+the public Shorts page because Shorts-only channels can return no RSS entries.
 
-1. The `sync-public-lab-episodes` Edge Function calls TikTok's Display API
-   `/v2/video/list/` with `TIKTOK_ACCESS_TOKEN`.
-2. It upserts the newest videos into `public_lab_episodes`.
+1. The `sync-public-lab-episodes` Edge Function fetches YouTube's public
+   `feeds/videos.xml?channel_id=...` source.
+2. If that feed is unavailable/empty, it reads the public `@brandonnfongg/shorts`
+   page and extracts the newest Short.
+3. It upserts the newest videos into `public_lab_episodes` with
+   `platform = 'youtube'`.
 3. The public website reads `public_lab_episodes_public` and refreshes the
    home episode card every five minutes.
 
 Required secrets:
 
-- `TIKTOK_ACCESS_TOKEN`: creator OAuth token with TikTok Display API video
-  permissions.
 - `SUPABASE_SERVICE_ROLE_KEY`: server-only database writer used inside the
   Edge Function.
 - `PUBLIC_LAB_SYNC_SECRET`: random shared secret required in the
   `x-sync-secret` request header so public clients cannot burn sync quota.
+
+Optional config:
+
+- `YOUTUBE_CHANNEL_ID`: defaults to `UCaf4uNVOcxm25xou7lLw4pQ`.
+- `YOUTUBE_HANDLE`: defaults to `brandonnfongg`.
+- `PUBLIC_LAB_EPISODE_LIMIT`: defaults to `12`.
 
 Schedule it with Supabase Cron, Vercel Cron, GitHub Actions, or another trusted
 scheduler. The scheduled request must be `POST`, include a valid Supabase JWT
