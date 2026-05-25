@@ -2235,6 +2235,7 @@ body[data-route="world-v2"] {
 .world-v2-menu-peek,
 .world-v2-help-button,
 .world-v2-lab-toggle-button,
+.world-v2-episode-toggle-button,
 .world-v2-lab-stack,
 .world-v2-episode-stack {
   z-index: 10;
@@ -2266,6 +2267,8 @@ body[data-route="world-v2"] {
   right: 18px;
   top: 72px;
   width: 318px;
+  display: grid;
+  justify-items: end;
   pointer-events: auto;
 }
 
@@ -2425,10 +2428,34 @@ body[data-route="world-v2"] {
 }
 
 .todays-episode-panel {
+  position: relative;
   display: grid;
   grid-template-columns: 64px minmax(0, 1fr);
   gap: 10px;
   padding: 11px;
+  width: 100%;
+}
+
+.todays-episode-panel__minimize {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  display: inline-grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid rgba(255, 238, 199, 0.18);
+  border-radius: 7px;
+  background: rgba(255, 247, 229, 0.08);
+  color: #fff7e5;
+  cursor: pointer;
+}
+
+.todays-episode-panel__minimize:hover,
+.todays-episode-panel__minimize:focus-visible {
+  outline: none;
+  border-color: rgba(255, 238, 199, 0.44);
+  background: rgba(255, 247, 229, 0.16);
 }
 
 .todays-episode-panel__thumb {
@@ -2468,10 +2495,12 @@ body[data-route="world-v2"] {
 
 .todays-episode-panel__body {
   min-width: 0;
+  padding-right: 28px;
 }
 
 .todays-episode-panel__body h2 {
   font-size: 18px;
+  overflow-wrap: anywhere;
 }
 
 .todays-episode-panel__body p {
@@ -2530,6 +2559,52 @@ body[data-route="world-v2"] {
   outline: none;
   border-color: rgba(255, 238, 199, 0.44);
   background: rgba(255, 247, 229, 0.16);
+}
+
+.world-v2-episode-toggle-button {
+  display: inline-grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  border: 1px solid rgba(255, 238, 199, 0.22);
+  border-radius: 999px;
+  background: rgba(25, 18, 12, 0.84);
+  color: #fff7e5;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(10px);
+  cursor: pointer;
+  animation: world-v2-episode-shake 1.8s ease-in-out infinite;
+}
+
+.world-v2-episode-toggle-button:hover,
+.world-v2-episode-toggle-button:focus-visible {
+  outline: none;
+  border-color: rgba(255, 238, 199, 0.48);
+  background: rgba(255, 247, 229, 0.14);
+  animation-play-state: paused;
+}
+
+@keyframes world-v2-episode-shake {
+  0%,
+  54%,
+  100% {
+    transform: rotate(0deg) translateX(0);
+  }
+  6% {
+    transform: rotate(-7deg) translateX(-1px);
+  }
+  12% {
+    transform: rotate(7deg) translateX(1px);
+  }
+  18% {
+    transform: rotate(-5deg) translateX(-1px);
+  }
+  24% {
+    transform: rotate(5deg) translateX(1px);
+  }
+  30% {
+    transform: rotate(0deg) translateX(0);
+  }
 }
 
 .follow-experiment {
@@ -3703,10 +3778,14 @@ body[data-route="world-v2"] {
 
   .todays-episode-panel__body p {
     font-size: 11px;
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3;
   }
 
   .todays-episode-panel__links {
-    display: none;
+    display: flex;
   }
 
   .follow-experiment:not(.follow-experiment--compact) {

@@ -1,4 +1,4 @@
-import { ArrowUpRight, Play, ReceiptText } from 'lucide-react';
+import { ArrowUpRight, ChevronDown, Play, ReceiptText } from 'lucide-react';
 import { formatPnl } from '@/lib/formatting';
 import { SOCIAL_LINKS, trackPublicLabEvent } from '@/lib/publicLab';
 import type { PublicLabEpisode } from '@/lib/publicLab';
@@ -10,6 +10,7 @@ interface Props {
   episode: PublicLabEpisode | null;
   loading?: boolean;
   trade: TradeLogEntry | null;
+  onMinimize?: () => void;
   onOpenAgent: (agentId: AgentId) => void;
   onOpenTrade: (agentId: AgentId, trade: TradeLogEntry) => void;
 }
@@ -19,7 +20,16 @@ function formatDate(value: string | null) {
   return new Date(value).toLocaleDateString([], { month: 'short', day: 'numeric' });
 }
 
-export function TodaysEpisodePanel({ agentName, agentId, episode, loading = false, trade, onOpenAgent, onOpenTrade }: Props) {
+export function TodaysEpisodePanel({
+  agentName,
+  agentId,
+  episode,
+  loading = false,
+  trade,
+  onMinimize,
+  onOpenAgent,
+  onOpenTrade,
+}: Props) {
   const episodePlatform = episode ? SOCIAL_LINKS.find((link) => link.id === episode.platform) : null;
   const displayAgentId = episode?.agentId ?? agentId;
   const title = episode?.title ?? (agentName && trade
@@ -33,6 +43,16 @@ export function TodaysEpisodePanel({ agentName, agentId, episode, loading = fals
 
   return (
     <section className="todays-episode-panel" aria-label="Watch today's episode">
+      {onMinimize && (
+        <button
+          type="button"
+          className="todays-episode-panel__minimize"
+          onClick={onMinimize}
+          aria-label="Minimize today's episode"
+        >
+          <ChevronDown size={15} aria-hidden />
+        </button>
+      )}
       <div className="todays-episode-panel__thumb" aria-hidden>
         {episode?.thumbnailUrl ? (
           <img src={episode.thumbnailUrl} alt="" loading="lazy" />

@@ -9,6 +9,7 @@ import {
   Menu,
   PanelLeftClose,
   Sparkles,
+  Tv,
   X,
 } from 'lucide-react';
 import { AgentLearnMorePanel } from '@/components/content/AgentLearnMorePanel';
@@ -350,6 +351,7 @@ export function WorldV2Page() {
   const [balanceWindow, setBalanceWindow] = useState<BnfChangeWindow>('24h');
   const [balanceMenuOpen, setBalanceMenuOpen] = useState(false);
   const [labMinimized, setLabMinimized] = useState(false);
+  const [episodeMinimized, setEpisodeMinimized] = useState(false);
   const [selectedTrade, setSelectedTrade] = useState<TradeLogEntry | null>(null);
   const [replayCaptureMode, setReplayCaptureMode] = useState(false);
   const [learnMoreOpen, setLearnMoreOpen] = useState(false);
@@ -397,7 +399,9 @@ export function WorldV2Page() {
     [cardViewModels],
   );
   const latestTrade = useMemo(() => latestTradeAcrossAgents(tradeLogsByAgent), [tradeLogsByAgent]);
-  const todaysEpisodeAgentId = publicLabEpisode.episode?.agentId ?? latestTrade?.agentId ?? null;
+  const todaysEpisodeAgentId = publicLabEpisode.episode
+    ? publicLabEpisode.episode.agentId
+    : latestTrade?.agentId ?? null;
   const todaysEpisodeTrade = useMemo(() => {
     const episode = publicLabEpisode.episode;
     if (episode?.agentId && episode.tradeId) {
@@ -406,6 +410,7 @@ export function WorldV2Page() {
     if (episode?.agentId) {
       return cardViewModels[episode.agentId]?.tradeLog[0] ?? null;
     }
+    if (episode) return null;
     return latestTrade?.trade ?? null;
   }, [cardViewModels, latestTrade?.trade, publicLabEpisode.episode]);
   const biggestMove = useMemo(() => biggestMoveAcrossAgents(tradeLogsByAgent), [tradeLogsByAgent]);
@@ -668,15 +673,27 @@ export function WorldV2Page() {
 
       {!isolatedTestMode && !selectedAgentId && !worldIntroOpen && (
         <div className="world-v2-episode-stack">
-          <TodaysEpisodePanel
-            agentId={todaysEpisodeAgentId}
-            agentName={todaysEpisodeAgentId ? WORLD_MENU_AGENTS[todaysEpisodeAgentId].name : null}
-            episode={publicLabEpisode.episode}
-            loading={publicLabEpisode.loading}
-            trade={todaysEpisodeTrade}
-            onOpenAgent={(agentId) => selectAgent(agentId, 'todays_episode')}
-            onOpenTrade={(agentId, trade) => openTradeForAgent(agentId, trade, 'todays_episode')}
-          />
+          {episodeMinimized ? (
+            <button
+              type="button"
+              className="world-v2-episode-toggle-button"
+              onClick={() => setEpisodeMinimized(false)}
+              aria-label="Show today's episode"
+            >
+              <Tv size={20} aria-hidden />
+            </button>
+          ) : (
+            <TodaysEpisodePanel
+              agentId={todaysEpisodeAgentId}
+              agentName={todaysEpisodeAgentId ? WORLD_MENU_AGENTS[todaysEpisodeAgentId].name : null}
+              episode={publicLabEpisode.episode}
+              loading={publicLabEpisode.loading}
+              trade={todaysEpisodeTrade}
+              onMinimize={() => setEpisodeMinimized(true)}
+              onOpenAgent={(agentId) => selectAgent(agentId, 'todays_episode')}
+              onOpenTrade={(agentId, trade) => openTradeForAgent(agentId, trade, 'todays_episode')}
+            />
+          )}
         </div>
       )}
 
