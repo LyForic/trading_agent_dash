@@ -41,6 +41,12 @@ live dashboard.
 - **`agent_learning_posts_public`** — read-only public view over published
   learning posts. The frontend polls this view while a Learn More card is open
   so new notes appear without a deploy. Anon `SELECT` GRANTED.
+- **`public_lab_episodes`** — privileged sync-written feed for short-form
+  public lab posts. The `sync-public-lab-episodes` Edge Function writes TikTok
+  uploads here with optional `agent_id` and `trade_id` tags inferred from the
+  caption/title. Anon access is revoked on the base table.
+- **`public_lab_episodes_public`** — read-only published episode projection
+  used by the Watch Today's Episode card. Anon `SELECT` GRANTED.
 - **`pm_bets`** — canonical per-trade table the trading daemons already
   write to. Untouched by this frontend. Anon/authenticated/public privileges
   are revoked; writes belong only to privileged daemon credentials.
@@ -68,6 +74,16 @@ supabase db push
 # 4. Deploy the Edge Functions
 supabase functions deploy leaderboard
 supabase functions deploy weather
+supabase functions deploy sync-public-lab-episodes
+
+# 5. Optional: enable auto-updating Watch Today's Episode from TikTok
+supabase secrets set TIKTOK_ACCESS_TOKEN=...
+supabase secrets set PUBLIC_LAB_EPISODE_LIMIT=12
+
+# Then call the function from a cron/scheduler every few minutes:
+curl -X POST \
+  "${VITE_SUPABASE_URL}/functions/v1/sync-public-lab-episodes" \
+  -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}"
 ```
 
 ## Verifying the trigger
@@ -122,6 +138,7 @@ credentials used by the trading daemons.
 | `20260522000000_agent_trade_replay_ticks.sql` | Create the privileged replay-ticks table and delayed public view |
 | `20260522001000_generalize_trade_replay_ticks.sql` | Add generic YES/NO probability + underlying fields for all markets |
 | `20260522002000_agent_learning_posts.sql` | Create privileged agent learning posts and public published view |
+| `20260524001000_public_lab_episodes.sql` | Create privileged public lab episode feed and published read-only view |
 
 ## Frontend read paths (current)
 
@@ -131,6 +148,22 @@ credentials used by the trading daemons.
 | Lifetime | `agent_lifetime_stats` (one row per agent) |
 | Trade replay chart | `agent_trade_replay_ticks_public` for real ticks, modeled fallback when missing |
 | Learn More cards | `agent_learning_posts_public` filtered by selected `agent_id` |
+| Watch Today's Episode | `public_lab_episodes_public` latest row, falling back to the latest trade if empty/unavailable |
 | Edge Function `leaderboard` | reads `agent_trades_public` |
 
 The frontend no longer queries `agent_trades` directly.
+
+## Watch Today's Episode sync
+
+The browser cannot safely call TikTok or Instagram APIs directly because the
+creator access token would be exposed. Use the server-side episode feed instead:
+
+1. The `sync-public-lab-episodes` Edge Function calls TikTok's Display API
+   `/v2/video/list/` with `TIKTOK_ACCESS_TOKEN`.
+2. It upserts the newest videos into `public_lab_episodes`.
+3. The public website reads `public_lab_episodes_public` and refreshes the
+   home episode card every five minutes.
+
+To link an episode to an agent or replay, include the agent name/hashtag
+(`#apex`, `#gale`, `#metheus`, `#bacon`, `#nova`) and optionally
+`trade:<agent_trades id>` in the post caption/title.

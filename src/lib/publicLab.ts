@@ -9,10 +9,14 @@ export interface SocialLinkConfig {
 export interface PublicLabEpisode {
   id: string;
   title: string;
-  dek: string;
-  agentId: AgentId;
-  platformLabel: string;
-  href: string;
+  dek: string | null;
+  agentId: AgentId | null;
+  tradeId: string | null;
+  platform: SocialLinkConfig['id'];
+  episodeUrl: string;
+  thumbnailUrl: string | null;
+  publishedAt: string;
+  source: string | null;
 }
 
 export interface AgentStrategyProfile {

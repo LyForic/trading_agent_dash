@@ -29,6 +29,7 @@ import {
 import { useAgentData } from '@/lib/useAgentData';
 import { useAgentWindow } from '@/lib/useAgentWindow';
 import { useBnfPortfolio } from '@/lib/useBnfPortfolio';
+import { usePublicLabEpisode } from '@/lib/usePublicLabEpisode';
 import { formatPnl, formatWinRate } from '@/lib/formatting';
 import type { Agent, AgentId, BnfPortfolioPoint, PerformanceWindow, TradeLogEntry } from '@/lib/types';
 import type { ZoneId } from '@/world-v2/worldMapData';
@@ -379,6 +380,7 @@ export function WorldV2Page() {
 
   const { data, cardViewModels, source, error, loading } = useAgentData(windowsByAgent);
   const bnf = useBnfPortfolio();
+  const publicLabEpisode = usePublicLabEpisode();
   const agentsById = useMemo(() => agentMap(data.agents), [data.agents]);
   const worldAgentOrder = WORLD_AGENT_ORDER;
   const primaryWorldAgentOrder = worldAgentOrder.slice(0, 3);
@@ -395,6 +397,17 @@ export function WorldV2Page() {
     [cardViewModels],
   );
   const latestTrade = useMemo(() => latestTradeAcrossAgents(tradeLogsByAgent), [tradeLogsByAgent]);
+  const todaysEpisodeAgentId = publicLabEpisode.episode?.agentId ?? latestTrade?.agentId ?? null;
+  const todaysEpisodeTrade = useMemo(() => {
+    const episode = publicLabEpisode.episode;
+    if (episode?.agentId && episode.tradeId) {
+      return cardViewModels[episode.agentId]?.tradeLog.find((trade) => trade.id === episode.tradeId) ?? null;
+    }
+    if (episode?.agentId) {
+      return cardViewModels[episode.agentId]?.tradeLog[0] ?? null;
+    }
+    return latestTrade?.trade ?? null;
+  }, [cardViewModels, latestTrade?.trade, publicLabEpisode.episode]);
   const biggestMove = useMemo(() => biggestMoveAcrossAgents(tradeLogsByAgent), [tradeLogsByAgent]);
   const latestBnfPoint = bnf.data.points[bnf.data.points.length - 1];
   const bnfChanges = useMemo(
@@ -656,9 +669,11 @@ export function WorldV2Page() {
       {!isolatedTestMode && !selectedAgentId && !worldIntroOpen && (
         <div className="world-v2-episode-stack">
           <TodaysEpisodePanel
-            agentId={latestTrade?.agentId ?? null}
-            agentName={latestTrade ? WORLD_MENU_AGENTS[latestTrade.agentId].name : null}
-            trade={latestTrade?.trade ?? null}
+            agentId={todaysEpisodeAgentId}
+            agentName={todaysEpisodeAgentId ? WORLD_MENU_AGENTS[todaysEpisodeAgentId].name : null}
+            episode={publicLabEpisode.episode}
+            loading={publicLabEpisode.loading}
+            trade={todaysEpisodeTrade}
             onOpenAgent={(agentId) => selectAgent(agentId, 'todays_episode')}
             onOpenTrade={(agentId, trade) => openTradeForAgent(agentId, trade, 'todays_episode')}
           />
