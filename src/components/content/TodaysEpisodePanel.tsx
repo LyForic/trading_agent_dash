@@ -194,6 +194,8 @@ export function TodaysEpisodePanel({
             href={episode.episodeUrl}
             target="_blank"
             rel="noreferrer"
+            aria-label={`Watch on ${episodePlatform.label}`}
+            title={`Watch on ${episodePlatform.label}`}
             onClick={() => trackPublicLabEvent('episode_click', {
               platform: episode.platform,
               episode_id: episode.id,
@@ -201,7 +203,6 @@ export function TodaysEpisodePanel({
             })}
           >
             <SocialPlatformIcon id={episodePlatform.id} className="follow-experiment__icon" />
-            <span>Watch on {episodePlatform.label}</span>
             <ArrowUpRight size={11} aria-hidden />
           </a>
         )}

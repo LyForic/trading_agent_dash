@@ -2374,6 +2374,11 @@ body[data-route="world-v2"] {
   letter-spacing: 0.06em;
 }
 
+.public-lab-tracker__season span,
+.follow-experiment__copy span {
+  white-space: nowrap;
+}
+
 .public-lab-tracker__head h1,
 .todays-episode-panel__body h2 {
   margin: 4px 0 0;
@@ -2683,7 +2688,9 @@ body[data-route="world-v2"] {
 }
 
 .follow-experiment {
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  justify-content: stretch;
   padding: 10px;
 }
 
