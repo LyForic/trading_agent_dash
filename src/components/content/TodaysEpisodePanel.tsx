@@ -4,6 +4,7 @@ import { formatPnl } from '@/lib/formatting';
 import { SOCIAL_LINKS, trackPublicLabEvent } from '@/lib/publicLab';
 import type { PublicLabEpisode } from '@/lib/publicLab';
 import type { AgentId, TradeLogEntry } from '@/lib/types';
+import { SocialPlatformIcon } from './SocialPlatformIcon';
 
 interface Props {
   agentName: string | null;
@@ -14,11 +15,37 @@ interface Props {
   onMinimize?: () => void;
   onOpenAgent: (agentId: AgentId) => void;
   onOpenTrade: (agentId: AgentId, trade: TradeLogEntry) => void;
+  onOpenTradeId?: (agentId: AgentId, tradeId: string) => void;
 }
 
 function formatDate(value: string | null) {
   if (!value) return 'Today';
   return new Date(value).toLocaleDateString([], { month: 'short', day: 'numeric' });
+}
+
+function isSameLocalDay(value: string | null) {
+  if (!value) return false;
+  const date = new Date(value);
+  const now = new Date();
+  return date.getFullYear() === now.getFullYear()
+    && date.getMonth() === now.getMonth()
+    && date.getDate() === now.getDate();
+}
+
+function episodeKicker(value: string | null) {
+  if (!value) return 'Latest Episode';
+  return isSameLocalDay(value) ? "Today's Episode" : 'Latest Episode';
+}
+
+function cleanEpisodeText(value: string | null | undefined, maxLength: number) {
+  const compact = (value ?? '')
+    .replace(/https?:\/\/\S+/g, '')
+    .replace(/#[\w-]+/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+  if (!compact) return '';
+  if (compact.length <= maxLength) return compact;
+  return `${compact.slice(0, maxLength - 1).trimEnd()}...`;
 }
 
 function youtubeVideoIdFromUrl(url: string | null | undefined) {
@@ -58,6 +85,7 @@ export function TodaysEpisodePanel({
   onMinimize,
   onOpenAgent,
   onOpenTrade,
+  onOpenTradeId,
 }: Props) {
   const episodePlatform = episode ? SOCIAL_LINKS.find((link) => link.id === episode.platform) : null;
   const thumbnails = useMemo(() => thumbnailCandidates(episode), [episode]);
@@ -66,12 +94,13 @@ export function TodaysEpisodePanel({
   const thumbnailIndex = thumbnailAttempt.key === thumbnailKey ? thumbnailAttempt.index : 0;
   const thumbnailUrl = thumbnails[thumbnailIndex] ?? null;
   const displayAgentId = episode?.agentId ?? agentId;
-  const title = episode?.title ?? (agentName && trade
+  const proofTradeId = trade?.id ?? episode?.tradeId ?? null;
+  const title = cleanEpisodeText(episode?.title, 66) || (agentName && trade
     ? `${agentName}'s latest public trade`
     : loading
       ? 'Syncing today’s lab update'
       : 'Watch today’s lab update');
-  const dek = episode?.dek ?? (trade
+  const dek = cleanEpisodeText(episode?.dek, 104) || (trade
     ? `${trade.side.toUpperCase()} on ${trade.contract_ticker} settled ${formatPnl(trade.pnl)}.`
     : 'The latest short connects the video claim back to the live proof layer.');
 
@@ -104,7 +133,11 @@ export function TodaysEpisodePanel({
             }}
           />
         ) : (
-          <Play size={28} />
+          <div className="todays-episode-panel__fallback">
+            {episodePlatform ? <SocialPlatformIcon id={episodePlatform.id} className="todays-episode-panel__fallback-icon" /> : <Play size={24} />}
+            <strong>{episodePlatform?.label ?? 'BNF'}</strong>
+            <span>{title}</span>
+          </div>
         )}
         {thumbnailUrl && (
           <span>
@@ -113,22 +146,26 @@ export function TodaysEpisodePanel({
         )}
       </div>
       <div className="todays-episode-panel__body">
-        <span>{formatDate(episode?.publishedAt ?? trade?.settled_at ?? null)} episode</span>
+        <span>{episodeKicker(episode?.publishedAt ?? trade?.settled_at ?? null)} · {formatDate(episode?.publishedAt ?? trade?.settled_at ?? null)}</span>
         <h2>{title}</h2>
         <p>{dek}</p>
       </div>
       <div className="todays-episode-panel__actions">
-        {displayAgentId && trade && (
+        {displayAgentId && (trade || proofTradeId) && (
           <button
             type="button"
             onClick={() => {
               trackPublicLabEvent('watch_trade_click', {
                 surface: 'todays_episode',
                 agent_id: displayAgentId,
-                trade_id: trade.id,
+                trade_id: proofTradeId,
                 episode_id: episode?.id,
               });
-              onOpenTrade(displayAgentId, trade);
+              if (trade) {
+                onOpenTrade(displayAgentId, trade);
+              } else if (proofTradeId) {
+                onOpenTradeId?.(displayAgentId, proofTradeId);
+              }
             }}
           >
             <ReceiptText size={14} aria-hidden />
@@ -152,7 +189,7 @@ export function TodaysEpisodePanel({
         )}
       </div>
       <div className="todays-episode-panel__links" aria-label="Episode platforms">
-        {episode && episodePlatform ? (
+        {episode && episodePlatform && (
           <a
             href={episode.episodeUrl}
             target="_blank"
@@ -163,23 +200,26 @@ export function TodaysEpisodePanel({
               surface: 'todays_episode',
             })}
           >
+            <SocialPlatformIcon id={episodePlatform.id} className="follow-experiment__icon" />
             <span>Watch on {episodePlatform.label}</span>
             <ArrowUpRight size={11} aria-hidden />
           </a>
-        ) : (
-          SOCIAL_LINKS.map((link) => (
-            <a
-              key={link.id}
-              href={link.href}
-              target="_blank"
-              rel="noreferrer"
-              onClick={() => trackPublicLabEvent('episode_click', { platform: link.id, surface: 'todays_episode' })}
-            >
-              <span>{link.label}</span>
-              <ArrowUpRight size={11} aria-hidden />
-            </a>
-          ))
         )}
+        {SOCIAL_LINKS.filter((link) => link.id !== episodePlatform?.id).map((link) => (
+          <a
+            key={link.id}
+            href={link.href}
+            target="_blank"
+            rel="noreferrer"
+            aria-label={episode ? `Open ${link.label}` : `Watch on ${link.label}`}
+            title={episode ? `Open ${link.label}` : `Watch on ${link.label}`}
+            onClick={() => trackPublicLabEvent('episode_click', { platform: link.id, surface: 'todays_episode' })}
+          >
+            <SocialPlatformIcon id={link.id} className="follow-experiment__icon" />
+            {!episode && <span>{link.label}</span>}
+            <ArrowUpRight size={11} aria-hidden />
+          </a>
+        ))}
       </div>
     </section>
   );

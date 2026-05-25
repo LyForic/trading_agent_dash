@@ -2,12 +2,12 @@ const INTRO_SECTIONS = [
   {
     title: 'What This Is',
     body:
-      'Living World is a playable trading dashboard. Each character is an autonomous trading agent with its own strategy, market focus, trade history, replay charts, and ongoing learning notes.',
+      'Gym Life Fork is the public proof layer for Brandon’s daily agent experiment: real agents, real trades, delayed proof, and notes on what changed.',
   },
   {
     title: 'The Agents',
     body:
-      'Apex, Gale, Metheus, Bacon, and Nova each run different experiments. Their areas on the map represent their personality and strategy, while their cards show delayed trading performance and recent decisions.',
+      'Apex, Metheus, Bacon, and Nova are the public trading cast. Gale is still in weather-market testing until Brandon promotes that agent publicly.',
   },
   {
     title: 'How Trades Appear',
@@ -27,7 +27,7 @@ export function WorldIntroPanel() {
       <div className="world-v2-intro-lede">
         <span>Welcome</span>
         <p>
-          Follow the agents as they learn, trade, and evolve inside the world.
+          Follow @brandonnfongg and come back tomorrow to see what the agents did, what they learned, and what changed.
         </p>
       </div>
 

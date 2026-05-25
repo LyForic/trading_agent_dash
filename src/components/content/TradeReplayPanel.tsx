@@ -1,4 +1,4 @@
-import { Pause, Play, RotateCcw, Smartphone } from 'lucide-react';
+import { Link, Pause, Play, RotateCcw, Smartphone } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { formatPnl } from '@/lib/formatting';
 import { buildReplay } from '@/lib/tradeReplay';
@@ -8,6 +8,7 @@ import type { TradeLogEntry } from '@/lib/types';
 interface Props {
   row: TradeLogEntry;
   captureMode?: boolean;
+  captureLink?: string;
   onCaptureModeChange?: (enabled: boolean) => void;
 }
 
@@ -89,7 +90,7 @@ function segmentPoints(points: ReplayPoint[], elapsedMs: number, activeYesProbab
     .filter((point, index, list) => index === 0 || point.elapsedMs !== list[index - 1].elapsedMs);
 }
 
-export function TradeReplayPanel({ row, captureMode = false, onCaptureModeChange }: Props) {
+export function TradeReplayPanel({ row, captureMode = false, captureLink, onCaptureModeChange }: Props) {
   const replay = useMemo(() => buildReplay(row), [row]);
   const [elapsedMs, setElapsedMs] = useState(replay.durationMs);
   const [playing, setPlaying] = useState(false);
@@ -168,6 +169,19 @@ export function TradeReplayPanel({ row, captureMode = false, onCaptureModeChange
             <span>9:16</span>
           </button>
         )}
+        {captureMode && captureLink && (
+          <button
+            type="button"
+            className="trade-replay-capture-toggle"
+            onClick={() => {
+              void navigator.clipboard?.writeText(captureLink);
+            }}
+            aria-label="Copy capture link"
+          >
+            <Link size={13} aria-hidden />
+            <span>Copy link</span>
+          </button>
+        )}
         <div className="trade-replay-timebox">
           {replay.sourceLabel} · {formatClock(replay.contractStart)}-{formatClock(replay.contractEnd)}
         </div>
@@ -214,26 +228,43 @@ export function TradeReplayPanel({ row, captureMode = false, onCaptureModeChange
         <span>{formatPercent(pctMove)} from {row.side.toUpperCase()} entry</span>
       </div>
 
-      <div className="trade-replay-value-grid">
-        <div>
-          <span>Held side</span>
-          <strong>{row.side.toUpperCase()} {formatProbability(activeSideProbability)}</strong>
+      {captureMode ? (
+        <div className="trade-replay-value-grid">
+          <div>
+            <span>Entry</span>
+            <strong>{row.entry_price_cents}% · {formatMoney(initialValue)}</strong>
+          </div>
+          <div>
+            <span>Settlement</span>
+            <strong>{row.settle_price_cents}%</strong>
+          </div>
+          <div>
+            <span>P&L</span>
+            <strong className={won ? 'trade-replay-readout--gain' : 'trade-replay-readout--loss'}>{formatPnl(row.pnl)}</strong>
+          </div>
         </div>
-        <div>
-          <span>Contract value</span>
-          <strong>{formatMoney(currentValue)}</strong>
+      ) : (
+        <div className="trade-replay-value-grid">
+          <div>
+            <span>Held side</span>
+            <strong>{row.side.toUpperCase()} {formatProbability(activeSideProbability)}</strong>
+          </div>
+          <div>
+            <span>Contract value</span>
+            <strong>{formatMoney(currentValue)}</strong>
+          </div>
+          <div>
+            <span>Entry</span>
+            <strong>{row.entry_price_cents}% · {formatMoney(initialValue)}</strong>
+          </div>
+          <div>
+            <span>Settled</span>
+            <strong className={won ? 'trade-replay-readout--gain' : 'trade-replay-readout--loss'}>
+              {row.settle_price_cents}% · {formatPnl(row.pnl)}
+            </strong>
+          </div>
         </div>
-        <div>
-          <span>Entry</span>
-          <strong>{row.entry_price_cents}% · {formatMoney(initialValue)}</strong>
-        </div>
-        <div>
-          <span>Settled</span>
-          <strong className={won ? 'trade-replay-readout--gain' : 'trade-replay-readout--loss'}>
-            {row.settle_price_cents}% · {formatPnl(row.pnl)}
-          </strong>
-        </div>
-      </div>
+      )}
 
       <div className="trade-replay-controls">
         <button type="button" onClick={toggleReplay} aria-label={playing ? 'Pause replay' : 'Play replay'}>

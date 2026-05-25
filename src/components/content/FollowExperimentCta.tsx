@@ -1,5 +1,6 @@
 import { ArrowUpRight, Bell } from 'lucide-react';
 import { SOCIAL_LINKS, trackPublicLabEvent } from '@/lib/publicLab';
+import { SocialPlatformIcon } from './SocialPlatformIcon';
 
 interface Props {
   surface: string;
@@ -24,7 +25,7 @@ export function FollowExperimentCta({ surface, compact = false }: Props) {
           onClick={() => trackPublicLabEvent('follow_click', { surface, platform: primary.id })}
         >
           <Bell size={15} aria-hidden />
-          <span>Follow</span>
+          <span>Follow @brandonnfongg</span>
         </a>
         <div className="follow-experiment__links" aria-label="Follow platforms">
           {SOCIAL_LINKS.map((link) => (
@@ -34,9 +35,10 @@ export function FollowExperimentCta({ surface, compact = false }: Props) {
               target="_blank"
               rel="noreferrer"
               aria-label={`Follow on ${link.label}`}
+              title={`Follow on ${link.label}`}
               onClick={() => trackPublicLabEvent('follow_click', { surface, platform: link.id })}
             >
-              <span>{link.label.slice(0, 2)}</span>
+              <SocialPlatformIcon id={link.id} className="follow-experiment__icon" />
               <ArrowUpRight size={11} aria-hidden />
             </a>
           ))}

@@ -71,6 +71,12 @@ npm run build
 
 Supabase credentials are optional for local work. Without `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`, the app uses mock data. With credentials configured, the app reads only the public delayed views documented in `supabase/README.md`.
 
+Public Lab analytics events always dispatch to `window.dataLayer`, `gtag`, and
+the in-browser `window.__PUBLIC_LAB_EVENTS__` debug queue when those collectors
+exist. To send the same payloads to a custom collector, configure
+`VITE_PUBLIC_LAB_ANALYTICS_ENDPOINT` and optionally
+`VITE_PUBLIC_LAB_ANALYTICS_TOKEN`.
+
 ## People
 
 - **Brandon Fong** — frontend, Apex + Gale daemons, product

@@ -7,6 +7,7 @@ interface Props {
   agentId: AgentId;
   about: string;
   representativeTrades?: TradeLogEntry[];
+  highlightLatestNote?: boolean;
 }
 
 function formatPostDate(value: string) {
@@ -24,11 +25,24 @@ function paragraphs(body: string) {
     .filter(Boolean);
 }
 
-function LearningPostCard({ post }: { post: AgentLearningPost }) {
+function chipsFor(post: AgentLearningPost) {
+  return [post.category, post.viewer_angle, post.why_it_matters ? 'Why it matters' : null, post.tomorrow_watch ? 'Tomorrow watch' : null]
+    .filter((chip, index, all): chip is string => Boolean(chip) && all.indexOf(chip) === index)
+    .slice(0, 4);
+}
+
+function LearningPostCard({ post, highlighted = false }: { post: AgentLearningPost; highlighted?: boolean }) {
   return (
-    <article className="agent-learning-post">
+    <article className={highlighted ? 'agent-learning-post agent-learning-post--highlighted' : 'agent-learning-post'}>
       <time dateTime={post.made_at}>{formatPostDate(post.made_at)}</time>
       <h3>{post.title}</h3>
+      {chipsFor(post).length > 0 && (
+        <div className="agent-learning-post__chips">
+          {chipsFor(post).map((chip) => (
+            <span key={chip}>{chip}</span>
+          ))}
+        </div>
+      )}
       {paragraphs(post.body).map((paragraph) => (
         <p key={paragraph}>{paragraph}</p>
       ))}
@@ -47,7 +61,7 @@ function RepresentativeTrade({ trade }: { trade: TradeLogEntry }) {
   );
 }
 
-export function AgentLearnMorePanel({ agentId, about, representativeTrades = [] }: Props) {
+export function AgentLearnMorePanel({ agentId, about, representativeTrades = [], highlightLatestNote = false }: Props) {
   const { posts, loading, error } = useAgentLearning(agentId);
   const strategy = AGENT_STRATEGY_PROFILES[agentId];
 
@@ -119,8 +133,8 @@ export function AgentLearnMorePanel({ agentId, about, representativeTrades = [] 
 
       {!error && posts.length > 0 && (
         <div className="agent-learning-posts">
-          {posts.map((post) => (
-            <LearningPostCard key={post.id} post={post} />
+          {posts.map((post, index) => (
+            <LearningPostCard key={post.id} post={post} highlighted={highlightLatestNote && index === 0} />
           ))}
         </div>
       )}

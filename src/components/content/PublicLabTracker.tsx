@@ -1,11 +1,6 @@
 import { FlaskConical, Minimize2, TrendingDown, TrendingUp, Users } from 'lucide-react';
 import { formatPnl } from '@/lib/formatting';
-import {
-  PUBLIC_LAB_EXPERIMENT,
-  PUBLIC_LAB_OPEN_QUESTION,
-  PUBLIC_LAB_STARTING_BANKROLL_CENTS,
-  publicLabDay,
-} from '@/lib/publicLab';
+import { PUBLIC_LAB_OPEN_QUESTION, PUBLIC_LAB_STARTING_BANKROLL_CENTS, publicLabDay } from '@/lib/publicLab';
 import type { AgentId, BnfPortfolioPoint, TradeLogEntry } from '@/lib/types';
 
 interface LabMove {
@@ -17,12 +12,13 @@ interface Props {
   currentBalanceCents: number | null;
   change24hCents: number | null;
   lifetimePnlCents: number | null;
-  agentCount: number;
+  agentCountLabel: string;
   biggestMove: LabMove | null;
   accountHighCents: number | null;
   biggestDrawdownCents: number | null;
   bestAgentName: string | null;
-  onOpenAgent: (agentId: AgentId) => void;
+  statement: string;
+  onOpenMove: (agentId: AgentId, trade: TradeLogEntry) => void;
   points: BnfPortfolioPoint[];
   onMinimize?: () => void;
 }
@@ -46,12 +42,13 @@ export function PublicLabTracker({
   currentBalanceCents,
   change24hCents,
   lifetimePnlCents,
-  agentCount,
+  agentCountLabel,
   biggestMove,
   accountHighCents,
   biggestDrawdownCents,
   bestAgentName,
-  onOpenAgent,
+  statement,
+  onOpenMove,
   points,
   onMinimize,
 }: Props) {
@@ -75,7 +72,7 @@ export function PublicLabTracker({
         </div>
       </div>
 
-      <p className="public-lab-tracker__statement">{PUBLIC_LAB_EXPERIMENT}</p>
+      <p className="public-lab-tracker__statement">{statement}</p>
 
       <div className="public-lab-tracker__grid">
         <div>
@@ -101,14 +98,14 @@ export function PublicLabTracker({
       </div>
 
       <div className="public-lab-tracker__moves">
-        <button type="button" onClick={() => biggestMove && onOpenAgent(biggestMove.agentId)}>
+        <button type="button" onClick={() => biggestMove && onOpenMove(biggestMove.agentId, biggestMove.trade)}>
           <TrendingUp size={15} aria-hidden />
           <span>Biggest move</span>
           <strong>{moveCopy(biggestMove)}</strong>
         </button>
         <div>
           <Users size={15} aria-hidden />
-          <span>{agentCount} live agents</span>
+          <span>{agentCountLabel}</span>
         </div>
       </div>
 

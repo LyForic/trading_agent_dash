@@ -23,6 +23,7 @@ const LEARNING_POST_COLUMNS = 'id,agent_id,title,body,made_at,source';
 const LEARNING_REFRESH_MS = 60_000;
 
 function rowToLearningPost(row: AgentLearningPostRow): AgentLearningPost {
+  const category = inferPublicCategory(`${row.title} ${row.body}`);
   return {
     id: row.id,
     agent_id: row.agent_id,
@@ -30,7 +31,17 @@ function rowToLearningPost(row: AgentLearningPostRow): AgentLearningPost {
     body: row.body,
     made_at: row.made_at,
     source: row.source,
+    category,
   };
+}
+
+function inferPublicCategory(text: string) {
+  const lower = text.toLowerCase();
+  if (/\bbug|reliab|sync|data|broken|fix|issue\b/.test(lower)) return 'Reliability';
+  if (/\bloss|mistake|drawdown|risk|missed|failed|wrong\b/.test(lower)) return 'Risk';
+  if (/\bwin|worked|profit|green|edge|improved\b/.test(lower)) return 'What worked';
+  if (/\bskip|wait|watch|flat|no trade|restraint\b/.test(lower)) return 'Restraint';
+  return 'Learning';
 }
 
 export function useAgentLearning(agentId: AgentId): UseAgentLearningResult {
@@ -79,7 +90,7 @@ export function useAgentLearning(agentId: AgentId): UseAgentLearningResult {
 
   if (!isSupabaseConfigured || !supabase) {
     return {
-      posts: mockAgentLearningPosts[agentId],
+      posts: mockAgentLearningPosts[agentId].map(rowToLearningPost),
       loading: false,
       error: null,
       source: 'mock',

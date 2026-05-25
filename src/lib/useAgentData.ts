@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { supabase, isSupabaseConfigured } from './supabase';
 import { AGENT_META, AGENT_IDS } from './agentMeta';
-import { mockLeaderboard, mockCardViewModels, buildMockCardViewModel } from './mockData';
+import { mockLeaderboard, mockCardViewModels, buildMockCardViewModel, mockTradeLog } from './mockData';
 import type {
   Agent,
   AgentId,
@@ -141,6 +141,32 @@ async function attachReplayTicks(tradeLog: TradeLogEntry[]): Promise<TradeLogEnt
     const replay_ticks = ticksByTrade.get(trade.id);
     return replay_ticks && replay_ticks.length > 0 ? { ...trade, replay_ticks } : trade;
   });
+}
+
+export async function fetchPublicTradeById(agentId: AgentId, tradeId: string): Promise<TradeLogEntry | null> {
+  if (!isSupabaseConfigured || !supabase) {
+    return mockTradeLog[agentId]?.find((trade) => trade.id === tradeId) ?? null;
+  }
+
+  const { data, error } = await supabase
+    .from('agent_trades_public')
+    .select(COLUMNS)
+    .eq('agent_id', agentId)
+    .eq('id', tradeId)
+    .not('pnl', 'is', null)
+    .limit(1);
+
+  if (error) {
+    console.warn(`[useAgentData] trade ${tradeId} unavailable; deep link will fall back: ${error.message}`);
+    return null;
+  }
+
+  const trade = ((data ?? []) as AgentTradeRow[])
+    .map(rowToTradeLogEntry)
+    .find((entry): entry is TradeLogEntry => entry !== null) ?? null;
+  if (!trade) return null;
+
+  return (await attachReplayTicks([trade]))[0] ?? trade;
 }
 
 function buildAgent(

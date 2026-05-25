@@ -70,6 +70,10 @@ export interface AgentLearningPost {
   body: string;
   made_at: string;
   source: string | null;
+  category?: string | null;
+  viewer_angle?: string | null;
+  why_it_matters?: string | null;
+  tomorrow_watch?: string | null;
 }
 
 export interface AgentLifetimeStats {

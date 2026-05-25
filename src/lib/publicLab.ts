@@ -53,6 +53,8 @@ export const SOCIAL_LINKS: SocialLinkConfig[] = [
   },
 ];
 
+export const PUBLIC_AGENT_IDS: AgentId[] = ['apex', 'metheus', 'bacon', 'nova'];
+
 export const AGENT_STRATEGY_PROFILES: Record<AgentId, AgentStrategyProfile> = {
   apex: {
     plainThesis:
@@ -163,6 +165,7 @@ export function trackPublicLabEvent(name: PublicLabEventName, detail: Record<str
   const payload = {
     event: `public_lab_${name}`,
     public_lab_event: name,
+    timestamp: new Date().toISOString(),
     ...detail,
   };
 
@@ -175,7 +178,34 @@ export function trackPublicLabEvent(name: PublicLabEventName, detail: Record<str
   };
 
   maybeWindow.__PUBLIC_LAB_EVENTS__ = maybeWindow.__PUBLIC_LAB_EVENTS__ ?? [];
-  maybeWindow.__PUBLIC_LAB_EVENTS__.push({ ...payload, tracked_at: new Date().toISOString() });
+  maybeWindow.__PUBLIC_LAB_EVENTS__.push(payload);
   maybeWindow.dataLayer?.push(payload);
   maybeWindow.gtag?.('event', name, detail);
+  sendPublicLabAnalytics(payload);
+}
+
+function sendPublicLabAnalytics(payload: Record<string, unknown>) {
+  const endpoint = import.meta.env.VITE_PUBLIC_LAB_ANALYTICS_ENDPOINT as string | undefined;
+  if (!endpoint) return;
+
+  const body = JSON.stringify(payload);
+  const token = import.meta.env.VITE_PUBLIC_LAB_ANALYTICS_TOKEN as string | undefined;
+
+  if (navigator.sendBeacon && !token) {
+    const blob = new Blob([body], { type: 'application/json' });
+    navigator.sendBeacon(endpoint, blob);
+    return;
+  }
+
+  void fetch(endpoint, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    },
+    body,
+    keepalive: true,
+  }).catch((error) => {
+    console.warn(`[publicLab] analytics unavailable: ${(error as Error).message}`);
+  });
 }

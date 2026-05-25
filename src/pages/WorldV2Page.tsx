@@ -15,8 +15,10 @@ import {
 import { AgentLearnMorePanel } from '@/components/content/AgentLearnMorePanel';
 import { FollowExperimentCta } from '@/components/content/FollowExperimentCta';
 import { PublicLabTracker } from '@/components/content/PublicLabTracker';
+import { SocialPlatformIcon } from '@/components/content/SocialPlatformIcon';
 import { TimeFilterPill } from '@/components/content/TimeFilterPill';
 import { TodaysEpisodePanel } from '@/components/content/TodaysEpisodePanel';
+import { TodaysFieldNote } from '@/components/content/TodaysFieldNote';
 import { TradeLog } from '@/components/content/TradeLog';
 import { TradeReplayPanel } from '@/components/content/TradeReplayPanel';
 import { WorldIntroPanel } from '@/components/content/WorldIntroPanel';
@@ -24,15 +26,18 @@ import { AGENT_META } from '@/lib/agentMeta';
 import {
   biggestMoveAcrossAgents,
   latestTradeAcrossAgents,
+  PUBLIC_AGENT_IDS,
+  PUBLIC_LAB_EXPERIMENT,
   SOCIAL_LINKS,
   trackPublicLabEvent,
 } from '@/lib/publicLab';
-import { useAgentData } from '@/lib/useAgentData';
+import { fetchPublicTradeById, useAgentData } from '@/lib/useAgentData';
+import { useAgentLearning } from '@/lib/useAgentLearning';
 import { useAgentWindow } from '@/lib/useAgentWindow';
 import { useBnfPortfolio } from '@/lib/useBnfPortfolio';
 import { usePublicLabEpisode } from '@/lib/usePublicLabEpisode';
 import { formatPnl, formatWinRate } from '@/lib/formatting';
-import type { Agent, AgentId, BnfPortfolioPoint, PerformanceWindow, TradeLogEntry } from '@/lib/types';
+import type { Agent, AgentId, AgentLearningPost, BnfPortfolioPoint, PerformanceWindow, TradeLogEntry } from '@/lib/types';
 import type { ZoneId } from '@/world-v2/worldMapData';
 
 type LivingWorldSceneInstance = InstanceType<typeof import('@/world-v2/LivingWorldScene').LivingWorldScene>;
@@ -48,11 +53,11 @@ const PORTRAITS: Record<AgentId, string> = {
 };
 
 const TAGLINES: Record<AgentId, string> = {
-  apex: 'Dojo market tactician',
-  metheus: 'Archive researcher',
-  gale: 'Weather spellcaster',
-  bacon: 'Chef pig',
-  nova: 'Celestial phoenix',
+  apex: 'Fast BTC tactician',
+  metheus: 'Patient BTC researcher',
+  gale: 'Weather testing agent',
+  bacon: 'Small-size BTC tester',
+  nova: 'Disciplined ETH trader',
 };
 
 interface WorldMenuAgent {
@@ -84,21 +89,7 @@ const WORLD_MENU_AGENTS: Record<WorldMenuAgentId, WorldMenuAgent> = {
 };
 
 const WORLD_AGENT_ORDER: WorldMenuAgentId[] = ['apex', 'metheus', 'gale', 'bacon', 'nova'];
-
-const SOCIAL_LINK_ICONS = [
-  {
-    id: 'instagram',
-    Icon: InstagramOutlineIcon,
-  },
-  {
-    id: 'tiktok',
-    Icon: TikTokOutlineIcon,
-  },
-  {
-    id: 'youtube',
-    Icon: YouTubeOutlineIcon,
-  },
-] as const;
+const PUBLIC_WORLD_AGENT_ORDER = PUBLIC_AGENT_IDS;
 
 const BNF_CHANGE_WINDOWS = ['24h', '7d', 'lifetime'] as const;
 type BnfChangeWindow = typeof BNF_CHANGE_WINDOWS[number];
@@ -129,34 +120,6 @@ interface PhaserWorldProps {
   selectedAgentId: ZoneId | null;
   focusRequestId: number;
   onAgentAreaSelect: (agentId: ZoneId) => void;
-}
-
-function InstagramOutlineIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden className="world-v2-social-icon">
-      <rect x="5" y="5" width="14" height="14" rx="4" />
-      <circle cx="12" cy="12" r="3.2" />
-      <circle cx="16.4" cy="7.8" r="0.7" />
-    </svg>
-  );
-}
-
-function TikTokOutlineIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden className="world-v2-social-icon">
-      <path d="M14.5 4v9.45a4.25 4.25 0 1 1-4.25-4.25c.38 0 .75.05 1.1.15v3.05a1.5 1.5 0 1 0 1.05 1.43V4h2.1Z" />
-      <path d="M14.5 4c.5 2.45 2.05 4.05 4.5 4.45v3.05c-1.72-.03-3.24-.58-4.5-1.58" />
-    </svg>
-  );
-}
-
-function YouTubeOutlineIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden className="world-v2-social-icon">
-      <rect x="3.6" y="6.7" width="16.8" height="10.6" rx="3" />
-      <path d="M10.4 9.7 14.9 12l-4.5 2.3V9.7Z" />
-    </svg>
-  );
 }
 
 function PhaserWorld({ selectedAgentId, focusRequestId, onAgentAreaSelect }: PhaserWorldProps) {
@@ -334,6 +297,54 @@ function calculateBiggestDrawdown(points: BnfPortfolioPoint[]) {
   return points.length > 0 ? drawdown : null;
 }
 
+function newestPost(posts: AgentLearningPost[]) {
+  return posts.reduce<AgentLearningPost | null>((latest, post) => {
+    if (!latest) return post;
+    return Date.parse(post.made_at) > Date.parse(latest.made_at) ? post : latest;
+  }, null);
+}
+
+function cleanStatementFragment(value: string) {
+  return value
+    .replace(/\s+/g, ' ')
+    .replace(/https?:\/\/\S+/g, '')
+    .trim()
+    .replace(/[.?!]+$/, '');
+}
+
+function publicLabDailyStatement(posts: AgentLearningPost[], biggestMove: { agentId: AgentId; trade: TradeLogEntry } | null) {
+  const latest = newestPost(posts);
+  if (latest) {
+    const title = cleanStatementFragment(latest.title);
+    const category = latest.category?.toLowerCase() ?? '';
+    if (category.includes('reliability')) return `Today’s lesson: ${title}. The lab is tightening reliability before the next run.`;
+    if (category.includes('risk')) return `Today’s lesson: ${title}. The focus is risk control, not forcing action.`;
+    if (category.includes('worked')) return `Today’s lesson: ${title}. The lab is checking whether that edge repeats tomorrow.`;
+    if (category.includes('restraint')) return `Today’s lesson: ${title}. Sometimes the public proof is knowing when not to trade.`;
+    return `Today’s lesson: ${title}. Come back tomorrow to see if it changes the rule set.`;
+  }
+
+  if (biggestMove) {
+    const name = WORLD_MENU_AGENTS[biggestMove.agentId].name;
+    const direction = biggestMove.trade.pnl >= 0 ? 'worked' : 'hurt';
+    return `${name}'s biggest public move ${direction} today. The question is what the agents change next.`;
+  }
+
+  return PUBLIC_LAB_EXPERIMENT;
+}
+
+function updateWorldDeepLink(params: Record<string, string | null>) {
+  const next = new URL(window.location.href);
+  for (const [key, value] of Object.entries(params)) {
+    if (value === null) {
+      next.searchParams.delete(key);
+    } else {
+      next.searchParams.set(key, value);
+    }
+  }
+  window.history.replaceState(null, '', `${next.pathname}${next.search}${next.hash}`);
+}
+
 function isMobileViewport() {
   return window.matchMedia('(max-width: 760px)').matches;
 }
@@ -351,13 +362,14 @@ export function WorldV2Page() {
   const [balanceWindow, setBalanceWindow] = useState<BnfChangeWindow>('24h');
   const [balanceMenuOpen, setBalanceMenuOpen] = useState(false);
   const [labMinimized, setLabMinimized] = useState(false);
-  const [episodeMinimized, setEpisodeMinimized] = useState(() => (
-    typeof window !== 'undefined' ? isMobileViewport() : false
-  ));
+  const [episodeMinimized, setEpisodeMinimized] = useState(true);
   const [selectedTrade, setSelectedTrade] = useState<TradeLogEntry | null>(null);
   const [replayCaptureMode, setReplayCaptureMode] = useState(false);
   const [learnMoreOpen, setLearnMoreOpen] = useState(false);
+  const [highlightLatestNote, setHighlightLatestNote] = useState(false);
+  const [pendingDeepLinkTrade, setPendingDeepLinkTrade] = useState<{ tradeId: string; surface: string } | null>(null);
   const [worldIntroOpen, setWorldIntroOpen] = useState(false);
+  const deepLinkAppliedRef = useRef(false);
   const dragStartY = useRef<number | null>(null);
   const balanceWrapRef = useRef<HTMLDivElement | null>(null);
 
@@ -385,6 +397,10 @@ export function WorldV2Page() {
   const { data, cardViewModels, source, error, loading } = useAgentData(windowsByAgent);
   const bnf = useBnfPortfolio();
   const publicLabEpisode = usePublicLabEpisode();
+  const apexLearning = useAgentLearning('apex');
+  const metheusLearning = useAgentLearning('metheus');
+  const baconLearning = useAgentLearning('bacon');
+  const novaLearning = useAgentLearning('nova');
   const agentsById = useMemo(() => agentMap(data.agents), [data.agents]);
   const worldAgentOrder = WORLD_AGENT_ORDER;
   const primaryWorldAgentOrder = worldAgentOrder.slice(0, 3);
@@ -393,14 +409,14 @@ export function WorldV2Page() {
   const selectedAgent = selectedLiveAgentId ? agentsById[selectedLiveAgentId] : undefined;
   const selectedVm = selectedLiveAgentId ? cardViewModels[selectedLiveAgentId] : undefined;
   const selectedPanelMode = selectedTrade ? 'replay' : learnMoreOpen ? 'learn' : 'stats';
-  const tradeLogsByAgent = useMemo(
-    () => WORLD_AGENT_ORDER.reduce<Partial<Record<AgentId, TradeLogEntry[]>>>((acc, id) => {
+  const publicTradeLogsByAgent = useMemo(
+    () => PUBLIC_WORLD_AGENT_ORDER.reduce<Partial<Record<AgentId, TradeLogEntry[]>>>((acc, id) => {
       acc[id] = cardViewModels[id]?.tradeLog ?? [];
       return acc;
     }, {}),
     [cardViewModels],
   );
-  const latestTrade = useMemo(() => latestTradeAcrossAgents(tradeLogsByAgent), [tradeLogsByAgent]);
+  const latestTrade = useMemo(() => latestTradeAcrossAgents(publicTradeLogsByAgent), [publicTradeLogsByAgent]);
   const todaysEpisodeAgentId = publicLabEpisode.episode
     ? publicLabEpisode.episode.agentId
     : latestTrade?.agentId ?? null;
@@ -415,7 +431,20 @@ export function WorldV2Page() {
     if (episode) return null;
     return latestTrade?.trade ?? null;
   }, [cardViewModels, latestTrade?.trade, publicLabEpisode.episode]);
-  const biggestMove = useMemo(() => biggestMoveAcrossAgents(tradeLogsByAgent), [tradeLogsByAgent]);
+  const biggestMove = useMemo(() => biggestMoveAcrossAgents(publicTradeLogsByAgent), [publicTradeLogsByAgent]);
+  const publicLearningPosts = useMemo(
+    () => [
+      ...apexLearning.posts,
+      ...metheusLearning.posts,
+      ...baconLearning.posts,
+      ...novaLearning.posts,
+    ],
+    [apexLearning.posts, metheusLearning.posts, baconLearning.posts, novaLearning.posts],
+  );
+  const publicLabStatement = useMemo(
+    () => publicLabDailyStatement(publicLearningPosts, biggestMove),
+    [publicLearningPosts, biggestMove],
+  );
   const latestBnfPoint = bnf.data.points[bnf.data.points.length - 1];
   const bnfChanges = useMemo(
     () => BNF_CHANGE_WINDOWS.reduce<Record<BnfChangeWindow, BnfChange | null>>((acc, window) => {
@@ -428,7 +457,7 @@ export function WorldV2Page() {
   const accountHighCents = useMemo(() => calculateAccountHigh(bnf.data.points), [bnf.data.points]);
   const biggestDrawdownCents = useMemo(() => calculateBiggestDrawdown(bnf.data.points), [bnf.data.points]);
   const bestAgent = useMemo(() => {
-    const liveAgents = data.agents.filter((agent) => agent.record.settled > 0);
+    const liveAgents = data.agents.filter((agent) => PUBLIC_WORLD_AGENT_ORDER.includes(agent.id) && agent.record.settled > 0);
     if (liveAgents.length === 0) return null;
     return liveAgents.reduce((best, agent) => (agent.total_pnl > best.total_pnl ? agent : best), liveAgents[0]);
   }, [data.agents]);
@@ -466,6 +495,83 @@ export function WorldV2Page() {
   }, []);
 
   useEffect(() => {
+    if (deepLinkAppliedRef.current) return;
+    deepLinkAppliedRef.current = true;
+    const params = new URLSearchParams(window.location.search);
+    const agent = params.get('agent') as AgentId | null;
+    if (!agent || !WORLD_AGENT_ORDER.includes(agent)) return;
+
+    // Deep links are URL-driven initial UI state. This effect intentionally
+    // hydrates the panel once after mount from the current query string.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSelectedAgentId(agent);
+    setWorldIntroOpen(false);
+    setReplayCaptureMode(false);
+    setBalanceMenuOpen(false);
+    setMenuExpanded(false);
+    setFocusRequestId((requestId) => requestId + 1);
+    if (isMobileViewport()) setMenuHidden(true);
+
+    const tradeId = params.get('trade');
+    const note = params.get('note');
+    if (tradeId) {
+      windowSetters[agent]('lifetime');
+      setPendingDeepLinkTrade({ tradeId, surface: 'deep_link' });
+      setLearnMoreOpen(false);
+      setHighlightLatestNote(false);
+    } else if (note === 'latest') {
+      setSelectedTrade(null);
+      setLearnMoreOpen(true);
+      setHighlightLatestNote(true);
+    }
+  }, [windowSetters]);
+
+  useEffect(() => {
+    if (!pendingDeepLinkTrade || !selectedLiveAgentId) return;
+    const row = cardViewModels[selectedLiveAgentId]?.tradeLog.find((trade) => trade.id === pendingDeepLinkTrade.tradeId);
+    if (!row) return;
+    // Replay deep links resolve after async trade data arrives.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setSelectedTrade(row);
+    setLearnMoreOpen(false);
+    setHighlightLatestNote(false);
+    setReplayCaptureMode(false);
+    setPendingDeepLinkTrade(null);
+    trackPublicLabEvent('replay_open', {
+      surface: pendingDeepLinkTrade.surface,
+      agent_id: selectedLiveAgentId,
+      trade_id: row.id,
+      contract_ticker: row.contract_ticker,
+    });
+  }, [cardViewModels, pendingDeepLinkTrade, selectedLiveAgentId]);
+
+  useEffect(() => {
+    if (!pendingDeepLinkTrade || !selectedLiveAgentId) return;
+    const alreadyLoaded = cardViewModels[selectedLiveAgentId]?.tradeLog.some((trade) => trade.id === pendingDeepLinkTrade.tradeId);
+    if (alreadyLoaded) return;
+
+    let cancelled = false;
+    void fetchPublicTradeById(selectedLiveAgentId, pendingDeepLinkTrade.tradeId).then((row) => {
+      if (cancelled || !row) return;
+      setSelectedTrade(row);
+      setLearnMoreOpen(false);
+      setHighlightLatestNote(false);
+      setReplayCaptureMode(false);
+      setPendingDeepLinkTrade(null);
+      trackPublicLabEvent('replay_open', {
+        surface: pendingDeepLinkTrade.surface,
+        agent_id: selectedLiveAgentId,
+        trade_id: row.id,
+        contract_ticker: row.contract_ticker,
+      });
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [cardViewModels, pendingDeepLinkTrade, selectedLiveAgentId]);
+
+  useEffect(() => {
     if (!balanceMenuOpen) return;
 
     const closeOnOutsidePointer = (event: Event) => {
@@ -491,6 +597,9 @@ export function WorldV2Page() {
     setSelectedTrade(null);
     setReplayCaptureMode(false);
     setLearnMoreOpen(false);
+    setHighlightLatestNote(false);
+    setPendingDeepLinkTrade(null);
+    updateWorldDeepLink({ agent: null, trade: null, note: null });
     setFocusRequestId((requestId) => requestId + 1);
     if (isMobileViewport()) setMenuHidden(false);
   };
@@ -501,20 +610,29 @@ export function WorldV2Page() {
     setSelectedTrade(null);
     setReplayCaptureMode(false);
     setLearnMoreOpen(false);
+    setHighlightLatestNote(false);
+    setPendingDeepLinkTrade(null);
     setWorldIntroOpen(false);
+    updateWorldDeepLink({ agent: id, trade: null, note: null });
     setFocusRequestId((requestId) => requestId + 1);
     setBalanceMenuOpen(false);
     setMenuExpanded(false);
     if (isMobileViewport()) setMenuHidden(true);
   };
 
-  const openLearnMore = () => {
+  const openLearnMore = (options?: { noteId?: string; surface?: string }) => {
     if (selectedLiveAgentId) {
-      trackPublicLabEvent('strategy_open', { surface: 'agent_card', agent_id: selectedLiveAgentId });
+      trackPublicLabEvent('strategy_open', {
+        surface: options?.surface ?? 'agent_card',
+        agent_id: selectedLiveAgentId,
+        note_id: options?.noteId,
+      });
+      updateWorldDeepLink({ agent: selectedLiveAgentId, trade: null, note: 'latest' });
     }
     setSelectedTrade(null);
     setReplayCaptureMode(false);
     setLearnMoreOpen(true);
+    setHighlightLatestNote(true);
   };
 
   const openTradeReplay = (row: TradeLogEntry) => {
@@ -525,9 +643,11 @@ export function WorldV2Page() {
       contract_ticker: row.contract_ticker,
     });
     setLearnMoreOpen(false);
+    setHighlightLatestNote(false);
     setWorldIntroOpen(false);
     setReplayCaptureMode(false);
     setSelectedTrade(row);
+    if (selectedLiveAgentId) updateWorldDeepLink({ agent: selectedLiveAgentId, trade: row.id, note: null });
   };
 
   const openTradeForAgent = (id: WorldMenuAgentId, row: TradeLogEntry, surface: string) => {
@@ -539,9 +659,27 @@ export function WorldV2Page() {
     });
     setSelectedAgentId(id);
     setLearnMoreOpen(false);
+    setHighlightLatestNote(false);
     setWorldIntroOpen(false);
     setReplayCaptureMode(false);
     setSelectedTrade(row);
+    updateWorldDeepLink({ agent: id, trade: row.id, note: null });
+    setFocusRequestId((requestId) => requestId + 1);
+    setBalanceMenuOpen(false);
+    setMenuExpanded(false);
+    if (isMobileViewport()) setMenuHidden(true);
+  };
+
+  const openTradeIdForAgent = (id: WorldMenuAgentId, tradeId: string, surface: string) => {
+    setSelectedAgentId(id);
+    setLearnMoreOpen(false);
+    setHighlightLatestNote(false);
+    setWorldIntroOpen(false);
+    setReplayCaptureMode(false);
+    setSelectedTrade(null);
+    setPendingDeepLinkTrade({ tradeId, surface });
+    windowSetters[id]('lifetime');
+    updateWorldDeepLink({ agent: id, trade: tradeId, note: null });
     setFocusRequestId((requestId) => requestId + 1);
     setBalanceMenuOpen(false);
     setMenuExpanded(false);
@@ -554,6 +692,9 @@ export function WorldV2Page() {
     setSelectedTrade(null);
     setReplayCaptureMode(false);
     setLearnMoreOpen(false);
+    setHighlightLatestNote(false);
+    setPendingDeepLinkTrade(null);
+    updateWorldDeepLink({ agent: null, trade: null, note: null });
     setWorldIntroOpen(true);
     setFocusRequestId((requestId) => requestId + 1);
     setBalanceMenuOpen(false);
@@ -563,6 +704,7 @@ export function WorldV2Page() {
 
   const closeWorldIntro = () => {
     setWorldIntroOpen(false);
+    updateWorldDeepLink({ agent: null, trade: null, note: null });
     if (isMobileViewport()) setMenuHidden(false);
   };
 
@@ -634,22 +776,47 @@ export function WorldV2Page() {
     : error?.kind === 'fetch-failed'
       ? 'Data unavailable'
       : 'Mock data';
+  const captureLink = selectedLiveAgentId && selectedTrade
+    ? `${window.location.origin}${window.location.pathname}?agent=${selectedLiveAgentId}&trade=${selectedTrade.id}`
+    : undefined;
 
   return (
-    <main className="world-v2-page">
+    <main className={replayCaptureMode ? 'world-v2-page world-v2-page--capture' : 'world-v2-page'}>
       <PhaserWorld selectedAgentId={selectedAgentId} focusRequestId={focusRequestId} onAgentAreaSelect={selectAgent} />
 
       {!isolatedTestMode && <div className="world-v2-vignette" />}
 
-      {!isolatedTestMode && !selectedAgentId && !worldIntroOpen && labMinimized && (
-        <button
-          type="button"
-          className="world-v2-lab-toggle-button"
-          onClick={() => setLabMinimized(false)}
-          aria-label="Show public lab tracker"
-        >
-          <FlaskConical size={19} aria-hidden />
-        </button>
+      {!isolatedTestMode && !selectedAgentId && !worldIntroOpen && (
+        <div className="world-v2-utility-stack" aria-label="World controls">
+          <button
+            type="button"
+            className="world-v2-help-button"
+            onClick={openWorldIntro}
+            aria-label="About the Living World"
+          >
+            <CircleHelp size={20} aria-hidden />
+          </button>
+          {labMinimized && (
+            <button
+              type="button"
+              className="world-v2-lab-toggle-button"
+              onClick={() => setLabMinimized(false)}
+              aria-label="Show public lab tracker"
+            >
+              <FlaskConical size={19} aria-hidden />
+            </button>
+          )}
+          {episodeMinimized && (
+            <button
+              type="button"
+              className="world-v2-episode-toggle-button"
+              onClick={() => setEpisodeMinimized(false)}
+              aria-label="Show latest episode"
+            >
+              <Tv size={20} aria-hidden />
+            </button>
+          )}
+        </div>
       )}
 
       {!isolatedTestMode && !selectedAgentId && !worldIntroOpen && !labMinimized && (
@@ -659,13 +826,14 @@ export function WorldV2Page() {
               currentBalanceCents={latestBnfPoint?.combined_cleared_cents ?? null}
               change24hCents={bnfChanges['24h']?.cents ?? null}
               lifetimePnlCents={bnfChanges.lifetime?.cents ?? null}
-              agentCount={data.agents.filter((agent) => agent.state !== 'arriving_soon').length || WORLD_AGENT_ORDER.length}
+              agentCountLabel={`${PUBLIC_WORLD_AGENT_ORDER.length} public agents`}
               biggestMove={biggestMove}
               accountHighCents={accountHighCents}
               biggestDrawdownCents={biggestDrawdownCents}
               bestAgentName={bestAgent?.name ?? null}
+              statement={publicLabStatement}
               points={bnf.data.points}
-              onOpenAgent={(agentId) => selectAgent(agentId, 'public_lab_tracker')}
+              onOpenMove={(agentId, trade) => openTradeForAgent(agentId, trade, 'public_lab_tracker')}
               onMinimize={() => setLabMinimized(true)}
             />
             <FollowExperimentCta surface="public_lab_tracker" />
@@ -675,16 +843,7 @@ export function WorldV2Page() {
 
       {!isolatedTestMode && !selectedAgentId && !worldIntroOpen && (
         <div className="world-v2-episode-stack">
-          {episodeMinimized ? (
-            <button
-              type="button"
-              className="world-v2-episode-toggle-button"
-              onClick={() => setEpisodeMinimized(false)}
-              aria-label="Show today's episode"
-            >
-              <Tv size={20} aria-hidden />
-            </button>
-          ) : (
+          {!episodeMinimized && (
             <TodaysEpisodePanel
               agentId={todaysEpisodeAgentId}
               agentName={todaysEpisodeAgentId ? WORLD_MENU_AGENTS[todaysEpisodeAgentId].name : null}
@@ -694,21 +853,10 @@ export function WorldV2Page() {
               onMinimize={() => setEpisodeMinimized(true)}
               onOpenAgent={(agentId) => selectAgent(agentId, 'todays_episode')}
               onOpenTrade={(agentId, trade) => openTradeForAgent(agentId, trade, 'todays_episode')}
+              onOpenTradeId={(agentId, tradeId) => openTradeIdForAgent(agentId, tradeId, 'todays_episode')}
             />
           )}
         </div>
-      )}
-
-      {!isolatedTestMode && (
-        <button
-          type="button"
-          className="world-v2-help-button"
-          onClick={worldIntroOpen ? closeWorldIntro : openWorldIntro}
-          aria-label="About the Living World"
-          aria-pressed={worldIntroOpen}
-        >
-          <CircleHelp size={20} aria-hidden />
-        </button>
       )}
 
       {!isolatedTestMode && menuHidden && !selectedAgentId && !worldIntroOpen && (
@@ -734,9 +882,7 @@ export function WorldV2Page() {
         <div className="world-v2-sheet-handle" aria-hidden />
         <div className="world-v2-menu-head">
           <div className="world-v2-social-links" aria-label="Social links">
-            {SOCIAL_LINKS.map(({ id, href, label }) => {
-              const Icon = SOCIAL_LINK_ICONS.find((item) => item.id === id)?.Icon ?? InstagramOutlineIcon;
-              return (
+            {SOCIAL_LINKS.map(({ id, href, label }) => (
               <a
                 key={id}
                 className="world-v2-social-link"
@@ -744,12 +890,12 @@ export function WorldV2Page() {
                 target="_blank"
                 rel="noreferrer"
                 aria-label={label}
+                title={label}
                 onClick={() => trackPublicLabEvent('follow_click', { surface: 'agent_menu_icons', platform: id })}
               >
-                <Icon />
+                <SocialPlatformIcon id={id} />
               </a>
-              );
-            })}
+            ))}
           </div>
           <div ref={balanceWrapRef} className="world-v2-balance-wrap">
             <button
@@ -847,7 +993,11 @@ export function WorldV2Page() {
                 <button
                   type="button"
                   className="world-v2-back-button"
-                  onClick={() => setSelectedTrade(null)}
+                  onClick={() => {
+                    setSelectedTrade(null);
+                    setReplayCaptureMode(false);
+                    updateWorldDeepLink({ trade: null });
+                  }}
                   aria-label="Back to trade stats"
                 >
                   <ArrowLeft size={18} aria-hidden />
@@ -871,6 +1021,7 @@ export function WorldV2Page() {
                 key={selectedTrade.id}
                 row={selectedTrade}
                 captureMode={replayCaptureMode}
+                captureLink={captureLink}
                 onCaptureModeChange={(enabled) => {
                   trackPublicLabEvent('replay_capture_toggle', {
                     agent_id: selectedLiveAgentId,
@@ -888,7 +1039,11 @@ export function WorldV2Page() {
                 <button
                   type="button"
                   className="world-v2-back-button"
-                  onClick={() => setLearnMoreOpen(false)}
+                  onClick={() => {
+                    setLearnMoreOpen(false);
+                    setHighlightLatestNote(false);
+                    updateWorldDeepLink({ note: null });
+                  }}
                   aria-label="Back to trade stats"
                 >
                   <ArrowLeft size={18} aria-hidden />
@@ -912,6 +1067,7 @@ export function WorldV2Page() {
                 agentId={selectedLiveAgentId}
                 about={AGENT_META[selectedLiveAgentId].strategy_about}
                 representativeTrades={selectedVm.tradeLog.slice(0, 4)}
+                highlightLatestNote={highlightLatestNote}
               />
               <FollowExperimentCta surface="strategy_panel" compact />
             </>
@@ -940,7 +1096,7 @@ export function WorldV2Page() {
                 <button
                   type="button"
                   className="world-v2-icon-button world-v2-learn-button"
-                  onClick={openLearnMore}
+                  onClick={() => openLearnMore()}
                   aria-label={`Learn more about ${selectedAgent.name}`}
                 >
                   <BookOpen size={18} aria-hidden />
@@ -977,6 +1133,8 @@ export function WorldV2Page() {
                 <span>{selectedAgent.market_label}</span>
               </div>
 
+              <TodaysFieldNote agentId={selectedLiveAgentId} onOpenHistory={openLearnMore} />
+
               <TimeFilterPill
                 agentId={selectedLiveAgentId}
                 agentName={selectedAgent.name}
@@ -999,29 +1157,32 @@ export function WorldV2Page() {
       )}
 
       {!isolatedTestMode && worldIntroOpen && (
-        <section
-          className="world-v2-stats-panel world-v2-stats-panel--world-intro"
-          aria-label="About the Living World"
-          style={{ '--agent-accent': 'var(--color-nova)' } as React.CSSProperties}
-        >
-          <div className="world-v2-stats-head world-v2-intro-head">
-            <div className="world-v2-stats-title">
-              <p>Living World</p>
-              <h2>About the World</h2>
-              <span>Trading agents, delayed data, and strategy notes</span>
+        <>
+          <div className="world-v2-modal-backdrop" aria-hidden />
+          <section
+            className="world-v2-stats-panel world-v2-stats-panel--world-intro"
+            aria-label="About the Living World"
+            style={{ '--agent-accent': 'var(--color-nova)' } as React.CSSProperties}
+          >
+            <div className="world-v2-stats-head world-v2-intro-head">
+              <div className="world-v2-stats-title">
+                <p>Living World</p>
+                <h2>About the World</h2>
+                <span>Trading agents, delayed data, and strategy notes</span>
+              </div>
+              <button
+                type="button"
+                className="world-v2-icon-button world-v2-close-button"
+                onClick={closeWorldIntro}
+                aria-label="Close world introduction"
+              >
+                <X size={18} aria-hidden />
+              </button>
             </div>
-            <button
-              type="button"
-              className="world-v2-icon-button world-v2-close-button"
-              onClick={closeWorldIntro}
-              aria-label="Close world introduction"
-            >
-              <X size={18} aria-hidden />
-            </button>
-          </div>
 
-          <WorldIntroPanel />
-        </section>
+            <WorldIntroPanel />
+          </section>
+        </>
       )}
 
     </main>

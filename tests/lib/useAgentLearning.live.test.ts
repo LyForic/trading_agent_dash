@@ -58,6 +58,7 @@ describe('useAgentLearning live mode', () => {
         body: 'Replay now ends at the actual contract close.',
         made_at: '2026-05-22T22:00:00Z',
         source: 'bacon_bot',
+        category: 'Reliability',
       },
     ]);
   });
