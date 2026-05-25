@@ -78,12 +78,14 @@ supabase functions deploy sync-public-lab-episodes
 
 # 5. Optional: enable auto-updating Watch Today's Episode from TikTok
 supabase secrets set TIKTOK_ACCESS_TOKEN=...
+supabase secrets set PUBLIC_LAB_SYNC_SECRET=...
 supabase secrets set PUBLIC_LAB_EPISODE_LIMIT=12
 
 # Then call the function from a cron/scheduler every few minutes:
 curl -X POST \
   "${VITE_SUPABASE_URL}/functions/v1/sync-public-lab-episodes" \
-  -H "Authorization: Bearer ${SUPABASE_SERVICE_ROLE_KEY}"
+  -H "Authorization: Bearer ${VITE_SUPABASE_ANON_KEY}" \
+  -H "x-sync-secret: ${PUBLIC_LAB_SYNC_SECRET}"
 ```
 
 ## Verifying the trigger
@@ -163,6 +165,19 @@ creator access token would be exposed. Use the server-side episode feed instead:
 2. It upserts the newest videos into `public_lab_episodes`.
 3. The public website reads `public_lab_episodes_public` and refreshes the
    home episode card every five minutes.
+
+Required secrets:
+
+- `TIKTOK_ACCESS_TOKEN`: creator OAuth token with TikTok Display API video
+  permissions.
+- `SUPABASE_SERVICE_ROLE_KEY`: server-only database writer used inside the
+  Edge Function.
+- `PUBLIC_LAB_SYNC_SECRET`: random shared secret required in the
+  `x-sync-secret` request header so public clients cannot burn sync quota.
+
+Schedule it with Supabase Cron, Vercel Cron, GitHub Actions, or another trusted
+scheduler. The scheduled request must be `POST`, include a valid Supabase JWT
+in `Authorization`, and include `x-sync-secret`.
 
 To link an episode to an agent or replay, include the agent name/hashtag
 (`#apex`, `#gale`, `#metheus`, `#bacon`, `#nova`) and optionally

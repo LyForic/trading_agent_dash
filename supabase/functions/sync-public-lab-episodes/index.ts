@@ -8,6 +8,7 @@
 // Required secrets:
 //   TIKTOK_ACCESS_TOKEN=<creator Display API access token>
 //   SUPABASE_SERVICE_ROLE_KEY=<server-only key>
+//   PUBLIC_LAB_SYNC_SECRET=<random shared secret for scheduled calls>
 // Optional:
 //   PUBLIC_LAB_EPISODE_LIMIT=12
 
@@ -150,8 +151,12 @@ Deno.serve(async (req) => {
   const supabaseUrl = Deno.env.get('SUPABASE_URL');
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
   const tiktokAccessToken = Deno.env.get('TIKTOK_ACCESS_TOKEN');
+  const syncSecret = Deno.env.get('PUBLIC_LAB_SYNC_SECRET');
   const limit = Math.min(Number(Deno.env.get('PUBLIC_LAB_EPISODE_LIMIT') ?? 12) || 12, 20);
 
+  if (!syncSecret || req.headers.get('x-sync-secret') !== syncSecret) {
+    return json({ error: 'unauthorized' }, 401);
+  }
   if (!supabaseUrl || !serviceRoleKey) {
     return json({ error: 'Supabase service role credentials are not configured' }, 500);
   }
