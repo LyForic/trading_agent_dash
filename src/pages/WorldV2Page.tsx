@@ -351,7 +351,9 @@ export function WorldV2Page() {
   const [balanceWindow, setBalanceWindow] = useState<BnfChangeWindow>('24h');
   const [balanceMenuOpen, setBalanceMenuOpen] = useState(false);
   const [labMinimized, setLabMinimized] = useState(false);
-  const [episodeMinimized, setEpisodeMinimized] = useState(false);
+  const [episodeMinimized, setEpisodeMinimized] = useState(() => (
+    typeof window !== 'undefined' ? isMobileViewport() : false
+  ));
   const [selectedTrade, setSelectedTrade] = useState<TradeLogEntry | null>(null);
   const [replayCaptureMode, setReplayCaptureMode] = useState(false);
   const [learnMoreOpen, setLearnMoreOpen] = useState(false);
