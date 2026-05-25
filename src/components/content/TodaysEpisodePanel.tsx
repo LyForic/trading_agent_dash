@@ -1,3 +1,4 @@
+import { useMemo, useState } from 'react';
 import { ArrowUpRight, ChevronDown, Play, ReceiptText } from 'lucide-react';
 import { formatPnl } from '@/lib/formatting';
 import { SOCIAL_LINKS, trackPublicLabEvent } from '@/lib/publicLab';
@@ -20,6 +21,34 @@ function formatDate(value: string | null) {
   return new Date(value).toLocaleDateString([], { month: 'short', day: 'numeric' });
 }
 
+function youtubeVideoIdFromUrl(url: string | null | undefined) {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname.includes('youtu.be')) return parsed.pathname.split('/').filter(Boolean)[0] ?? null;
+    const watchId = parsed.searchParams.get('v');
+    if (watchId) return watchId;
+    const segments = parsed.pathname.split('/').filter(Boolean);
+    const shortsIndex = segments.indexOf('shorts');
+    if (shortsIndex >= 0) return segments[shortsIndex + 1] ?? null;
+    const embedIndex = segments.indexOf('embed');
+    if (embedIndex >= 0) return segments[embedIndex + 1] ?? null;
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function thumbnailCandidates(episode: PublicLabEpisode | null) {
+  const videoId = youtubeVideoIdFromUrl(episode?.episodeUrl);
+  const urls = [
+    episode?.thumbnailUrl,
+    videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : null,
+    videoId ? `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg` : null,
+  ];
+  return urls.filter((url, index, all): url is string => Boolean(url) && all.indexOf(url) === index);
+}
+
 export function TodaysEpisodePanel({
   agentName,
   agentId,
@@ -31,6 +60,11 @@ export function TodaysEpisodePanel({
   onOpenTrade,
 }: Props) {
   const episodePlatform = episode ? SOCIAL_LINKS.find((link) => link.id === episode.platform) : null;
+  const thumbnails = useMemo(() => thumbnailCandidates(episode), [episode]);
+  const thumbnailKey = `${episode?.id ?? 'none'}:${episode?.episodeUrl ?? ''}:${episode?.thumbnailUrl ?? ''}`;
+  const [thumbnailAttempt, setThumbnailAttempt] = useState({ key: '', index: 0 });
+  const thumbnailIndex = thumbnailAttempt.key === thumbnailKey ? thumbnailAttempt.index : 0;
+  const thumbnailUrl = thumbnails[thumbnailIndex] ?? null;
   const displayAgentId = episode?.agentId ?? agentId;
   const title = episode?.title ?? (agentName && trade
     ? `${agentName}'s latest public trade`
@@ -54,12 +88,25 @@ export function TodaysEpisodePanel({
         </button>
       )}
       <div className="todays-episode-panel__thumb" aria-hidden>
-        {episode?.thumbnailUrl ? (
-          <img src={episode.thumbnailUrl} alt="" loading="lazy" />
+        {thumbnailUrl ? (
+          <img
+            key={thumbnailUrl}
+            src={thumbnailUrl}
+            alt=""
+            loading="lazy"
+            decoding="async"
+            referrerPolicy="no-referrer"
+            onError={() => {
+              setThumbnailAttempt((attempt) => ({
+                key: thumbnailKey,
+                index: attempt.key === thumbnailKey ? attempt.index + 1 : 1,
+              }));
+            }}
+          />
         ) : (
           <Play size={28} />
         )}
-        {episode?.thumbnailUrl && (
+        {thumbnailUrl && (
           <span>
             <Play size={14} />
           </span>

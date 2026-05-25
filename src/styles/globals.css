@@ -3734,22 +3734,48 @@ body[data-route="world-v2"] {
   }
 
   .public-lab-tracker {
-    max-height: 32dvh;
-    gap: 8px;
-    padding: 10px;
-    overflow: hidden;
+    max-height: min(38dvh, 300px);
+    gap: 6px;
+    padding: 8px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
   }
 
   .public-lab-tracker__head h1 {
-    font-size: 18px;
+    font-size: 17px;
   }
 
   .public-lab-tracker__statement {
     font-size: 11px;
+    line-height: 1.25;
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
   }
 
   .public-lab-tracker__grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 5px;
+  }
+
+  .public-lab-tracker__grid > div {
+    min-height: 42px;
+    padding: 6px 5px;
+  }
+
+  .public-lab-tracker__grid span {
+    font-size: 9px;
+    letter-spacing: 0.04em;
+  }
+
+  .public-lab-tracker__grid strong {
+    margin-top: 3px;
+    font-size: 12px;
+    line-height: 1.1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   .public-lab-tracker__season,
