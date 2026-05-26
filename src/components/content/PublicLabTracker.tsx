@@ -16,7 +16,10 @@ interface Props {
   accountHighCents: number | null;
   biggestDrawdownCents: number | null;
   bestAgentName: string | null;
-  statement: string;
+  asOfLabel: string;
+  lesson: string;
+  lessonSource: string;
+  tomorrowWatch: string;
   onOpenMove: (agentId: AgentId, trade: TradeLogEntry) => void;
   labDate?: Date;
   dateLabel?: string;
@@ -47,7 +50,10 @@ export function PublicLabTracker({
   accountHighCents,
   biggestDrawdownCents,
   bestAgentName,
-  statement,
+  asOfLabel,
+  lesson,
+  lessonSource,
+  tomorrowWatch,
   onOpenMove,
   labDate,
   dateLabel,
@@ -61,7 +67,8 @@ export function PublicLabTracker({
       <div className="public-lab-tracker__head">
         <div>
           <span>{dateLabel ? `Public Lab / ${dateLabel}` : 'Public Lab'}</span>
-          <h1>Day {day}: real agents, real trades.</h1>
+          <h1>Day {day} of the public agent account</h1>
+          <p className="public-lab-tracker__as-of">{asOfLabel}</p>
         </div>
         <div className="public-lab-tracker__head-actions">
           <FlaskConical size={20} aria-hidden />
@@ -78,7 +85,17 @@ export function PublicLabTracker({
         </div>
       </div>
 
-      <p className="public-lab-tracker__statement">{statement}</p>
+      <div className="public-lab-tracker__narrative">
+        <section aria-label="Today's lesson">
+          <span>Today's lesson</span>
+          <strong>{lessonSource}</strong>
+          <p>{lesson}</p>
+        </section>
+        <section aria-label="Tomorrow watch">
+          <span>Tomorrow watch</span>
+          <p>{tomorrowWatch}</p>
+        </section>
+      </div>
 
       <div className="public-lab-tracker__grid">
         <div>

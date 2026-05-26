@@ -121,6 +121,12 @@ interface BnfChange {
   pct: number;
 }
 
+interface PublicLabNarrative {
+  lesson: string;
+  lessonSource: string;
+  tomorrowWatch: string;
+}
+
 interface PublicLabDateTradeState {
   dateKey: string;
   tradeLogsByAgent: Partial<Record<AgentId, TradeLogEntry[]>>;
@@ -256,6 +262,18 @@ function formatPublicLabDateLabel(dateKey: string) {
   const { year, month, day } = parsePublicLabDateKey(dateKey);
   return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })
     .format(new Date(Date.UTC(year, month - 1, day, 12)));
+}
+
+function formatPublicLabAsOf(value: string | null | undefined) {
+  if (!value) return 'Delayed public data pending';
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return 'Delayed public data pending';
+  const time = new Intl.DateTimeFormat('en-US', {
+    timeZone: PUBLIC_LAB_TIME_ZONE,
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(date);
+  return `As of ${time} PT / delayed data`;
 }
 
 interface PhaserWorldProps {
@@ -439,13 +457,6 @@ function calculateBiggestDrawdown(points: BnfPortfolioPoint[]) {
   return points.length > 0 ? drawdown : null;
 }
 
-function newestPost(posts: AgentLearningPost[]) {
-  return posts.reduce<AgentLearningPost | null>((latest, post) => {
-    if (!latest) return post;
-    return Date.parse(post.made_at) > Date.parse(latest.made_at) ? post : latest;
-  }, null);
-}
-
 function cleanStatementFragment(value: string) {
   return value
     .replace(/\s+/g, ' ')
@@ -454,25 +465,81 @@ function cleanStatementFragment(value: string) {
     .replace(/[.?!]+$/, '');
 }
 
-function publicLabDailyStatement(posts: AgentLearningPost[], biggestMove: { agentId: AgentId; trade: TradeLogEntry } | null) {
-  const latest = newestPost(posts);
-  if (latest) {
-    const title = cleanStatementFragment(latest.title);
-    const category = latest.category?.toLowerCase() ?? '';
-    if (category.includes('reliability')) return `Today’s lesson: ${title}. The lab is tightening reliability before the next run.`;
-    if (category.includes('risk')) return `Today’s lesson: ${title}. The focus is risk control, not forcing action.`;
-    if (category.includes('worked')) return `Today’s lesson: ${title}. The lab is checking whether that edge repeats tomorrow.`;
-    if (category.includes('restraint')) return `Today’s lesson: ${title}. Sometimes the public proof is knowing when not to trade.`;
-    return `Today’s lesson: ${title}. Come back tomorrow to see if it changes the rule set.`;
+function postSignalScore(post: AgentLearningPost) {
+  const category = post.category?.toLowerCase() ?? '';
+  let score = 0;
+  if (post.tomorrow_watch) score += 8;
+  if (post.why_it_matters) score += 4;
+  if (category.includes('risk') || category.includes('worked')) score += 3;
+  if (category.includes('reliability') || category.includes('restraint')) score += 2;
+  return score;
+}
+
+function highestSignalPost(posts: AgentLearningPost[]) {
+  return posts.reduce<AgentLearningPost | null>((best, post) => {
+    if (!best) return post;
+    const score = postSignalScore(post);
+    const bestScore = postSignalScore(best);
+    if (score !== bestScore) return score > bestScore ? post : best;
+    return Date.parse(post.made_at) > Date.parse(best.made_at) ? post : best;
+  }, null);
+}
+
+function lessonFromPost(post: AgentLearningPost) {
+  const body = cleanStatementFragment(post.viewer_angle || post.why_it_matters || post.title || post.body);
+  if (body.length <= 150) return body;
+  return `${body.slice(0, 149).trimEnd()}...`;
+}
+
+function tomorrowWatchFromPost(post: AgentLearningPost) {
+  if (post.tomorrow_watch) return cleanStatementFragment(post.tomorrow_watch);
+  const name = WORLD_MENU_AGENTS[post.agent_id].name;
+  const category = post.category?.toLowerCase() ?? '';
+
+  if (category.includes('risk')) {
+    return `Can ${name}'s risk filter keep losses smaller without muting the best entries?`;
+  }
+  if (category.includes('worked')) {
+    return `Can ${name}'s latest edge repeat in the next settled trade window?`;
+  }
+  if (category.includes('reliability')) {
+    return `Can ${name}'s next run stay clean enough to trust the signal?`;
+  }
+  if (category.includes('restraint')) {
+    return `Can ${name} keep skipping weak setups when the market gets noisy?`;
+  }
+  return `Can ${name}'s next field note turn this lesson into a better rule?`;
+}
+
+function publicLabNarrative(
+  posts: AgentLearningPost[],
+  biggestMove: { agentId: AgentId; trade: TradeLogEntry } | null,
+): PublicLabNarrative {
+  const signalPost = highestSignalPost(posts);
+  if (signalPost) {
+    const name = WORLD_MENU_AGENTS[signalPost.agent_id].name;
+    return {
+      lesson: lessonFromPost(signalPost),
+      lessonSource: `From ${name}'s field note`,
+      tomorrowWatch: tomorrowWatchFromPost(signalPost),
+    };
   }
 
   if (biggestMove) {
     const name = WORLD_MENU_AGENTS[biggestMove.agentId].name;
     const direction = biggestMove.trade.pnl >= 0 ? 'worked' : 'hurt';
-    return `${name}'s biggest public move ${direction} today. The question is what the agents change next.`;
+    return {
+      lesson: `${name}'s biggest public move ${direction} today.`,
+      lessonSource: `From ${name}'s biggest settled move`,
+      tomorrowWatch: 'Waiting for the next settled trade window.',
+    };
   }
 
-  return PUBLIC_LAB_EXPERIMENT;
+  return {
+    lesson: PUBLIC_LAB_EXPERIMENT,
+    lessonSource: 'From the field-note queue',
+    tomorrowWatch: 'Waiting for the next settled trade window.',
+  };
 }
 
 function bestAgentNameFromTradeLogs(tradeLogs: Partial<Record<AgentId, TradeLogEntry[]>>) {
@@ -649,9 +716,13 @@ export function WorldV2Page() {
     () => publicLearningPosts.filter((post) => publicLabDateKeyFromIso(post.made_at) === publicLabDateKeyForView),
     [publicLabDateKeyForView, publicLearningPosts],
   );
-  const publicLabStatement = useMemo(
-    () => publicLabDailyStatement(publicLabPostsForDate, biggestMove),
+  const publicLabCopy = useMemo(
+    () => publicLabNarrative(publicLabPostsForDate, biggestMove),
     [publicLabPostsForDate, biggestMove],
+  );
+  const publicLabAsOfLabel = useMemo(
+    () => formatPublicLabAsOf(publicLabBnfPoint?.captured_at),
+    [publicLabBnfPoint?.captured_at],
   );
   const bnfChanges = useMemo(
     () => BNF_CHANGE_WINDOWS.reduce<Record<BnfChangeWindow, BnfChange | null>>((acc, window) => {
@@ -1086,7 +1157,10 @@ export function WorldV2Page() {
                   accountHighCents={accountHighCents}
                   biggestDrawdownCents={biggestDrawdownCents}
                   bestAgentName={publicLabBestAgentName}
-                  statement={publicLabStatement}
+                  asOfLabel={publicLabAsOfLabel}
+                  lesson={publicLabCopy.lesson}
+                  lessonSource={publicLabCopy.lessonSource}
+                  tomorrowWatch={publicLabCopy.tomorrowWatch}
                   labDate={publicLabDateForView}
                   dateLabel={publicLabDateLabel}
                   onOpenCalendar={() => {
@@ -1418,8 +1492,8 @@ export function WorldV2Page() {
             <div className="world-v2-stats-head world-v2-intro-head">
               <div className="world-v2-stats-title">
                 <p>Gym Live</p>
-                <h2>How this works</h2>
-                <span>Follow @brandonnfongg and come back tomorrow.</span>
+                <h2>How Gym Live works</h2>
+                <span>Follow real agents, real trades, and daily lessons as the public account evolves.</span>
               </div>
               <button
                 type="button"

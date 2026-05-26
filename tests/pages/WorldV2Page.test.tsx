@@ -104,7 +104,10 @@ describe('WorldV2Page onboarding and Public Lab state', () => {
     renderWorld();
 
     expect(screen.getByRole('region', { name: 'How this works' })).toBeInTheDocument();
-    expect(screen.getByText(/This is the public lab for Brandon's trading agents/i)).toBeInTheDocument();
+    expect(screen.getByText(/How Gym Live works/i)).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Agents/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /Proof/i })).toBeInTheDocument();
+    expect(screen.getByText(/Each character is an autonomous agent/i)).toBeInTheDocument();
     expect(screen.queryByRole('region', { name: /Public lab tracker/i })).not.toBeInTheDocument();
   });
 
@@ -139,6 +142,10 @@ describe('WorldV2Page onboarding and Public Lab state', () => {
 
     expect(screen.queryByRole('region', { name: 'How this works' })).not.toBeInTheDocument();
     expect(screen.getByRole('region', { name: /Public lab tracker/i })).toBeInTheDocument();
+    expect(screen.getByText(/of the public agent account/i)).toBeInTheDocument();
+    expect(screen.getByText(/delayed data/i)).toBeInTheDocument();
+    expect(screen.getByText(/Today's lesson/i)).toBeInTheDocument();
+    expect(screen.getByText(/Tomorrow watch/i)).toBeInTheDocument();
   });
 
   it('opens the Public Lab calendar and returns to a selected day', async () => {
