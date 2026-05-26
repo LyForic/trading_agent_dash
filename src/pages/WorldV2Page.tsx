@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import {
   ArrowLeft,
   BookOpen,
@@ -41,7 +41,7 @@ import { formatPnl, formatWinRate } from '@/lib/formatting';
 import type { WorldMode } from '@/lib/timeOfDay';
 import type { Agent, AgentId, AgentLearningPost, BnfPortfolioPoint, PerformanceWindow, TradeLogEntry } from '@/lib/types';
 import type { ZoneId } from '@/world-v2/worldMapData';
-import { useTimeOfDayPreference } from '@/lib/useTimeOfDayPreference';
+import { getDevModeOverride, useTimeOfDay } from '@/hooks/useTimeOfDay';
 
 type LivingWorldSceneInstance = InstanceType<typeof import('@/world-v2/LivingWorldScene').LivingWorldScene>;
 type PhaserModule = typeof import('phaser');
@@ -579,8 +579,11 @@ function isMobileViewport() {
 }
 
 export function WorldV2Page() {
-  const { effectiveMode } = useTimeOfDayPreference();
+  // The live world has no visible mode picker. Ignore stored manual mode so
+  // embedded browsers cannot get stuck on an old dusk/night test preference.
+  const autoMode = useTimeOfDay();
   const worldTestParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+  const effectiveMode = getDevModeOverride(worldTestParams?.toString() ? `?${worldTestParams.toString()}` : '') ?? autoMode;
   const isolatedTestMode = worldTestParams?.has('apexTest') === true
     || worldTestParams?.has('treeTest') === true
     || worldTestParams?.has('manifestWorld') === true
@@ -605,6 +608,10 @@ export function WorldV2Page() {
   const deepLinkAppliedRef = useRef(false);
   const dragStartY = useRef<number | null>(null);
   const balanceWrapRef = useRef<HTMLDivElement | null>(null);
+
+  useLayoutEffect(() => {
+    document.body.dataset.mode = effectiveMode;
+  }, [effectiveMode]);
 
   const [apexWindow, setApexWindow] = useAgentWindow('apex');
   const [galeWindow, setGaleWindow] = useAgentWindow('gale');
