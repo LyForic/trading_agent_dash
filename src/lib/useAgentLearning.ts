@@ -10,10 +10,6 @@ interface AgentLearningPostRow {
   body: string;
   made_at: string;
   source: string | null;
-  category?: string | null;
-  viewer_angle?: string | null;
-  why_it_matters?: string | null;
-  tomorrow_watch?: string | null;
 }
 
 export interface UseAgentLearningResult {
@@ -24,12 +20,10 @@ export interface UseAgentLearningResult {
 }
 
 const LEARNING_POST_COLUMNS = 'id,agent_id,title,body,made_at,source';
-const RICH_LEARNING_POST_COLUMNS =
-  'id,agent_id,title,body,made_at,source,category,viewer_angle,why_it_matters,tomorrow_watch';
 const LEARNING_REFRESH_MS = 60_000;
 
 function rowToLearningPost(row: AgentLearningPostRow): AgentLearningPost {
-  const category = row.category ?? inferPublicCategory(`${row.title} ${row.body}`);
+  const category = inferPublicCategory(`${row.title} ${row.body}`);
   return {
     id: row.id,
     agent_id: row.agent_id,
@@ -38,14 +32,7 @@ function rowToLearningPost(row: AgentLearningPostRow): AgentLearningPost {
     made_at: row.made_at,
     source: row.source,
     category,
-    viewer_angle: row.viewer_angle,
-    why_it_matters: row.why_it_matters,
-    tomorrow_watch: row.tomorrow_watch,
   };
-}
-
-function shouldRetryBaseLearningColumns(message: string) {
-  return /column|schema|cache|relationship/i.test(message);
 }
 
 function inferPublicCategory(text: string) {
@@ -70,27 +57,12 @@ export function useAgentLearning(agentId: AgentId): UseAgentLearningResult {
 
     const fetchPosts = async () => {
       setLoading(true);
-      const richResult = await client
+      const { data, error: fetchError } = await client
         .from('agent_learning_posts_public')
-        .select(RICH_LEARNING_POST_COLUMNS)
+        .select(LEARNING_POST_COLUMNS)
         .eq('agent_id', agentId)
         .order('made_at', { ascending: false })
         .limit(20);
-
-      let rows = richResult.data as AgentLearningPostRow[] | null;
-      let fetchError = richResult.error;
-
-      if (fetchError && shouldRetryBaseLearningColumns(fetchError.message)) {
-        const baseResult = await client
-          .from('agent_learning_posts_public')
-          .select(LEARNING_POST_COLUMNS)
-          .eq('agent_id', agentId)
-          .order('made_at', { ascending: false })
-          .limit(20);
-
-        rows = baseResult.data as AgentLearningPostRow[] | null;
-        fetchError = baseResult.error;
-      }
 
       if (cancelled) return;
 
@@ -100,7 +72,7 @@ export function useAgentLearning(agentId: AgentId): UseAgentLearningResult {
         return;
       }
 
-      setPosts((rows ?? []).map(rowToLearningPost));
+      setPosts(((data ?? []) as AgentLearningPostRow[]).map(rowToLearningPost));
       setError(null);
       setLoading(false);
     };
