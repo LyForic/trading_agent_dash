@@ -20,9 +20,20 @@ vi.mock('@/world-v2/LivingWorldScene', () => ({
 }));
 
 vi.mock('@/lib/useAgentData', async () => {
-  const { mockCardViewModels, mockLeaderboard } = await import('@/lib/mockData');
+  const { mockCardViewModels, mockLeaderboard, mockTradeLog } = await import('@/lib/mockData');
   return {
     fetchPublicTradeById: vi.fn(),
+    fetchPublicTradesInRange: vi.fn(async (agentIds: string[], startIso: string, endIso: string) => {
+      const startTime = Date.parse(startIso);
+      const endTime = Date.parse(endIso);
+      return agentIds.reduce<Record<string, unknown[]>>((acc, agentId) => {
+        acc[agentId] = (mockTradeLog[agentId as keyof typeof mockTradeLog] ?? []).filter((trade) => {
+          const settledTime = Date.parse(trade.settled_at);
+          return Number.isFinite(settledTime) && settledTime >= startTime && settledTime < endTime;
+        });
+        return acc;
+      }, {});
+    }),
     useAgentData: () => ({
       data: mockLeaderboard,
       cardViewModels: mockCardViewModels,
@@ -128,6 +139,25 @@ describe('WorldV2Page onboarding and Public Lab state', () => {
 
     expect(screen.queryByRole('region', { name: 'How this works' })).not.toBeInTheDocument();
     expect(screen.getByRole('region', { name: /Public lab tracker/i })).toBeInTheDocument();
+  });
+
+  it('opens the Public Lab calendar and returns to a selected day', async () => {
+    const user = userEvent.setup();
+    window.localStorage.setItem(GUIDE_STORAGE_KEY, '1');
+    renderWorld('/?lab=open');
+
+    await user.click(screen.getByRole('button', { name: /Open public lab calendar/i }));
+
+    expect(screen.getByRole('region', { name: /Public lab calendar/i })).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: /Public lab tracker/i })).not.toBeInTheDocument();
+
+    const selectableDays = screen
+      .getAllByRole('button', { name: /Show Public Lab for/i })
+      .filter((button) => !(button as HTMLButtonElement).disabled);
+    await user.click(selectableDays[0]);
+
+    expect(screen.getByRole('region', { name: /Public lab tracker/i })).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: /Public lab calendar/i })).not.toBeInTheDocument();
   });
 
   it('reopens the guide from the help icon after onboarding is seen', async () => {

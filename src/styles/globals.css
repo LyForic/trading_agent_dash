@@ -2462,6 +2462,131 @@ body[data-route="world-v2"] {
   line-height: 1.35;
 }
 
+.public-lab-calendar {
+  display: grid;
+  gap: 10px;
+  padding: 13px;
+  color: #fff7e5;
+}
+
+.public-lab-calendar__head,
+.public-lab-calendar__actions,
+.public-lab-calendar__foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.public-lab-calendar__head {
+  justify-content: space-between;
+}
+
+.public-lab-calendar__head span,
+.public-lab-calendar__weekdays span,
+.public-lab-calendar__foot span {
+  color: rgba(255, 239, 201, 0.64);
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.public-lab-calendar__head h2 {
+  margin: 4px 0 0;
+  font-family: var(--font-display);
+  font-size: 22px;
+  line-height: 1;
+}
+
+.public-lab-calendar__actions button,
+.public-lab-calendar__foot button {
+  display: inline-grid;
+  place-items: center;
+  min-width: 26px;
+  height: 26px;
+  border: 1px solid rgba(255, 238, 199, 0.18);
+  border-radius: 7px;
+  background: rgba(255, 247, 229, 0.08);
+  color: #fff7e5;
+  font: inherit;
+  cursor: pointer;
+}
+
+.public-lab-calendar__actions button:hover,
+.public-lab-calendar__actions button:focus-visible,
+.public-lab-calendar__foot button:hover,
+.public-lab-calendar__foot button:focus-visible {
+  outline: none;
+  border-color: rgba(255, 238, 199, 0.44);
+  background: rgba(255, 247, 229, 0.16);
+}
+
+.public-lab-calendar__actions button:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+}
+
+.public-lab-calendar__weekdays,
+.public-lab-calendar__grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.public-lab-calendar__weekdays span {
+  text-align: center;
+}
+
+.public-lab-calendar__day {
+  aspect-ratio: 1;
+  min-width: 0;
+  border: 1px solid rgba(255, 238, 199, 0.12);
+  border-radius: 7px;
+  background: rgba(255, 247, 229, 0.07);
+  color: #fff7e5;
+  font: inherit;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.public-lab-calendar__day:hover,
+.public-lab-calendar__day:focus-visible {
+  outline: none;
+  border-color: rgba(255, 238, 199, 0.44);
+  background: rgba(255, 247, 229, 0.14);
+}
+
+.public-lab-calendar__day:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.public-lab-calendar__day--selected {
+  border-color: rgba(94, 234, 212, 0.72);
+  background: rgba(94, 234, 212, 0.18);
+  color: #eafffb;
+}
+
+.public-lab-calendar__foot {
+  justify-content: space-between;
+}
+
+.public-lab-calendar__foot button {
+  padding: 0 10px;
+  width: auto;
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.public-lab-calendar__foot span {
+  overflow: hidden;
+  text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .todays-episode-panel {
   position: relative;
   display: grid;
@@ -3963,6 +4088,50 @@ button.todays-field-note:focus-visible {
     gap: 5px;
     font-size: 11px;
     line-height: 1.25;
+  }
+
+  .public-lab-calendar {
+    max-height: min(38dvh, 300px);
+    gap: 7px;
+    padding: 8px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .public-lab-calendar__head h2 {
+    font-size: 17px;
+  }
+
+  .public-lab-calendar__head span,
+  .public-lab-calendar__weekdays span,
+  .public-lab-calendar__foot span {
+    font-size: 8px;
+    letter-spacing: 0.04em;
+  }
+
+  .public-lab-calendar__weekdays,
+  .public-lab-calendar__grid {
+    gap: 4px;
+  }
+
+  .public-lab-calendar__actions button,
+  .public-lab-calendar__foot button {
+    min-width: 24px;
+    height: 24px;
+  }
+
+  .public-lab-calendar__day {
+    border-radius: 6px;
+    font-size: 12px;
+  }
+
+  .public-lab-calendar__foot {
+    gap: 6px;
+  }
+
+  .public-lab-calendar__foot button {
+    padding-inline: 8px;
+    font-size: 10px;
   }
 
   .todays-episode-panel {

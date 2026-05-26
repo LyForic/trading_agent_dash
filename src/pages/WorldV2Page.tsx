@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { AgentLearnMorePanel } from '@/components/content/AgentLearnMorePanel';
 import { FollowExperimentCta } from '@/components/content/FollowExperimentCta';
+import { PublicLabCalendar } from '@/components/content/PublicLabCalendar';
 import { PublicLabTracker } from '@/components/content/PublicLabTracker';
 import { SocialPlatformIcon } from '@/components/content/SocialPlatformIcon';
 import { TimeFilterPill } from '@/components/content/TimeFilterPill';
@@ -28,10 +29,11 @@ import {
   latestTradeAcrossAgents,
   PUBLIC_AGENT_IDS,
   PUBLIC_LAB_EXPERIMENT,
+  PUBLIC_LAB_START_DATE,
   SOCIAL_LINKS,
   trackPublicLabEvent,
 } from '@/lib/publicLab';
-import { fetchPublicTradeById, useAgentData } from '@/lib/useAgentData';
+import { fetchPublicTradeById, fetchPublicTradesInRange, useAgentData } from '@/lib/useAgentData';
 import { useAgentLearning } from '@/lib/useAgentLearning';
 import { useAgentWindow } from '@/lib/useAgentWindow';
 import { useBnfPortfolio } from '@/lib/useBnfPortfolio';
@@ -119,7 +121,30 @@ interface BnfChange {
   pct: number;
 }
 
+interface PublicLabDateTradeState {
+  dateKey: string;
+  tradeLogsByAgent: Partial<Record<AgentId, TradeLogEntry[]>>;
+}
+
 type PublicLabStoredState = 'open' | 'closed';
+
+const PUBLIC_LAB_TIME_ZONE = 'America/Los_Angeles';
+const PUBLIC_LAB_DATE_FORMATTER = new Intl.DateTimeFormat('en-US', {
+  timeZone: PUBLIC_LAB_TIME_ZONE,
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+});
+const PUBLIC_LAB_DATE_TIME_FORMATTER = new Intl.DateTimeFormat('en-US', {
+  timeZone: PUBLIC_LAB_TIME_ZONE,
+  hourCycle: 'h23',
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  second: '2-digit',
+});
 
 function readStorage(key: string) {
   if (typeof window === 'undefined') return null;
@@ -163,6 +188,74 @@ function shouldShowFirstRunGuide(isolatedTestMode: boolean) {
   if (typeof window === 'undefined' || isolatedTestMode) return false;
   if (hasIntentionalContentLink(window.location.search)) return false;
   return readStorage(WORLD_GUIDE_SEEN_STORAGE_KEY) !== '1';
+}
+
+function formatterPart(parts: Intl.DateTimeFormatPart[], type: Intl.DateTimeFormatPartTypes) {
+  return parts.find((part) => part.type === type)?.value ?? '0';
+}
+
+function parsePublicLabDateKey(dateKey: string) {
+  const [year, month, day] = dateKey.split('-').map(Number);
+  return { year, month, day };
+}
+
+function padDatePart(value: number) {
+  return String(value).padStart(2, '0');
+}
+
+function publicLabDateKey(date: Date) {
+  if (!Number.isFinite(date.getTime())) return '';
+  const parts = PUBLIC_LAB_DATE_FORMATTER.formatToParts(date);
+  return [
+    formatterPart(parts, 'year'),
+    formatterPart(parts, 'month'),
+    formatterPart(parts, 'day'),
+  ].join('-');
+}
+
+function publicLabDateKeyFromIso(value: string | null | undefined) {
+  if (!value) return '';
+  return publicLabDateKey(new Date(value));
+}
+
+function addDaysToPublicLabDateKey(dateKey: string, days: number) {
+  const { year, month, day } = parsePublicLabDateKey(dateKey);
+  const date = new Date(Date.UTC(year, month - 1, day + days, 12));
+  return `${date.getUTCFullYear()}-${padDatePart(date.getUTCMonth() + 1)}-${padDatePart(date.getUTCDate())}`;
+}
+
+function publicLabTimeZoneOffsetMs(date: Date) {
+  const parts = PUBLIC_LAB_DATE_TIME_FORMATTER.formatToParts(date);
+  const zonedTime = Date.UTC(
+    Number(formatterPart(parts, 'year')),
+    Number(formatterPart(parts, 'month')) - 1,
+    Number(formatterPart(parts, 'day')),
+    Number(formatterPart(parts, 'hour')),
+    Number(formatterPart(parts, 'minute')),
+    Number(formatterPart(parts, 'second')),
+  );
+  return zonedTime - date.getTime();
+}
+
+function publicLabDateTimeToUtc(dateKey: string, hour = 0) {
+  const { year, month, day } = parsePublicLabDateKey(dateKey);
+  const targetTime = Date.UTC(year, month - 1, day, hour, 0, 0);
+  let offset = publicLabTimeZoneOffsetMs(new Date(targetTime));
+  offset = publicLabTimeZoneOffsetMs(new Date(targetTime - offset));
+  return new Date(targetTime - offset);
+}
+
+function publicLabDateRange(dateKey: string) {
+  return {
+    startIso: publicLabDateTimeToUtc(dateKey).toISOString(),
+    endIso: publicLabDateTimeToUtc(addDaysToPublicLabDateKey(dateKey, 1)).toISOString(),
+  };
+}
+
+function formatPublicLabDateLabel(dateKey: string) {
+  const { year, month, day } = parsePublicLabDateKey(dateKey);
+  return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', year: 'numeric', timeZone: 'UTC' })
+    .format(new Date(Date.UTC(year, month - 1, day, 12)));
 }
 
 interface PhaserWorldProps {
@@ -382,6 +475,19 @@ function publicLabDailyStatement(posts: AgentLearningPost[], biggestMove: { agen
   return PUBLIC_LAB_EXPERIMENT;
 }
 
+function bestAgentNameFromTradeLogs(tradeLogs: Partial<Record<AgentId, TradeLogEntry[]>>) {
+  let best: { agentId: AgentId; pnl: number; settled: number } | null = null;
+
+  for (const [agentId, rows] of Object.entries(tradeLogs) as Array<[AgentId, TradeLogEntry[] | undefined]>) {
+    const settled = rows?.length ?? 0;
+    if (settled === 0) continue;
+    const pnl = rows?.reduce((total, trade) => total + trade.pnl, 0) ?? 0;
+    if (!best || pnl > best.pnl) best = { agentId, pnl, settled };
+  }
+
+  return best ? WORLD_MENU_AGENTS[best.agentId].name : null;
+}
+
 function updateWorldDeepLink(params: Record<string, string | null>) {
   const next = new URL(window.location.href);
   for (const [key, value] of Object.entries(params)) {
@@ -411,6 +517,10 @@ export function WorldV2Page() {
   const [balanceWindow, setBalanceWindow] = useState<BnfChangeWindow>('24h');
   const [balanceMenuOpen, setBalanceMenuOpen] = useState(false);
   const [labMinimized, setLabMinimized] = useState(() => initialPublicLabMinimized());
+  const [labCalendarOpen, setLabCalendarOpen] = useState(false);
+  const [selectedLabDateKey, setSelectedLabDateKey] = useState<string | null>(null);
+  const [publicLabDateTrades, setPublicLabDateTrades] = useState<PublicLabDateTradeState | null>(null);
+  const [publicLabDateTradesLoading, setPublicLabDateTradesLoading] = useState(false);
   const [episodeMinimized, setEpisodeMinimized] = useState(true);
   const [selectedTrade, setSelectedTrade] = useState<TradeLogEntry | null>(null);
   const [learnMoreOpen, setLearnMoreOpen] = useState(false);
@@ -479,7 +589,6 @@ export function WorldV2Page() {
     if (episode) return null;
     return latestTrade?.trade ?? null;
   }, [cardViewModels, latestTrade?.trade, publicLabEpisode.episode]);
-  const biggestMove = useMemo(() => biggestMoveAcrossAgents(publicTradeLogsByAgent), [publicTradeLogsByAgent]);
   const publicLearningPosts = useMemo(
     () => [
       ...apexLearning.posts,
@@ -489,11 +598,61 @@ export function WorldV2Page() {
     ],
     [apexLearning.posts, metheusLearning.posts, baconLearning.posts, novaLearning.posts],
   );
-  const publicLabStatement = useMemo(
-    () => publicLabDailyStatement(publicLearningPosts, biggestMove),
-    [publicLearningPosts, biggestMove],
-  );
   const latestBnfPoint = bnf.data.points[bnf.data.points.length - 1];
+  const publicLabStartDateKey = publicLabDateKey(new Date(PUBLIC_LAB_START_DATE));
+  const latestPublicLabDateKey = latestBnfPoint
+    ? publicLabDateKeyFromIso(latestBnfPoint.captured_at)
+    : publicLabDateKey(new Date());
+  const publicLabAvailableDateKeys = useMemo(() => {
+    const dateKeys = new Set<string>();
+    for (const point of bnf.data.points) {
+      const dateKey = publicLabDateKeyFromIso(point.captured_at);
+      if (dateKey && dateKey >= publicLabStartDateKey && dateKey <= latestPublicLabDateKey) {
+        dateKeys.add(dateKey);
+      }
+    }
+    if (dateKeys.size === 0 && latestPublicLabDateKey) dateKeys.add(latestPublicLabDateKey);
+    return Array.from(dateKeys).sort();
+  }, [bnf.data.points, latestPublicLabDateKey, publicLabStartDateKey]);
+  const publicLabDateKeyForView =
+    selectedLabDateKey && publicLabAvailableDateKeys.includes(selectedLabDateKey)
+      ? selectedLabDateKey
+      : latestPublicLabDateKey;
+  const publicLabDateForView = useMemo(() => publicLabDateTimeToUtc(publicLabDateKeyForView, 12), [publicLabDateKeyForView]);
+  const publicLabDateLabel = useMemo(() => formatPublicLabDateLabel(publicLabDateKeyForView), [publicLabDateKeyForView]);
+  const publicLabBnfPoint = useMemo(() => {
+    const pointsForDate = bnf.data.points.filter((point) => publicLabDateKeyFromIso(point.captured_at) === publicLabDateKeyForView);
+    return pointsForDate[pointsForDate.length - 1] ?? null;
+  }, [bnf.data.points, publicLabDateKeyForView]);
+  const publicLabBnfPointsThroughDate = useMemo(() => {
+    if (!publicLabBnfPoint) return [];
+    const selectedTime = Date.parse(publicLabBnfPoint.captured_at);
+    if (!Number.isFinite(selectedTime)) return [];
+    return bnf.data.points.filter((point) => {
+      const pointTime = Date.parse(point.captured_at);
+      return Number.isFinite(pointTime) && pointTime <= selectedTime;
+    });
+  }, [bnf.data.points, publicLabBnfPoint]);
+  const publicLabBnfChanges = useMemo(
+    () => BNF_CHANGE_WINDOWS.reduce<Record<BnfChangeWindow, BnfChange | null>>((acc, window) => {
+      acc[window] = calculateBnfChange(publicLabBnfPointsThroughDate, window);
+      return acc;
+    }, { '24h': null, '7d': null, lifetime: null }),
+    [publicLabBnfPointsThroughDate],
+  );
+  const publicLabTradeLogsByAgent = useMemo(
+    () => (publicLabDateTrades?.dateKey === publicLabDateKeyForView ? publicLabDateTrades.tradeLogsByAgent : {}),
+    [publicLabDateKeyForView, publicLabDateTrades],
+  );
+  const biggestMove = useMemo(() => biggestMoveAcrossAgents(publicLabTradeLogsByAgent), [publicLabTradeLogsByAgent]);
+  const publicLabPostsForDate = useMemo(
+    () => publicLearningPosts.filter((post) => publicLabDateKeyFromIso(post.made_at) === publicLabDateKeyForView),
+    [publicLabDateKeyForView, publicLearningPosts],
+  );
+  const publicLabStatement = useMemo(
+    () => publicLabDailyStatement(publicLabPostsForDate, biggestMove),
+    [publicLabPostsForDate, biggestMove],
+  );
   const bnfChanges = useMemo(
     () => BNF_CHANGE_WINDOWS.reduce<Record<BnfChangeWindow, BnfChange | null>>((acc, window) => {
       acc[window] = calculateBnfChange(bnf.data.points, window);
@@ -502,13 +661,9 @@ export function WorldV2Page() {
     [bnf.data.points],
   );
   const selectedBnfChange = bnfChanges[balanceWindow];
-  const accountHighCents = useMemo(() => calculateAccountHigh(bnf.data.points), [bnf.data.points]);
-  const biggestDrawdownCents = useMemo(() => calculateBiggestDrawdown(bnf.data.points), [bnf.data.points]);
-  const bestAgent = useMemo(() => {
-    const liveAgents = data.agents.filter((agent) => PUBLIC_WORLD_AGENT_ORDER.includes(agent.id) && agent.record.settled > 0);
-    if (liveAgents.length === 0) return null;
-    return liveAgents.reduce((best, agent) => (agent.total_pnl > best.total_pnl ? agent : best), liveAgents[0]);
-  }, [data.agents]);
+  const accountHighCents = useMemo(() => calculateAccountHigh(publicLabBnfPointsThroughDate), [publicLabBnfPointsThroughDate]);
+  const biggestDrawdownCents = useMemo(() => calculateBiggestDrawdown(publicLabBnfPointsThroughDate), [publicLabBnfPointsThroughDate]);
+  const publicLabBestAgentName = useMemo(() => bestAgentNameFromTradeLogs(publicLabTradeLogsByAgent), [publicLabTradeLogsByAgent]);
   const totalBalanceCopy = latestBnfPoint
     ? formatTotalBalance(latestBnfPoint.combined_cleared_cents)
     : bnf.loading
@@ -541,6 +696,33 @@ export function WorldV2Page() {
       delete document.body.dataset.route;
     };
   }, []);
+
+  useEffect(() => {
+    if (!publicLabDateKeyForView) return;
+
+    let cancelled = false;
+    const { startIso, endIso } = publicLabDateRange(publicLabDateKeyForView);
+    // Date changes intentionally start a fresh async day-history fetch.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPublicLabDateTradesLoading(true);
+
+    void fetchPublicTradesInRange(PUBLIC_WORLD_AGENT_ORDER, startIso, endIso)
+      .then((tradeLogsByAgent) => {
+        if (cancelled) return;
+        setPublicLabDateTrades({ dateKey: publicLabDateKeyForView, tradeLogsByAgent });
+      })
+      .catch((err) => {
+        console.warn(`[WorldV2Page] Public Lab day trades unavailable: ${(err as Error).message}`);
+        if (!cancelled) setPublicLabDateTrades({ dateKey: publicLabDateKeyForView, tradeLogsByAgent: {} });
+      })
+      .finally(() => {
+        if (!cancelled) setPublicLabDateTradesLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [publicLabDateKeyForView]);
 
   useEffect(() => {
     if (deepLinkAppliedRef.current) return;
@@ -650,6 +832,7 @@ export function WorldV2Page() {
 
   const setPublicLabOpen = (open: boolean, options: { remember: boolean }) => {
     setLabMinimized(!open);
+    setLabCalendarOpen(false);
     setBalanceMenuOpen(false);
     if (!options.remember) return;
     writeStorage(PUBLIC_LAB_STATE_STORAGE_KEY, open ? 'open' : 'closed');
@@ -880,21 +1063,44 @@ export function WorldV2Page() {
       {!isolatedTestMode && !selectedAgentId && !worldIntroOpen && !labMinimized && (
         <div className="world-v2-lab-stack">
           <div className="world-v2-lab-card">
-            <PublicLabTracker
-              currentBalanceCents={latestBnfPoint?.combined_cleared_cents ?? null}
-              change24hCents={bnfChanges['24h']?.cents ?? null}
-              lifetimePnlCents={bnfChanges.lifetime?.cents ?? null}
-              agentCountLabel={`${PUBLIC_WORLD_AGENT_ORDER.length} public agents`}
-              biggestMove={biggestMove}
-              accountHighCents={accountHighCents}
-              biggestDrawdownCents={biggestDrawdownCents}
-              bestAgentName={bestAgent?.name ?? null}
-              statement={publicLabStatement}
-              points={bnf.data.points}
-              onOpenMove={(agentId, trade) => openTradeForAgent(agentId, trade, 'public_lab_tracker')}
-              onMinimize={() => setPublicLabOpen(false, { remember: true })}
-            />
-            <FollowExperimentCta surface="public_lab_tracker" />
+            {labCalendarOpen ? (
+              <PublicLabCalendar
+                availableDateKeys={publicLabAvailableDateKeys}
+                latestDateKey={latestPublicLabDateKey}
+                minDateKey={publicLabStartDateKey}
+                selectedDateKey={publicLabDateKeyForView}
+                loading={publicLabDateTradesLoading}
+                onClose={() => setLabCalendarOpen(false)}
+                onSelectDate={(dateKey) => {
+                  setSelectedLabDateKey(dateKey);
+                  setLabCalendarOpen(false);
+                }}
+              />
+            ) : (
+              <>
+                <PublicLabTracker
+                  currentBalanceCents={publicLabBnfPoint?.combined_cleared_cents ?? null}
+                  change24hCents={publicLabBnfChanges['24h']?.cents ?? null}
+                  lifetimePnlCents={publicLabBnfChanges.lifetime?.cents ?? null}
+                  agentCountLabel={`${PUBLIC_WORLD_AGENT_ORDER.length} public agents`}
+                  biggestMove={biggestMove}
+                  accountHighCents={accountHighCents}
+                  biggestDrawdownCents={biggestDrawdownCents}
+                  bestAgentName={publicLabBestAgentName}
+                  statement={publicLabStatement}
+                  points={publicLabBnfPointsThroughDate}
+                  labDate={publicLabDateForView}
+                  dateLabel={publicLabDateLabel}
+                  onOpenCalendar={() => {
+                    setLabCalendarOpen(true);
+                    setBalanceMenuOpen(false);
+                  }}
+                  onOpenMove={(agentId, trade) => openTradeForAgent(agentId, trade, 'public_lab_tracker')}
+                  onMinimize={() => setPublicLabOpen(false, { remember: true })}
+                />
+                <FollowExperimentCta surface="public_lab_tracker" />
+              </>
+            )}
           </div>
         </div>
       )}

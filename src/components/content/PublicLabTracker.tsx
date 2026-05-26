@@ -1,4 +1,4 @@
-import { FlaskConical, Minimize2, TrendingDown, TrendingUp, Users } from 'lucide-react';
+import { CalendarDays, FlaskConical, Minimize2, TrendingDown, TrendingUp, Users } from 'lucide-react';
 import { formatPnl } from '@/lib/formatting';
 import { PUBLIC_LAB_OPEN_QUESTION, PUBLIC_LAB_STARTING_BANKROLL_CENTS, publicLabDay } from '@/lib/publicLab';
 import type { AgentId, BnfPortfolioPoint, TradeLogEntry } from '@/lib/types';
@@ -20,6 +20,9 @@ interface Props {
   statement: string;
   onOpenMove: (agentId: AgentId, trade: TradeLogEntry) => void;
   points: BnfPortfolioPoint[];
+  labDate?: Date;
+  dateLabel?: string;
+  onOpenCalendar?: () => void;
   onMinimize?: () => void;
 }
 
@@ -50,20 +53,28 @@ export function PublicLabTracker({
   statement,
   onOpenMove,
   points,
+  labDate,
+  dateLabel,
+  onOpenCalendar,
   onMinimize,
 }: Props) {
-  const day = publicLabDay();
+  const day = publicLabDay(labDate);
   const latestPoint = points[points.length - 1];
 
   return (
     <section className="public-lab-tracker" aria-label="Public lab tracker">
       <div className="public-lab-tracker__head">
         <div>
-          <span>Public Lab</span>
+          <span>{dateLabel ? `Public Lab / ${dateLabel}` : 'Public Lab'}</span>
           <h1>Day {day}: real agents, real trades.</h1>
         </div>
         <div className="public-lab-tracker__head-actions">
           <FlaskConical size={20} aria-hidden />
+          {onOpenCalendar && (
+            <button type="button" onClick={onOpenCalendar} aria-label="Open public lab calendar">
+              <CalendarDays size={14} aria-hidden />
+            </button>
+          )}
           {onMinimize && (
             <button type="button" onClick={onMinimize} aria-label="Minimize public lab tracker">
               <Minimize2 size={14} aria-hidden />

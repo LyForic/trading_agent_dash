@@ -169,6 +169,50 @@ export async function fetchPublicTradeById(agentId: AgentId, tradeId: string): P
   return (await attachReplayTicks([trade]))[0] ?? trade;
 }
 
+export async function fetchPublicTradesInRange(
+  agentIds: AgentId[],
+  startIso: string,
+  endIso: string,
+): Promise<Partial<Record<AgentId, TradeLogEntry[]>>> {
+  const startTime = Date.parse(startIso);
+  const endTime = Date.parse(endIso);
+
+  if (!isSupabaseConfigured || !supabase) {
+    return agentIds.reduce<Partial<Record<AgentId, TradeLogEntry[]>>>((acc, agentId) => {
+      acc[agentId] = (mockTradeLog[agentId] ?? []).filter((trade) => {
+        const settledTime = Date.parse(trade.settled_at);
+        return Number.isFinite(settledTime) && settledTime >= startTime && settledTime < endTime;
+      });
+      return acc;
+    }, {});
+  }
+
+  const { data, error } = await supabase
+    .from('agent_trades_public')
+    .select(COLUMNS)
+    .in('agent_id', agentIds)
+    .not('pnl', 'is', null)
+    .gte('settled_at', startIso)
+    .lt('settled_at', endIso)
+    .order('settled_at', { ascending: false })
+    .limit(500);
+
+  if (error) throw error;
+
+  const parsedRows = ((data ?? []) as AgentTradeRow[])
+    .map((row) => ({ agentId: row.agent_id, trade: rowToTradeLogEntry(row) }))
+    .filter((row): row is { agentId: AgentId; trade: TradeLogEntry } => row.trade !== null);
+  const tradesWithReplay = await attachReplayTicks(parsedRows.map((row) => row.trade));
+  const replayByTradeId = new Map(tradesWithReplay.map((trade) => [trade.id, trade]));
+
+  return parsedRows.reduce<Partial<Record<AgentId, TradeLogEntry[]>>>((acc, row) => {
+    const rowsForAgent = acc[row.agentId] ?? [];
+    rowsForAgent.push(replayByTradeId.get(row.trade.id) ?? row.trade);
+    acc[row.agentId] = rowsForAgent;
+    return acc;
+  }, {});
+}
+
 function buildAgent(
   id: AgentId,
   lifetime: LifetimeStatsRow,
