@@ -4190,10 +4190,16 @@ button.todays-field-note:focus-visible {
   grid-template-columns: 48px minmax(0, 1fr);
   gap: 12px;
   align-items: start;
+  min-height: 140px;
   padding: 14px;
   border: 1px solid rgba(255, 238, 199, 0.14);
   border-radius: 8px;
   background: rgba(255, 247, 229, 0.06);
+}
+
+.world-v2-intro-stage > div:last-child {
+  align-self: center;
+  min-width: 0;
 }
 
 .world-v2-intro-stage__icon {
@@ -4834,6 +4840,7 @@ button.todays-field-note:focus-visible {
   .world-v2-intro-stage {
     grid-template-columns: 40px minmax(0, 1fr);
     gap: 10px;
+    min-height: 126px;
     padding: 10px;
   }
 
