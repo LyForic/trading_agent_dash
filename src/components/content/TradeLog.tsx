@@ -136,23 +136,21 @@ export function TradeLog({
         <span>Trades · {WINDOW_LABEL[window]}</span>
         <span>{windowSettledCount} settled</span>
       </div>
-      <FirstRow row={first} selected={selectedTradeId === first.id} onSelect={() => selectTrade(first)} />
-      {showInlineReplay && selectedRow?.id === first.id && <TradeReplayPanel key={selectedRow.id} row={selectedRow} />}
-      {rest.length > 0 && (
-        <div className="trade-log-ledger">
-          {rest.map((row) => (
-            <Fragment key={row.id}>
-              <LedgerRow row={row} selected={selectedTradeId === row.id} onSelect={() => selectTrade(row)} />
-              {showInlineReplay && selectedRow?.id === row.id && <TradeReplayPanel key={selectedRow.id} row={selectedRow} />}
-            </Fragment>
-          ))}
-        </div>
-      )}
-      {showFooter && (
-        <div className="trade-log-footer">
-          Latest 25 of {windowSettledCount}
-        </div>
-      )}
+      <div className="trade-log-ledger">
+        <FirstRow row={first} selected={selectedTradeId === first.id} onSelect={() => selectTrade(first)} />
+        {showInlineReplay && selectedRow?.id === first.id && <TradeReplayPanel key={selectedRow.id} row={selectedRow} />}
+        {rest.map((row) => (
+          <Fragment key={row.id}>
+            <LedgerRow row={row} selected={selectedTradeId === row.id} onSelect={() => selectTrade(row)} />
+            {showInlineReplay && selectedRow?.id === row.id && <TradeReplayPanel key={selectedRow.id} row={selectedRow} />}
+          </Fragment>
+        ))}
+        {showFooter && (
+          <div className="trade-log-footer">
+            Latest 25 of {windowSettledCount}
+          </div>
+        )}
+      </div>
       <p className="trade-log-delay-note">
         Settlements shown after 30-minute delay.
       </p>

@@ -32,6 +32,15 @@ describe('TradeLog', () => {
     expect(screen.getByText(/Latest 25 of 143/)).toBeInTheDocument();
   });
 
+  it('keeps the latest trade inside the scrollable ledger', () => {
+    const rows = [makeEntry('apex-1', 2), makeEntry('apex-2', -1)];
+    const { container } = render(<TradeLog rows={rows} windowSettledCount={2} window="24h" hasOpenPosition={false} />);
+    const ledger = container.querySelector('.trade-log-ledger');
+    const featured = container.querySelector('.trade-log-featured');
+
+    expect(featured?.parentElement).toBe(ledger);
+  });
+
   it('does NOT show the footer when windowSettledCount <= 25', () => {
     const rows = [makeEntry('apex-1', 2)];
     render(<TradeLog rows={rows} windowSettledCount={1} window="24h" hasOpenPosition={false} />);

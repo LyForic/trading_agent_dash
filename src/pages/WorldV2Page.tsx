@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import {
   ArrowLeft,
-  BarChart3,
   BookOpen,
   ChevronDown,
   CircleHelp,
@@ -1451,11 +1450,6 @@ export function WorldV2Page() {
                   <span>Settled</span>
                   <strong>{selectedVm.record.settled}</strong>
                 </div>
-              </div>
-
-              <div className="world-v2-market-line">
-                <BarChart3 size={15} aria-hidden />
-                <span>{selectedAgent.market_label}</span>
               </div>
 
               <TodaysFieldNote agentId={selectedLiveAgentId} onOpenHistory={openLearnMore} />
