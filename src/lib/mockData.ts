@@ -349,11 +349,30 @@ export const mockLifetimeStats: Record<AgentId, AgentLifetimeStats> = {
 
 function generateBnfSeries(): BnfPortfolioSeries {
   const points: BnfPortfolioPoint[] = [];
-  const baseline = 680000; // $6,800 combined (accounts.yaml today)
+  const baseline = 1_000_000; // Round 4 public scoreboard reset: $10,000.
+  const currentArea = 680000; // Current public account area used for local previews.
+  const historicalSnapshots = [
+    { captured_at: '2026-05-18T23:00:00-07:00', combined_cleared_cents: 654900 },
+    { captured_at: '2026-05-24T23:45:00-07:00', combined_cleared_cents: 685888 },
+    { captured_at: '2026-05-25T23:00:00-07:00', combined_cleared_cents: 641300 },
+  ];
+
+  for (const snapshot of historicalSnapshots) {
+    points.push({
+      captured_at: new Date(snapshot.captured_at).toISOString(),
+      combined_cleared_cents: snapshot.combined_cleared_cents,
+      combined_baseline_cents: baseline,
+      brandon_source: 'kalshi',
+      justin_source: 'reconstructed',
+      is_partial: false,
+      pct_vs_baseline: Math.round((snapshot.combined_cleared_cents / baseline - 1) * 10000) / 100,
+    });
+  }
+
   for (let i = 47; i >= 0; i--) {
     const t = new Date(now - i * 3600 * 1000 - 35 * 60 * 1000); // each ≥30-min delayed
     const drift = Math.round(Math.sin((47 - i) / 6) * 4000) + (47 - i) * 250;
-    const combined = baseline + drift;
+    const combined = currentArea + drift;
     points.push({
       captured_at: t.toISOString(),
       combined_cleared_cents: combined,
@@ -364,6 +383,7 @@ function generateBnfSeries(): BnfPortfolioSeries {
       pct_vs_baseline: Math.round((combined / baseline - 1) * 10000) / 100,
     });
   }
+  points.sort((a, b) => Date.parse(a.captured_at) - Date.parse(b.captured_at));
   return { points, updated_at: points[points.length - 1].captured_at };
 }
 

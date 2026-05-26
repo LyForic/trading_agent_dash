@@ -11,6 +11,10 @@ import {
   Tv,
   X,
 } from 'lucide-react';
+import {
+  AccountValueChartPanel,
+  type AccountChartPeriod,
+} from '@/components/content/AccountValueChartPanel';
 import { AgentLearnMorePanel } from '@/components/content/AgentLearnMorePanel';
 import { FollowExperimentCta } from '@/components/content/FollowExperimentCta';
 import { PublicLabCalendar } from '@/components/content/PublicLabCalendar';
@@ -29,6 +33,7 @@ import {
   PUBLIC_AGENT_IDS,
   PUBLIC_LAB_EXPERIMENT,
   PUBLIC_LAB_START_DATE,
+  PUBLIC_LAB_STARTING_BANKROLL_CENTS,
   SOCIAL_LINKS,
   trackPublicLabEvent,
 } from '@/lib/publicLab';
@@ -133,6 +138,7 @@ interface PublicLabDateTradeState {
 }
 
 type PublicLabQueryState = 'open' | 'closed';
+const ACCOUNT_CHART_PERIODS: AccountChartPeriod[] = ['1d', '1w', '1m', '1y', 'all'];
 
 const PUBLIC_LAB_TIME_ZONE = 'America/Los_Angeles';
 const PUBLIC_LAB_DATE_FORMATTER = new Intl.DateTimeFormat('en-US', {
@@ -178,16 +184,53 @@ function labStateFromSearch(search: string): PublicLabQueryState | null {
   return null;
 }
 
+function labDateFromSearch(search: string) {
+  const value = new URLSearchParams(search).get('date');
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  return value;
+}
+
+function accountChartOpenFromSearch(search: string) {
+  return new URLSearchParams(search).get('chart')?.toLowerCase() === 'account';
+}
+
+function accountChartPeriodFromSearch(search: string): AccountChartPeriod {
+  const value = new URLSearchParams(search).get('period')?.toLowerCase();
+  return ACCOUNT_CHART_PERIODS.includes(value as AccountChartPeriod)
+    ? value as AccountChartPeriod
+    : '1w';
+}
+
 function hasIntentionalContentLink(search: string) {
   const params = new URLSearchParams(search);
-  return params.has('agent') || params.has('trade') || params.has('note') || labStateFromSearch(search) === 'open';
+  return params.has('agent')
+    || params.has('trade')
+    || params.has('note')
+    || labStateFromSearch(search) === 'open'
+    || accountChartOpenFromSearch(search);
 }
 
 function initialPublicLabMinimized() {
   if (typeof window === 'undefined') return true;
+  if (accountChartOpenFromSearch(window.location.search)) return false;
   const queryState = labStateFromSearch(window.location.search);
   if (queryState) return queryState !== 'open';
   return true;
+}
+
+function initialPublicLabDateKey() {
+  if (typeof window === 'undefined') return null;
+  return labDateFromSearch(window.location.search);
+}
+
+function initialAccountChartOpen() {
+  if (typeof window === 'undefined') return false;
+  return accountChartOpenFromSearch(window.location.search);
+}
+
+function initialAccountChartPeriod() {
+  if (typeof window === 'undefined') return '1w';
+  return accountChartPeriodFromSearch(window.location.search);
 }
 
 function shouldShowFirstRunGuide(isolatedTestMode: boolean) {
@@ -273,7 +316,7 @@ function formatPublicLabAsOf(value: string | null | undefined) {
     hour: 'numeric',
     minute: '2-digit',
   }).format(date);
-  return `As of ${time} PT / delayed data`;
+  return `As of ${time} PT · delayed data`;
 }
 
 interface PhaserWorldProps {
@@ -377,7 +420,12 @@ function statusCopy(agent: Agent | undefined, loading: boolean) {
 }
 
 function formatTotalBalance(cents: number) {
-  return `$${Math.round(cents / 100).toLocaleString('en-US')}`;
+  return (cents / 100).toLocaleString('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  });
 }
 
 function formatCurrencyChange(cents: number | null) {
@@ -446,24 +494,6 @@ function calculateBnfChange(points: BnfPortfolioPoint[], window: BnfChangeWindow
   };
 }
 
-function calculateAccountHigh(points: BnfPortfolioPoint[]) {
-  if (points.length === 0) return null;
-  return points.reduce((high, point) => Math.max(high, point.combined_cleared_cents), points[0].combined_cleared_cents);
-}
-
-function calculateBiggestDrawdown(points: BnfPortfolioPoint[]) {
-  let peak: number | null = null;
-  let drawdown = 0;
-
-  for (const point of points) {
-    const value = point.combined_cleared_cents;
-    peak = peak === null ? value : Math.max(peak, value);
-    drawdown = Math.max(drawdown, peak - value);
-  }
-
-  return points.length > 0 ? drawdown : null;
-}
-
 function cleanStatementFragment(value: string) {
   return value
     .replace(/\s+/g, ' ')
@@ -527,7 +557,7 @@ function publicLabNarrative(
     const name = WORLD_MENU_AGENTS[signalPost.agent_id].name;
     return {
       lesson: lessonFromPost(signalPost),
-      lessonSource: `From ${name}'s field note`,
+      lessonSource: `Lesson from ${name}'s field note`,
       tomorrowWatch: tomorrowWatchFromPost(signalPost),
     };
   }
@@ -536,30 +566,17 @@ function publicLabNarrative(
     const name = WORLD_MENU_AGENTS[biggestMove.agentId].name;
     const direction = biggestMove.trade.pnl >= 0 ? 'worked' : 'hurt';
     return {
-      lesson: `${name}'s biggest public move ${direction} today.`,
-      lessonSource: `From ${name}'s biggest settled move`,
+      lesson: `${name}'s largest settled trade ${direction} the account.`,
+      lessonSource: `Lesson from ${name}'s settled trade`,
       tomorrowWatch: 'Waiting for the next settled trade window.',
     };
   }
 
   return {
     lesson: PUBLIC_LAB_EXPERIMENT,
-    lessonSource: 'From the field-note queue',
+    lessonSource: 'Lesson from the field-note queue',
     tomorrowWatch: 'Waiting for the next settled trade window.',
   };
-}
-
-function bestAgentNameFromTradeLogs(tradeLogs: Partial<Record<AgentId, TradeLogEntry[]>>) {
-  let best: { agentId: AgentId; pnl: number; settled: number } | null = null;
-
-  for (const [agentId, rows] of Object.entries(tradeLogs) as Array<[AgentId, TradeLogEntry[] | undefined]>) {
-    const settled = rows?.length ?? 0;
-    if (settled === 0) continue;
-    const pnl = rows?.reduce((total, trade) => total + trade.pnl, 0) ?? 0;
-    if (!best || pnl > best.pnl) best = { agentId, pnl, settled };
-  }
-
-  return best ? WORLD_MENU_AGENTS[best.agentId].name : null;
 }
 
 function updateWorldDeepLink(params: Record<string, string | null>) {
@@ -596,7 +613,9 @@ export function WorldV2Page() {
   const [balanceMenuOpen, setBalanceMenuOpen] = useState(false);
   const [labMinimized, setLabMinimized] = useState(() => initialPublicLabMinimized());
   const [labCalendarOpen, setLabCalendarOpen] = useState(false);
-  const [selectedLabDateKey, setSelectedLabDateKey] = useState<string | null>(null);
+  const [selectedLabDateKey, setSelectedLabDateKey] = useState<string | null>(() => initialPublicLabDateKey());
+  const [accountChartOpen, setAccountChartOpen] = useState(() => initialAccountChartOpen());
+  const [accountChartPeriod, setAccountChartPeriod] = useState<AccountChartPeriod>(() => initialAccountChartPeriod());
   const [publicLabDateTrades, setPublicLabDateTrades] = useState<PublicLabDateTradeState | null>(null);
   const [publicLabDateTradesLoading, setPublicLabDateTradesLoading] = useState(false);
   const [episodeMinimized, setEpisodeMinimized] = useState(true);
@@ -606,6 +625,8 @@ export function WorldV2Page() {
   const [pendingDeepLinkTrade, setPendingDeepLinkTrade] = useState<{ tradeId: string; surface: string } | null>(null);
   const [worldIntroOpen, setWorldIntroOpen] = useState(() => shouldShowFirstRunGuide(isolatedTestMode));
   const deepLinkAppliedRef = useRef(false);
+  const guideOpenTrackedRef = useRef(false);
+  const initialLabOpenTrackedRef = useRef(false);
   const dragStartY = useRef<number | null>(null);
   const balanceWrapRef = useRef<HTMLDivElement | null>(null);
 
@@ -693,9 +714,16 @@ export function WorldV2Page() {
         dateKeys.add(dateKey);
       }
     }
+    if (
+      selectedLabDateKey
+      && selectedLabDateKey >= publicLabStartDateKey
+      && selectedLabDateKey <= latestPublicLabDateKey
+    ) {
+      dateKeys.add(selectedLabDateKey);
+    }
     if (dateKeys.size === 0 && latestPublicLabDateKey) dateKeys.add(latestPublicLabDateKey);
     return Array.from(dateKeys).sort();
-  }, [bnf.data.points, latestPublicLabDateKey, publicLabStartDateKey]);
+  }, [bnf.data.points, latestPublicLabDateKey, publicLabStartDateKey, selectedLabDateKey]);
   const publicLabDateKeyForView =
     selectedLabDateKey && publicLabAvailableDateKeys.includes(selectedLabDateKey)
       ? selectedLabDateKey
@@ -706,39 +734,26 @@ export function WorldV2Page() {
     const pointsForDate = bnf.data.points.filter((point) => publicLabDateKeyFromIso(point.captured_at) === publicLabDateKeyForView);
     return pointsForDate[pointsForDate.length - 1] ?? null;
   }, [bnf.data.points, publicLabDateKeyForView]);
-  const publicLabBnfPointsThroughDate = useMemo(() => {
-    if (!publicLabBnfPoint) return [];
-    const selectedTime = Date.parse(publicLabBnfPoint.captured_at);
-    if (!Number.isFinite(selectedTime)) return [];
-    return bnf.data.points.filter((point) => {
-      const pointTime = Date.parse(point.captured_at);
-      return Number.isFinite(pointTime) && pointTime <= selectedTime;
-    });
-  }, [bnf.data.points, publicLabBnfPoint]);
-  const publicLabBnfChanges = useMemo(
-    () => BNF_CHANGE_WINDOWS.reduce<Record<BnfChangeWindow, BnfChange | null>>((acc, window) => {
-      acc[window] = calculateBnfChange(publicLabBnfPointsThroughDate, window);
-      return acc;
-    }, { '24h': null, '7d': null, lifetime: null }),
-    [publicLabBnfPointsThroughDate],
-  );
   const publicLabTradeLogsByAgent = useMemo(
     () => (publicLabDateTrades?.dateKey === publicLabDateKeyForView ? publicLabDateTrades.tradeLogsByAgent : {}),
     [publicLabDateKeyForView, publicLabDateTrades],
   );
-  const biggestMove = useMemo(() => biggestMoveAcrossAgents(publicLabTradeLogsByAgent), [publicLabTradeLogsByAgent]);
+  const largestSettledTrade = useMemo(() => biggestMoveAcrossAgents(publicLabTradeLogsByAgent), [publicLabTradeLogsByAgent]);
   const publicLabPostsForDate = useMemo(
     () => publicLearningPosts.filter((post) => publicLabDateKeyFromIso(post.made_at) === publicLabDateKeyForView),
     [publicLabDateKeyForView, publicLearningPosts],
   );
   const publicLabCopy = useMemo(
-    () => publicLabNarrative(publicLabPostsForDate, biggestMove),
-    [publicLabPostsForDate, biggestMove],
+    () => publicLabNarrative(publicLabPostsForDate, largestSettledTrade),
+    [publicLabPostsForDate, largestSettledTrade],
   );
   const publicLabAsOfLabel = useMemo(
     () => formatPublicLabAsOf(publicLabBnfPoint?.captured_at),
     [publicLabBnfPoint?.captured_at],
   );
+  const publicLabLifePnlCents = publicLabBnfPoint
+    ? publicLabBnfPoint.combined_cleared_cents - PUBLIC_LAB_STARTING_BANKROLL_CENTS
+    : null;
   const bnfChanges = useMemo(
     () => BNF_CHANGE_WINDOWS.reduce<Record<BnfChangeWindow, BnfChange | null>>((acc, window) => {
       acc[window] = calculateBnfChange(bnf.data.points, window);
@@ -747,9 +762,6 @@ export function WorldV2Page() {
     [bnf.data.points],
   );
   const selectedBnfChange = bnfChanges[balanceWindow];
-  const accountHighCents = useMemo(() => calculateAccountHigh(publicLabBnfPointsThroughDate), [publicLabBnfPointsThroughDate]);
-  const biggestDrawdownCents = useMemo(() => calculateBiggestDrawdown(publicLabBnfPointsThroughDate), [publicLabBnfPointsThroughDate]);
-  const publicLabBestAgentName = useMemo(() => bestAgentNameFromTradeLogs(publicLabTradeLogsByAgent), [publicLabTradeLogsByAgent]);
   const totalBalanceCopy = latestBnfPoint
     ? formatTotalBalance(latestBnfPoint.combined_cleared_cents)
     : bnf.loading
@@ -782,6 +794,27 @@ export function WorldV2Page() {
       delete document.body.dataset.route;
     };
   }, []);
+
+  useEffect(() => {
+    if (!worldIntroOpen) {
+      guideOpenTrackedRef.current = false;
+      return;
+    }
+    if (guideOpenTrackedRef.current) return;
+    guideOpenTrackedRef.current = true;
+    trackPublicLabEvent('guide_view', { surface: 'guide', source: 'auto_or_help' });
+  }, [worldIntroOpen]);
+
+  useEffect(() => {
+    if (initialLabOpenTrackedRef.current || labMinimized) return;
+    if (labStateFromSearch(window.location.search) !== 'open') return;
+    initialLabOpenTrackedRef.current = true;
+    trackPublicLabEvent('public_lab_open', {
+      surface: 'url',
+      date: publicLabDateKeyForView,
+      source: window.location.search.includes('date=') ? 'direct_date_link' : 'direct_lab_link',
+    });
+  }, [labMinimized, publicLabDateKeyForView]);
 
   useEffect(() => {
     if (!publicLabDateKeyForView) return;
@@ -851,7 +884,7 @@ export function WorldV2Page() {
     setLearnMoreOpen(false);
     setHighlightLatestNote(false);
     setPendingDeepLinkTrade(null);
-    trackPublicLabEvent('replay_open', {
+    trackPublicLabEvent('trade_replay_open', {
       surface: pendingDeepLinkTrade.surface,
       agent_id: selectedLiveAgentId,
       trade_id: row.id,
@@ -871,7 +904,7 @@ export function WorldV2Page() {
       setLearnMoreOpen(false);
       setHighlightLatestNote(false);
       setPendingDeepLinkTrade(null);
-      trackPublicLabEvent('replay_open', {
+      trackPublicLabEvent('trade_replay_open', {
         surface: pendingDeepLinkTrade.surface,
         agent_id: selectedLiveAgentId,
         trade_id: row.id,
@@ -916,11 +949,47 @@ export function WorldV2Page() {
     if (isMobileViewport()) setMenuHidden(false);
   };
 
-  const setPublicLabOpen = (open: boolean) => {
+  const setPublicLabOpen = (open: boolean, surface = 'utility_rail') => {
     setLabMinimized(!open);
     setLabCalendarOpen(false);
+    setAccountChartOpen(false);
     setBalanceMenuOpen(false);
-    if (!open) updateWorldDeepLink({ lab: null });
+    if (open) {
+      setSelectedLabDateKey(null);
+      updateWorldDeepLink({ lab: 'open', date: null, chart: null, period: null });
+      trackPublicLabEvent('public_lab_open', { surface, date: latestPublicLabDateKey });
+    } else {
+      updateWorldDeepLink({ lab: null, date: null, chart: null, period: null });
+      trackPublicLabEvent('public_lab_minimize', { surface, date: publicLabDateKeyForView });
+    }
+  };
+
+  const openAccountChart = (surface = 'public_lab_tracker') => {
+    setLabMinimized(false);
+    setLabCalendarOpen(false);
+    setAccountChartOpen(true);
+    setBalanceMenuOpen(false);
+    updateWorldDeepLink({
+      lab: 'open',
+      chart: 'account',
+      period: accountChartPeriod,
+      date: selectedLabDateKey,
+    });
+    trackPublicLabEvent('account_chart_open', {
+      surface,
+      period: accountChartPeriod,
+      date: publicLabDateKeyForView,
+    });
+  };
+
+  const closeAccountChartToLab = () => {
+    setAccountChartOpen(false);
+    updateWorldDeepLink({ lab: 'open', chart: null, period: null, date: selectedLabDateKey });
+  };
+
+  const setAccountChartPeriodAndUrl = (period: AccountChartPeriod) => {
+    setAccountChartPeriod(period);
+    updateWorldDeepLink({ lab: 'open', chart: 'account', period, date: selectedLabDateKey });
   };
 
   const selectAgent = (id: WorldMenuAgentId, surface = 'agent_menu') => {
@@ -940,7 +1009,7 @@ export function WorldV2Page() {
 
   const openLearnMore = (options?: { noteId?: string; surface?: string }) => {
     if (selectedLiveAgentId) {
-      trackPublicLabEvent('strategy_open', {
+      trackPublicLabEvent(options?.noteId ? 'field_note_open' : 'strategy_open', {
         surface: options?.surface ?? 'agent_card',
         agent_id: selectedLiveAgentId,
         note_id: options?.noteId,
@@ -953,7 +1022,7 @@ export function WorldV2Page() {
   };
 
   const openTradeReplay = (row: TradeLogEntry) => {
-    trackPublicLabEvent('replay_open', {
+    trackPublicLabEvent('trade_replay_open', {
       surface: 'agent_card',
       agent_id: selectedLiveAgentId,
       trade_id: row.id,
@@ -967,7 +1036,7 @@ export function WorldV2Page() {
   };
 
   const openTradeForAgent = (id: WorldMenuAgentId, row: TradeLogEntry, surface: string) => {
-    trackPublicLabEvent('replay_open', {
+    trackPublicLabEvent('trade_replay_open', {
       surface,
       agent_id: id,
       trade_id: row.id,
@@ -1001,7 +1070,6 @@ export function WorldV2Page() {
   };
 
   const openWorldIntro = () => {
-    trackPublicLabEvent('intro_open', { surface: 'help_button' });
     setSelectedAgentId(null);
     setSelectedTrade(null);
     setLearnMoreOpen(false);
@@ -1017,6 +1085,7 @@ export function WorldV2Page() {
 
   const closeWorldIntro = () => {
     writeStorage(WORLD_GUIDE_SEEN_STORAGE_KEY, '1');
+    trackPublicLabEvent('guide_complete', { surface: 'guide', source: 'start_exploring' });
     setWorldIntroOpen(false);
     updateWorldDeepLink({ agent: null, trade: null, note: null });
     if (isMobileViewport()) setMenuHidden(false);
@@ -1024,6 +1093,7 @@ export function WorldV2Page() {
 
   const openPublicLabFromIntro = () => {
     writeStorage(WORLD_GUIDE_SEEN_STORAGE_KEY, '1');
+    trackPublicLabEvent('guide_complete', { surface: 'guide', source: 'open_public_lab' });
     setWorldIntroOpen(false);
     setSelectedAgentId(null);
     setSelectedTrade(null);
@@ -1031,7 +1101,7 @@ export function WorldV2Page() {
     setHighlightLatestNote(false);
     setPendingDeepLinkTrade(null);
     updateWorldDeepLink({ agent: null, trade: null, note: null });
-    setPublicLabOpen(true);
+    setPublicLabOpen(true, 'guide');
     setFocusRequestId((requestId) => requestId + 1);
     setMenuExpanded(false);
     if (isMobileViewport()) setMenuHidden(false);
@@ -1140,7 +1210,14 @@ export function WorldV2Page() {
             <button
               type="button"
               className="world-v2-episode-toggle-button"
-              onClick={() => setEpisodeMinimized(false)}
+              onClick={() => {
+                setEpisodeMinimized(false);
+                trackPublicLabEvent('latest_episode_open', {
+                  surface: 'utility_rail',
+                  episode_id: publicLabEpisode.episode?.id,
+                  source: 'tv_icon',
+                });
+              }}
               aria-label="Show latest episode"
             >
               <Tv size={20} aria-hidden />
@@ -1149,10 +1226,18 @@ export function WorldV2Page() {
         </div>
       )}
 
-      {!isolatedTestMode && !selectedAgentId && !worldIntroOpen && !labMinimized && (
+      {!isolatedTestMode && !selectedAgentId && !worldIntroOpen && (!labMinimized || accountChartOpen) && (
         <div className="world-v2-lab-stack">
           <div className="world-v2-lab-card">
-            {labCalendarOpen ? (
+            {accountChartOpen ? (
+              <AccountValueChartPanel
+                points={bnf.data.points}
+                period={accountChartPeriod}
+                onPeriodChange={setAccountChartPeriodAndUrl}
+                onBack={closeAccountChartToLab}
+                onClose={() => setPublicLabOpen(false, 'account_chart')}
+              />
+            ) : labCalendarOpen ? (
               <PublicLabCalendar
                 availableDateKeys={publicLabAvailableDateKeys}
                 latestDateKey={latestPublicLabDateKey}
@@ -1161,32 +1246,49 @@ export function WorldV2Page() {
                 loading={publicLabDateTradesLoading}
                 onClose={() => setLabCalendarOpen(false)}
                 onSelectDate={(dateKey) => {
-                  setSelectedLabDateKey(dateKey);
+                  const latestSelected = dateKey === latestPublicLabDateKey;
+                  setSelectedLabDateKey(latestSelected ? null : dateKey);
                   setLabCalendarOpen(false);
+                  updateWorldDeepLink({
+                    lab: 'open',
+                    date: latestSelected ? null : dateKey,
+                  });
+                  trackPublicLabEvent('public_lab_date_selected', {
+                    surface: 'public_lab_calendar',
+                    date: dateKey,
+                    source: latestSelected ? 'latest_control' : 'calendar_day',
+                  });
                 }}
               />
             ) : (
               <>
                 <PublicLabTracker
                   currentBalanceCents={publicLabBnfPoint?.combined_cleared_cents ?? null}
-                  change24hCents={publicLabBnfChanges['24h']?.cents ?? null}
-                  lifetimePnlCents={publicLabBnfChanges.lifetime?.cents ?? null}
-                  biggestMove={biggestMove}
-                  accountHighCents={accountHighCents}
-                  biggestDrawdownCents={biggestDrawdownCents}
-                  bestAgentName={publicLabBestAgentName}
+                  lifetimePnlCents={publicLabLifePnlCents}
+                  largestSettledTrade={largestSettledTrade}
                   asOfLabel={publicLabAsOfLabel}
                   lesson={publicLabCopy.lesson}
                   lessonSource={publicLabCopy.lessonSource}
                   tomorrowWatch={publicLabCopy.tomorrowWatch}
+                  latestDateKey={latestPublicLabDateKey}
+                  selectedDateKey={publicLabDateKeyForView}
                   labDate={publicLabDateForView}
                   dateLabel={publicLabDateLabel}
+                  onOpenChart={() => openAccountChart('public_lab_tracker')}
                   onOpenCalendar={() => {
                     setLabCalendarOpen(true);
                     setBalanceMenuOpen(false);
+                    updateWorldDeepLink({
+                      lab: 'open',
+                      date: selectedLabDateKey,
+                    });
+                    trackPublicLabEvent('public_lab_calendar_open', {
+                      surface: 'public_lab_tracker',
+                      date: publicLabDateKeyForView,
+                    });
                   }}
-                  onOpenMove={(agentId, trade) => openTradeForAgent(agentId, trade, 'public_lab_tracker')}
-                  onMinimize={() => setPublicLabOpen(false)}
+                  onOpenSettledTrade={(agentId, trade) => openTradeForAgent(agentId, trade, 'public_lab_largest_settled_trade')}
+                  onMinimize={() => setPublicLabOpen(false, 'public_lab_tracker')}
                 />
                 <FollowExperimentCta surface="public_lab_tracker" />
               </>
@@ -1290,7 +1392,11 @@ export function WorldV2Page() {
                 rel="noreferrer"
                 aria-label={label}
                 title={label}
-                onClick={() => trackPublicLabEvent('follow_click', { surface: 'agent_menu_icons', platform: id })}
+                onClick={() => trackPublicLabEvent('social_click', {
+                  surface: 'agent_menu_icons',
+                  platform: id,
+                  destination: href,
+                })}
               >
                 <SocialPlatformIcon id={id} />
               </a>

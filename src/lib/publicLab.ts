@@ -115,12 +115,24 @@ export const AGENT_STRATEGY_PROFILES: Record<AgentId, AgentStrategyProfile> = {
 
 export type PublicLabEventName =
   | 'agent_open'
+  | 'account_chart_open'
+  | 'account_chart_period_selected'
   | 'episode_click'
+  | 'field_note_open'
   | 'follow_click'
+  | 'guide_complete'
+  | 'guide_view'
   | 'intro_open'
+  | 'latest_episode_open'
   | 'page_view'
+  | 'public_lab_calendar_open'
+  | 'public_lab_date_selected'
+  | 'public_lab_minimize'
+  | 'public_lab_open'
   | 'replay_open'
+  | 'social_click'
   | 'strategy_open'
+  | 'trade_replay_open'
   | 'watch_trade_click';
 
 export function publicLabDay(now = new Date()) {
@@ -161,10 +173,13 @@ export function biggestMoveAcrossAgents(
 }
 
 export function trackPublicLabEvent(name: PublicLabEventName, detail: Record<string, unknown> = {}) {
+  if (typeof window === 'undefined') return;
+
   const payload = {
     event: `public_lab_${name}`,
     public_lab_event: name,
     timestamp: new Date().toISOString(),
+    path: `${window.location.pathname}${window.location.search}`,
     ...detail,
   };
 

@@ -2326,7 +2326,7 @@ body[data-route="world-v2"] {
 
 .public-lab-tracker {
   display: grid;
-  gap: 10px;
+  gap: 11px;
   padding: 13px;
   color: #fff7e5;
 }
@@ -2424,13 +2424,13 @@ body[data-route="world-v2"] {
 
 .public-lab-tracker__narrative {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 7px;
+  grid-template-columns: 1fr;
+  gap: 8px;
 }
 
 .public-lab-tracker__narrative section {
   min-width: 0;
-  padding: 8px;
+  padding: 9px;
   border: 1px solid rgba(255, 238, 199, 0.12);
   border-radius: 7px;
   background: rgba(255, 247, 229, 0.06);
@@ -2456,7 +2456,7 @@ body[data-route="world-v2"] {
 }
 
 .public-lab-tracker__grid {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .public-lab-tracker__season {
@@ -2467,7 +2467,7 @@ body[data-route="world-v2"] {
 .public-lab-tracker__season > div,
 .public-lab-tracker__moves button {
   min-width: 0;
-  min-height: 54px;
+  min-height: 52px;
   padding: 8px;
   border: 1px solid rgba(255, 238, 199, 0.12);
   border-radius: 7px;
@@ -2484,7 +2484,7 @@ body[data-route="world-v2"] {
   display: block;
   margin-top: 4px;
   color: #fff7e5;
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 900;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -2492,8 +2492,6 @@ body[data-route="world-v2"] {
 
 .public-lab-tracker__grid strong,
 .public-lab-tracker__season strong {
-  overflow: hidden;
-  text-overflow: ellipsis;
   white-space: nowrap;
 }
 
@@ -2503,10 +2501,176 @@ body[data-route="world-v2"] {
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 7px;
+  min-height: 40px;
   color: inherit;
   font: inherit;
   text-align: left;
   cursor: pointer;
+}
+
+.public-lab-tracker__moves button:disabled {
+  cursor: default;
+  opacity: 0.72;
+}
+
+.public-lab-tracker__chart-link {
+  display: inline-grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  justify-content: start;
+  gap: 7px;
+  width: 100%;
+  min-height: 36px;
+  padding: 8px;
+  border: 1px solid rgba(94, 234, 212, 0.24);
+  border-radius: 7px;
+  background: rgba(94, 234, 212, 0.1);
+  color: #eafffb;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.public-lab-tracker__chart-link:hover,
+.public-lab-tracker__chart-link:focus-visible {
+  outline: none;
+  border-color: rgba(94, 234, 212, 0.52);
+  background: rgba(94, 234, 212, 0.16);
+}
+
+.account-chart-panel {
+  display: grid;
+  gap: 12px;
+  padding: 13px;
+  color: #fff7e5;
+}
+
+.account-chart-panel__head,
+.account-chart-panel__periods {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.account-chart-panel__head {
+  justify-content: space-between;
+}
+
+.account-chart-panel__head button,
+.account-chart-panel__period {
+  display: inline-grid;
+  place-items: center;
+  min-width: 28px;
+  height: 28px;
+  border: 1px solid rgba(255, 238, 199, 0.18);
+  border-radius: 7px;
+  background: rgba(255, 247, 229, 0.08);
+  color: #fff7e5;
+  font: inherit;
+  cursor: pointer;
+}
+
+.account-chart-panel__head button:hover,
+.account-chart-panel__head button:focus-visible,
+.account-chart-panel__period:hover,
+.account-chart-panel__period:focus-visible,
+.account-chart-panel__period--active {
+  outline: none;
+  border-color: rgba(94, 234, 212, 0.58);
+  background: rgba(94, 234, 212, 0.14);
+  color: #eafffb;
+}
+
+.account-chart-panel__head span,
+.account-chart-panel__value em {
+  color: rgba(255, 239, 201, 0.64);
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.account-chart-panel__head h2 {
+  margin: 4px 0 0;
+  font-family: var(--font-display);
+  font-size: 22px;
+  line-height: 1;
+}
+
+.account-chart-panel__value {
+  display: grid;
+  gap: 5px;
+  padding: 10px;
+  border: 1px solid rgba(255, 238, 199, 0.12);
+  border-radius: 7px;
+  background: rgba(255, 247, 229, 0.07);
+}
+
+.account-chart-panel__value strong {
+  font-size: 28px;
+  font-weight: 900;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.account-chart-panel__value span {
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.account-chart-panel__value em {
+  font-style: normal;
+}
+
+.account-chart-panel__periods {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.account-chart-panel__period {
+  min-width: 0;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.account-chart-panel__chart {
+  min-height: 150px;
+  padding: 10px;
+  border: 1px solid rgba(255, 238, 199, 0.12);
+  border-radius: 7px;
+  background: rgba(255, 247, 229, 0.06);
+}
+
+.account-chart-panel__chart svg {
+  display: block;
+  width: 100%;
+  height: 150px;
+  overflow: visible;
+}
+
+.account-chart-panel__chart line {
+  stroke: rgba(255, 239, 201, 0.16);
+  stroke-width: 1;
+}
+
+.account-chart-panel__chart path {
+  fill: none;
+  stroke: #5eead4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 3;
+}
+
+.account-chart-panel__empty {
+  display: grid;
+  min-height: 130px;
+  place-items: center;
+  color: rgba(255, 239, 201, 0.68);
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
 }
 
 .public-lab-calendar {
@@ -4233,7 +4397,7 @@ button.todays-field-note:focus-visible {
   }
 
   .public-lab-tracker__grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 5px;
   }
 
@@ -4252,8 +4416,6 @@ button.todays-field-note:focus-visible {
     font-size: 12px;
     line-height: 1.1;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
 
   .public-lab-tracker__moves {
@@ -4261,12 +4423,12 @@ button.todays-field-note:focus-visible {
   }
 
   .public-lab-tracker__moves button {
-    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-columns: auto minmax(0, 1fr) auto;
     gap: 5px;
   }
 
   .public-lab-tracker__moves strong {
-    grid-column: 2;
+    grid-column: auto;
   }
 
   .public-lab-tracker__moves button,
@@ -4289,6 +4451,44 @@ button.todays-field-note:focus-visible {
   .public-lab-tracker__moves strong {
     font-size: 11px;
     line-height: 1.05;
+  }
+
+  .public-lab-tracker__chart-link {
+    min-height: 32px;
+    padding: 6px 7px;
+    font-size: 11px;
+  }
+
+  .account-chart-panel {
+    gap: 8px;
+    padding: 9px;
+  }
+
+  .account-chart-panel__head h2 {
+    font-size: 18px;
+  }
+
+  .account-chart-panel__value {
+    padding: 8px;
+  }
+
+  .account-chart-panel__value strong {
+    font-size: 23px;
+  }
+
+  .account-chart-panel__value span {
+    font-size: 11px;
+  }
+
+  .account-chart-panel__chart,
+  .account-chart-panel__chart svg {
+    min-height: 126px;
+    height: 126px;
+  }
+
+  .account-chart-panel__period {
+    height: 25px;
+    font-size: 10px;
   }
 
   .public-lab-calendar {

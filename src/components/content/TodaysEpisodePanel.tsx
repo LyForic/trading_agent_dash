@@ -66,10 +66,23 @@ function youtubeVideoIdFromUrl(url: string | null | undefined) {
   return null;
 }
 
+function canonicalThumbnailUrl(url: string | null | undefined) {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    if (!parsed.hostname.endsWith('ytimg.com')) return null;
+    parsed.protocol = 'https:';
+    parsed.hostname = 'i.ytimg.com';
+    return parsed.toString();
+  } catch {
+    return null;
+  }
+}
+
 function thumbnailCandidates(episode: PublicLabEpisode | null) {
   const videoId = youtubeVideoIdFromUrl(episode?.episodeUrl);
   const urls = [
-    episode?.thumbnailUrl,
+    canonicalThumbnailUrl(episode?.thumbnailUrl),
     videoId ? `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg` : null,
     videoId ? `https://i.ytimg.com/vi/${videoId}/mqdefault.jpg` : null,
   ];
@@ -100,9 +113,11 @@ export function TodaysEpisodePanel({
     : loading
       ? 'Syncing today’s lab update'
       : 'Watch today’s lab update');
-  const dek = cleanEpisodeText(episode?.dek, 104) || (trade
-    ? `${trade.side.toUpperCase()} on ${trade.contract_ticker} settled ${formatPnl(trade.pnl)}.`
-    : 'The latest short connects the video claim back to the live proof layer.');
+  const dek = episode
+    ? 'Watch the setup, then check the live proof layer here.'
+    : trade
+      ? `${trade.side.toUpperCase()} on ${trade.contract_ticker} settled ${formatPnl(trade.pnl)}.`
+      : 'The latest short connects the video claim back to the live proof layer.';
 
   return (
     <section className="todays-episode-panel" aria-label="Watch today's episode">
@@ -196,10 +211,11 @@ export function TodaysEpisodePanel({
             rel="noreferrer"
             aria-label={`Watch on ${episodePlatform.label}`}
             title={`Watch on ${episodePlatform.label}`}
-            onClick={() => trackPublicLabEvent('episode_click', {
+            onClick={() => trackPublicLabEvent('latest_episode_open', {
               platform: episode.platform,
               episode_id: episode.id,
               surface: 'todays_episode',
+              destination: episode.episodeUrl,
             })}
           >
             <SocialPlatformIcon id={episodePlatform.id} className="follow-experiment__icon" />
@@ -214,7 +230,11 @@ export function TodaysEpisodePanel({
             rel="noreferrer"
             aria-label={episode ? `Open ${link.label}` : `Watch on ${link.label}`}
             title={episode ? `Open ${link.label}` : `Watch on ${link.label}`}
-            onClick={() => trackPublicLabEvent('episode_click', { platform: link.id, surface: 'todays_episode' })}
+            onClick={() => trackPublicLabEvent('social_click', {
+              platform: link.id,
+              surface: 'todays_episode',
+              destination: link.href,
+            })}
           >
             <SocialPlatformIcon id={link.id} className="follow-experiment__icon" />
             {!episode && <span>{link.label}</span>}

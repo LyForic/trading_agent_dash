@@ -23,7 +23,11 @@ export function FollowExperimentCta({ surface, compact = false }: Props) {
           target="_blank"
           rel="noreferrer"
           aria-label="Follow @brandonnfongg"
-          onClick={() => trackPublicLabEvent('follow_click', { surface, platform: primary.id })}
+          onClick={() => trackPublicLabEvent('follow_click', {
+            surface,
+            platform: primary.id,
+            destination: primary.href,
+          })}
         >
           <Bell size={15} aria-hidden />
           <span>@brandonnfongg</span>
@@ -37,7 +41,11 @@ export function FollowExperimentCta({ surface, compact = false }: Props) {
               rel="noreferrer"
               aria-label={`Follow on ${link.label}`}
               title={`Follow on ${link.label}`}
-              onClick={() => trackPublicLabEvent('follow_click', { surface, platform: link.id })}
+              onClick={() => trackPublicLabEvent('social_click', {
+                surface,
+                platform: link.id,
+                destination: link.href,
+              })}
             >
               <SocialPlatformIcon id={link.id} className="follow-experiment__icon" />
               <ArrowUpRight size={11} aria-hidden />

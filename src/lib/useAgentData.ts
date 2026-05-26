@@ -393,10 +393,10 @@ export function useAgentData(
               .limit(5);
             if (openErr) throw openErr;
             const eligibleOpens = (openRows ?? []) as AgentTradeRow[];
+            // Multiple delayed open rows can exist while separate contracts are
+            // still unsettled. Public UI shows one deterministic "In Battle"
+            // receipt: newest entered_at first from the ordered query above.
             const latestOpen = eligibleOpens[0] ?? null;
-            if (eligibleOpens.length > 1) {
-              console.warn(`[useAgentData] ${id}: ${eligibleOpens.length} eligible opens; using latest`);
-            }
             const open_position: OpenPosition | null = latestOpen
               ? {
                   contract_ticker: latestOpen.contract_ticker,
