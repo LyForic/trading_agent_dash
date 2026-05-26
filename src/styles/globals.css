@@ -799,6 +799,8 @@ body[data-room="metheus"] .room-agent--metheus {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-width: 0;
+  max-width: 100%;
   padding: 9px;
   border: 1px solid color-mix(in srgb, var(--color-ink) 18%, var(--color-border-default));
   border-radius: 6px;
@@ -817,6 +819,9 @@ body[data-room="metheus"] .room-agent--metheus {
   text-transform: uppercase;
 }
 .trade-log-featured {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
   width: 100%;
   padding: 9px;
   border: 1px solid color-mix(in srgb, var(--agent-accent, var(--color-gain)) 35%, var(--color-border-default));
@@ -841,6 +846,7 @@ body[data-room="metheus"] .room-agent--metheus {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
+  min-width: 0;
   margin-bottom: 5px;
 }
 .trade-log-receipt-id {
@@ -868,10 +874,15 @@ body[data-room="metheus"] .room-agent--metheus {
   white-space: nowrap;
 }
 .trade-log-ledger {
+  min-width: 0;
+  max-width: 100%;
   max-height: clamp(150px, 28vh, 240px);
+  align-content: start;
   overflow-y: auto;
+  overflow-x: hidden;
   overscroll-behavior: contain;
   display: grid;
+  grid-auto-rows: max-content;
   gap: 6px;
   padding-right: 4px;
   border-top: 1px solid color-mix(in srgb, var(--color-border-default) 72%, transparent);
@@ -890,6 +901,9 @@ body[data-room="metheus"] .room-agent--metheus {
   grid-template-columns: 60px minmax(0, 1fr) 30px minmax(54px, auto) 44px;
   align-items: center;
   gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
   width: 100%;
   padding: 6px 0;
   border-bottom: 1px solid color-mix(in srgb, var(--color-border-default) 72%, transparent);
@@ -902,7 +916,7 @@ body[data-room="metheus"] .room-agent--metheus {
   font-size: 11px;
   text-align: left;
   cursor: pointer;
-  transition: background-color 150ms ease, padding-inline 150ms ease;
+  transition: background-color 150ms ease, box-shadow 150ms ease;
 }
 .trade-log-row:last-of-type {
   border-bottom: none;
@@ -911,8 +925,8 @@ body[data-room="metheus"] .room-agent--metheus {
 .trade-log-row:focus-visible,
 .trade-log-row--active {
   outline: none;
-  padding-inline: 5px;
   background: color-mix(in srgb, var(--agent-accent, var(--color-gain)) 10%, transparent);
+  box-shadow: inset 3px 0 0 color-mix(in srgb, var(--agent-accent, var(--color-gain)) 58%, transparent);
 }
 .trade-log-row-main {
   min-width: 0;
@@ -923,9 +937,13 @@ body[data-room="metheus"] .room-agent--metheus {
 }
 .trade-log-row-size,
 .trade-log-row-time {
+  min-width: 0;
+  overflow: hidden;
   color: var(--color-ink-muted);
   font-size: 10px;
   text-align: right;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 .trade-log-footer {
   color: var(--color-ink-muted);
@@ -3535,7 +3553,10 @@ body[data-route="world-v2"] {
   flex: 1 1 auto;
   min-height: 0;
   max-height: none;
+  align-content: start;
+  grid-auto-rows: max-content;
   overflow: auto;
+  overflow-x: hidden;
 }
 
 .world-v2-stats-panel .trade-log-header,
@@ -4739,6 +4760,13 @@ button.todays-field-note:focus-visible {
   .world-v2-stats-panel .trade-log,
   .world-v2-stats-panel .trade-log-empty {
     max-height: none;
+  }
+}
+
+@media (max-width: 430px) {
+  .world-v2-stats-panel--stats .trade-log-row {
+    grid-template-columns: 50px minmax(0, 1fr) minmax(46px, max-content);
+    gap: 5px;
   }
 }
 
