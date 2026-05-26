@@ -413,7 +413,6 @@ export function WorldV2Page() {
   const [labMinimized, setLabMinimized] = useState(() => initialPublicLabMinimized());
   const [episodeMinimized, setEpisodeMinimized] = useState(true);
   const [selectedTrade, setSelectedTrade] = useState<TradeLogEntry | null>(null);
-  const [replayCaptureMode, setReplayCaptureMode] = useState(false);
   const [learnMoreOpen, setLearnMoreOpen] = useState(false);
   const [highlightLatestNote, setHighlightLatestNote] = useState(false);
   const [pendingDeepLinkTrade, setPendingDeepLinkTrade] = useState<{ tradeId: string; surface: string } | null>(null);
@@ -555,7 +554,6 @@ export function WorldV2Page() {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedAgentId(agent);
     setWorldIntroOpen(false);
-    setReplayCaptureMode(false);
     setBalanceMenuOpen(false);
     setMenuExpanded(false);
     setFocusRequestId((requestId) => requestId + 1);
@@ -584,7 +582,6 @@ export function WorldV2Page() {
     setSelectedTrade(row);
     setLearnMoreOpen(false);
     setHighlightLatestNote(false);
-    setReplayCaptureMode(false);
     setPendingDeepLinkTrade(null);
     trackPublicLabEvent('replay_open', {
       surface: pendingDeepLinkTrade.surface,
@@ -605,7 +602,6 @@ export function WorldV2Page() {
       setSelectedTrade(row);
       setLearnMoreOpen(false);
       setHighlightLatestNote(false);
-      setReplayCaptureMode(false);
       setPendingDeepLinkTrade(null);
       trackPublicLabEvent('replay_open', {
         surface: pendingDeepLinkTrade.surface,
@@ -644,7 +640,6 @@ export function WorldV2Page() {
   const closeFocus = () => {
     setSelectedAgentId(null);
     setSelectedTrade(null);
-    setReplayCaptureMode(false);
     setLearnMoreOpen(false);
     setHighlightLatestNote(false);
     setPendingDeepLinkTrade(null);
@@ -665,7 +660,6 @@ export function WorldV2Page() {
     trackPublicLabEvent('agent_open', { surface, agent_id: id });
     setSelectedAgentId(id);
     setSelectedTrade(null);
-    setReplayCaptureMode(false);
     setLearnMoreOpen(false);
     setHighlightLatestNote(false);
     setPendingDeepLinkTrade(null);
@@ -687,7 +681,6 @@ export function WorldV2Page() {
       updateWorldDeepLink({ agent: selectedLiveAgentId, trade: null, note: 'latest' });
     }
     setSelectedTrade(null);
-    setReplayCaptureMode(false);
     setLearnMoreOpen(true);
     setHighlightLatestNote(true);
   };
@@ -702,7 +695,6 @@ export function WorldV2Page() {
     setLearnMoreOpen(false);
     setHighlightLatestNote(false);
     setWorldIntroOpen(false);
-    setReplayCaptureMode(false);
     setSelectedTrade(row);
     if (selectedLiveAgentId) updateWorldDeepLink({ agent: selectedLiveAgentId, trade: row.id, note: null });
   };
@@ -718,7 +710,6 @@ export function WorldV2Page() {
     setLearnMoreOpen(false);
     setHighlightLatestNote(false);
     setWorldIntroOpen(false);
-    setReplayCaptureMode(false);
     setSelectedTrade(row);
     updateWorldDeepLink({ agent: id, trade: row.id, note: null });
     setFocusRequestId((requestId) => requestId + 1);
@@ -732,7 +723,6 @@ export function WorldV2Page() {
     setLearnMoreOpen(false);
     setHighlightLatestNote(false);
     setWorldIntroOpen(false);
-    setReplayCaptureMode(false);
     setSelectedTrade(null);
     setPendingDeepLinkTrade({ tradeId, surface });
     windowSetters[id]('lifetime');
@@ -747,7 +737,6 @@ export function WorldV2Page() {
     trackPublicLabEvent('intro_open', { surface: 'help_button' });
     setSelectedAgentId(null);
     setSelectedTrade(null);
-    setReplayCaptureMode(false);
     setLearnMoreOpen(false);
     setHighlightLatestNote(false);
     setPendingDeepLinkTrade(null);
@@ -771,7 +760,6 @@ export function WorldV2Page() {
     setWorldIntroOpen(false);
     setSelectedAgentId(null);
     setSelectedTrade(null);
-    setReplayCaptureMode(false);
     setLearnMoreOpen(false);
     setHighlightLatestNote(false);
     setPendingDeepLinkTrade(null);
@@ -850,12 +838,9 @@ export function WorldV2Page() {
     : error?.kind === 'fetch-failed'
       ? 'Data unavailable'
       : 'Mock data';
-  const captureLink = selectedLiveAgentId && selectedTrade
-    ? `${window.location.origin}${window.location.pathname}?agent=${selectedLiveAgentId}&trade=${selectedTrade.id}`
-    : undefined;
 
   return (
-    <main className={replayCaptureMode ? 'world-v2-page world-v2-page--capture' : 'world-v2-page'}>
+    <main className="world-v2-page">
       <PhaserWorld selectedAgentId={selectedAgentId} focusRequestId={focusRequestId} onAgentAreaSelect={selectAgent} />
 
       {!isolatedTestMode && <div className="world-v2-vignette" />}
@@ -1050,7 +1035,7 @@ export function WorldV2Page() {
 
       {!isolatedTestMode && selectedLiveAgentId && selectedAgent && selectedVm && (
         <section
-          className={`world-v2-stats-panel world-v2-stats-panel--${selectedPanelMode}${replayCaptureMode ? ' world-v2-stats-panel--capture' : ''}`}
+          className={`world-v2-stats-panel world-v2-stats-panel--${selectedPanelMode}`}
           aria-label={
             selectedTrade
               ? `${selectedAgent.name} trade replay`
@@ -1068,7 +1053,6 @@ export function WorldV2Page() {
                   className="world-v2-back-button"
                   onClick={() => {
                     setSelectedTrade(null);
-                    setReplayCaptureMode(false);
                     updateWorldDeepLink({ trade: null });
                   }}
                   aria-label="Back to trade stats"
@@ -1093,16 +1077,6 @@ export function WorldV2Page() {
               <TradeReplayPanel
                 key={selectedTrade.id}
                 row={selectedTrade}
-                captureMode={replayCaptureMode}
-                captureLink={captureLink}
-                onCaptureModeChange={(enabled) => {
-                  trackPublicLabEvent('replay_capture_toggle', {
-                    agent_id: selectedLiveAgentId,
-                    trade_id: selectedTrade.id,
-                    enabled,
-                  });
-                  setReplayCaptureMode(enabled);
-                }}
               />
               <FollowExperimentCta surface="replay_modal" compact />
             </>

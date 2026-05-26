@@ -119,7 +119,6 @@ export type PublicLabEventName =
   | 'follow_click'
   | 'intro_open'
   | 'page_view'
-  | 'replay_capture_toggle'
   | 'replay_open'
   | 'strategy_open'
   | 'watch_trade_click';

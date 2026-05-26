@@ -2230,15 +2230,6 @@ body[data-route="world-v2"] {
   z-index: 2;
 }
 
-.world-v2-page--capture .world-v2-menu,
-.world-v2-page--capture .world-v2-menu-peek,
-.world-v2-page--capture .world-v2-utility-stack,
-.world-v2-page--capture .world-v2-lab-stack,
-.world-v2-page--capture .world-v2-episode-stack,
-.world-v2-page--capture .world-v2-vignette {
-  display: none;
-}
-
 .world-v2-menu,
 .world-v2-stats-panel,
 .world-v2-menu-peek,
@@ -2599,8 +2590,7 @@ body[data-route="world-v2"] {
 .todays-episode-panel__actions button,
 .todays-episode-panel__links a,
 .follow-experiment__primary,
-.follow-experiment__links a,
-.trade-replay-capture-toggle {
+.follow-experiment__links a {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2636,10 +2626,7 @@ body[data-route="world-v2"] {
 .follow-experiment__primary:hover,
 .follow-experiment__primary:focus-visible,
 .follow-experiment__links a:hover,
-.follow-experiment__links a:focus-visible,
-.trade-replay-capture-toggle:hover,
-.trade-replay-capture-toggle:focus-visible,
-.trade-replay-capture-toggle--active {
+.follow-experiment__links a:focus-visible {
   outline: none;
   border-color: rgba(255, 238, 199, 0.44);
   background: rgba(255, 247, 229, 0.16);
@@ -3237,11 +3224,6 @@ body[data-route="world-v2"] {
   gap: 12px;
 }
 
-.world-v2-stats-panel--capture {
-  width: min(430px, calc(100vw - 28px));
-  max-height: min(820px, calc(100dvh - 28px));
-}
-
 .world-v2-stats-panel--learn {
   width: min(760px, calc(100vw - 44px));
   max-height: min(780px, calc(100dvh - 48px));
@@ -3598,97 +3580,6 @@ button.todays-field-note:focus-visible {
 .world-v2-stats-panel .trade-replay-speed-button--active {
   border-color: color-mix(in srgb, var(--agent-accent) 58%, rgba(255, 238, 199, 0.26));
   background: color-mix(in srgb, var(--agent-accent) 18%, rgba(255, 247, 229, 0.08));
-}
-
-.trade-replay-capture-toggle {
-  flex: 0 0 auto;
-  min-height: 28px;
-  padding: 0 8px;
-  color: inherit;
-}
-
-.trade-replay-panel--capture {
-  min-height: 0;
-  aspect-ratio: 9 / 16;
-  align-content: start;
-  gap: 12px;
-  padding: 14px !important;
-  background:
-    radial-gradient(circle at 50% 16%, color-mix(in srgb, var(--agent-accent) 22%, transparent), transparent 48%),
-    rgba(25, 18, 12, 0.96) !important;
-}
-
-.trade-replay-panel--capture .trade-replay-head {
-  align-items: start;
-}
-
-.trade-replay-panel--capture .trade-replay-timebox {
-  display: none;
-}
-
-.trade-replay-capture-caption {
-  display: grid;
-  gap: 5px;
-  padding: 10px;
-  border: 1px solid rgba(255, 238, 199, 0.14);
-  border-radius: 7px;
-  background: rgba(255, 247, 229, 0.08);
-}
-
-.trade-replay-capture-caption span {
-  color: rgba(255, 239, 201, 0.62);
-  font-size: 10px;
-  font-weight: 900;
-  line-height: 1;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-}
-
-.trade-replay-capture-caption strong {
-  color: #fff7e5;
-  font-family: var(--font-display);
-  font-size: 24px;
-  line-height: 1.05;
-}
-
-.trade-replay-panel--capture .trade-replay-chart {
-  border-radius: 8px;
-}
-
-.trade-replay-panel--capture .trade-replay-side-percent {
-  font-size: 38px;
-}
-
-.trade-replay-panel--capture .trade-replay-readout {
-  grid-template-columns: 58px minmax(110px, auto) minmax(0, 1fr);
-  padding: 10px;
-  border: 1px solid rgba(255, 238, 199, 0.14);
-  border-radius: 7px;
-  background: rgba(0, 0, 0, 0.16);
-}
-
-.trade-replay-panel--capture .trade-replay-readout strong {
-  min-width: 110px;
-  font-size: 20px;
-}
-
-.trade-replay-panel--capture .trade-replay-value-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.trade-replay-panel--capture .trade-replay-value-grid div {
-  display: grid;
-  align-content: center;
-  min-height: 58px;
-}
-
-.trade-replay-panel--capture .trade-replay-value-grid span,
-.trade-replay-panel--capture .trade-replay-value-grid strong {
-  font-size: 13px;
-}
-
-.world-v2-stats-panel--capture .follow-experiment {
-  display: none;
 }
 
 .agent-learning-panel {
@@ -4274,11 +4165,6 @@ button.todays-field-note:focus-visible {
 
   .world-v2-stats-panel--replay {
     width: min(430px, calc(100vw - 20px));
-  }
-
-  .world-v2-stats-panel--capture {
-    width: min(430px, calc(100vw - 14px));
-    max-height: calc(100dvh - 14px);
   }
 
   .world-v2-stats-panel--learn {
