@@ -1082,13 +1082,11 @@ export function WorldV2Page() {
                   currentBalanceCents={publicLabBnfPoint?.combined_cleared_cents ?? null}
                   change24hCents={publicLabBnfChanges['24h']?.cents ?? null}
                   lifetimePnlCents={publicLabBnfChanges.lifetime?.cents ?? null}
-                  agentCountLabel={`${PUBLIC_WORLD_AGENT_ORDER.length} public agents`}
                   biggestMove={biggestMove}
                   accountHighCents={accountHighCents}
                   biggestDrawdownCents={biggestDrawdownCents}
                   bestAgentName={publicLabBestAgentName}
                   statement={publicLabStatement}
-                  points={publicLabBnfPointsThroughDate}
                   labDate={publicLabDateForView}
                   dateLabel={publicLabDateLabel}
                   onOpenCalendar={() => {
@@ -1145,22 +1143,6 @@ export function WorldV2Page() {
       >
         <div className="world-v2-sheet-handle" aria-hidden />
         <div className="world-v2-menu-head">
-          <div className="world-v2-social-links" aria-label="Social links">
-            {SOCIAL_LINKS.map(({ id, href, label }) => (
-              <a
-                key={id}
-                className="world-v2-social-link"
-                href={href}
-                target="_blank"
-                rel="noreferrer"
-                aria-label={label}
-                title={label}
-                onClick={() => trackPublicLabEvent('follow_click', { surface: 'agent_menu_icons', platform: id })}
-              >
-                <SocialPlatformIcon id={id} />
-              </a>
-            ))}
-          </div>
           <div ref={balanceWrapRef} className="world-v2-balance-wrap">
             <button
               type="button"
@@ -1205,6 +1187,22 @@ export function WorldV2Page() {
                 })}
               </div>
             )}
+          </div>
+          <div className="world-v2-social-links" aria-label="Social links">
+            {SOCIAL_LINKS.map(({ id, href, label }) => (
+              <a
+                key={id}
+                className="world-v2-social-link"
+                href={href}
+                target="_blank"
+                rel="noreferrer"
+                aria-label={label}
+                title={label}
+                onClick={() => trackPublicLabEvent('follow_click', { surface: 'agent_menu_icons', platform: id })}
+              >
+                <SocialPlatformIcon id={id} />
+              </a>
+            ))}
           </div>
           <button
             type="button"

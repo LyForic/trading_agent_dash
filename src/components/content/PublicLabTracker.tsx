@@ -1,7 +1,7 @@
-import { CalendarDays, FlaskConical, Minimize2, TrendingDown, TrendingUp, Users } from 'lucide-react';
+import { CalendarDays, FlaskConical, Minimize2, TrendingUp } from 'lucide-react';
 import { formatPnl } from '@/lib/formatting';
-import { PUBLIC_LAB_OPEN_QUESTION, PUBLIC_LAB_STARTING_BANKROLL_CENTS, publicLabDay } from '@/lib/publicLab';
-import type { AgentId, BnfPortfolioPoint, TradeLogEntry } from '@/lib/types';
+import { PUBLIC_LAB_STARTING_BANKROLL_CENTS, publicLabDay } from '@/lib/publicLab';
+import type { AgentId, TradeLogEntry } from '@/lib/types';
 
 interface LabMove {
   agentId: AgentId;
@@ -12,14 +12,12 @@ interface Props {
   currentBalanceCents: number | null;
   change24hCents: number | null;
   lifetimePnlCents: number | null;
-  agentCountLabel: string;
   biggestMove: LabMove | null;
   accountHighCents: number | null;
   biggestDrawdownCents: number | null;
   bestAgentName: string | null;
   statement: string;
   onOpenMove: (agentId: AgentId, trade: TradeLogEntry) => void;
-  points: BnfPortfolioPoint[];
   labDate?: Date;
   dateLabel?: string;
   onOpenCalendar?: () => void;
@@ -45,21 +43,18 @@ export function PublicLabTracker({
   currentBalanceCents,
   change24hCents,
   lifetimePnlCents,
-  agentCountLabel,
   biggestMove,
   accountHighCents,
   biggestDrawdownCents,
   bestAgentName,
   statement,
   onOpenMove,
-  points,
   labDate,
   dateLabel,
   onOpenCalendar,
   onMinimize,
 }: Props) {
   const day = publicLabDay(labDate);
-  const latestPoint = points[points.length - 1];
 
   return (
     <section className="public-lab-tracker" aria-label="Public lab tracker">
@@ -114,10 +109,6 @@ export function PublicLabTracker({
           <span>Biggest move</span>
           <strong>{moveCopy(biggestMove)}</strong>
         </button>
-        <div>
-          <Users size={15} aria-hidden />
-          <span>{agentCountLabel}</span>
-        </div>
       </div>
 
       <div className="public-lab-tracker__season" aria-label="Season milestones">
@@ -135,11 +126,6 @@ export function PublicLabTracker({
           <span>Best agent</span>
           <strong>{bestAgentName ?? 'Pending'}</strong>
         </div>
-      </div>
-
-      <div className="public-lab-tracker__question">
-        <TrendingDown size={14} aria-hidden />
-        <span>{latestPoint?.is_partial ? 'Partial data today.' : PUBLIC_LAB_OPEN_QUESTION}</span>
       </div>
     </section>
   );

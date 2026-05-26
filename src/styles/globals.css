@@ -2310,7 +2310,6 @@ body[data-route="world-v2"] {
 
 .public-lab-tracker__head,
 .public-lab-tracker__moves,
-.public-lab-tracker__question,
 .todays-episode-panel__actions,
 .todays-episode-panel__links,
 .follow-experiment,
@@ -2406,8 +2405,7 @@ body[data-route="world-v2"] {
 
 .public-lab-tracker__grid > div,
 .public-lab-tracker__season > div,
-.public-lab-tracker__moves button,
-.public-lab-tracker__moves > div {
+.public-lab-tracker__moves button {
   min-width: 0;
   min-height: 54px;
   padding: 8px;
@@ -2449,17 +2447,6 @@ body[data-route="world-v2"] {
   font: inherit;
   text-align: left;
   cursor: pointer;
-}
-
-.public-lab-tracker__moves > div {
-  flex: 0 0 auto;
-}
-
-.public-lab-tracker__question {
-  padding-top: 2px;
-  color: rgba(255, 239, 201, 0.7);
-  font-size: 12px;
-  line-height: 1.35;
 }
 
 .public-lab-calendar {
@@ -2931,7 +2918,7 @@ body[data-route="world-v2"] {
 
 .world-v2-menu-head {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto 38px;
+  grid-template-columns: minmax(136px, auto) minmax(0, 1fr) 38px;
   align-items: center;
   gap: 8px;
 }
@@ -2950,14 +2937,14 @@ body[data-route="world-v2"] {
   display: flex;
   min-width: 0;
   align-items: center;
-  justify-content: center;
-  gap: 7px;
+  justify-content: flex-end;
+  gap: 4px;
 }
 
 .world-v2-social-link {
   display: inline-grid;
   place-items: center;
-  width: 31px;
+  width: 29px;
   height: 31px;
   border: 0;
   border-radius: 8px;
@@ -2991,16 +2978,17 @@ body[data-route="world-v2"] {
 
 .world-v2-total-bal {
   display: grid;
-  justify-items: end;
-  min-width: 124px;
+  justify-items: start;
+  min-width: 136px;
+  max-width: 154px;
   gap: 4px;
-  padding: 7px 9px;
+  padding: 8px 10px;
   border: 1px solid rgba(255, 238, 199, 0.16);
   border-radius: 7px;
   background: rgba(255, 247, 229, 0.07);
   color: #fff7e5;
   font: inherit;
-  text-align: right;
+  text-align: left;
   cursor: pointer;
   transition: background-color 150ms ease, border-color 150ms ease, transform 150ms ease;
 }
@@ -3014,10 +3002,10 @@ body[data-route="world-v2"] {
 }
 
 .world-v2-total-bal strong {
-  max-width: 104px;
+  max-width: 132px;
   overflow-wrap: anywhere;
   color: #fff7e5;
-  font-size: 15px;
+  font-size: 20px;
   font-weight: 900;
   line-height: 1;
   font-variant-numeric: tabular-nums;
@@ -3026,7 +3014,7 @@ body[data-route="world-v2"] {
 .world-v2-total-bal em {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: 4px;
   max-width: 100%;
   min-width: 0;
@@ -3049,7 +3037,7 @@ body[data-route="world-v2"] {
 
 .world-v2-balance-menu {
   position: absolute;
-  right: 0;
+  left: 0;
   top: calc(100% + 7px);
   z-index: 14;
   width: 178px;
@@ -3997,11 +3985,8 @@ button.todays-field-note:focus-visible {
   }
 
   .public-lab-tracker {
-    max-height: min(38dvh, 300px);
     gap: 6px;
     padding: 8px;
-    overflow-y: auto;
-    overscroll-behavior: contain;
   }
 
   .public-lab-tracker__head h1 {
@@ -4042,8 +4027,6 @@ button.todays-field-note:focus-visible {
   }
 
   .public-lab-tracker__moves {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
     gap: 5px;
   }
 
@@ -4057,15 +4040,9 @@ button.todays-field-note:focus-visible {
   }
 
   .public-lab-tracker__moves button,
-  .public-lab-tracker__moves > div,
   .public-lab-tracker__season > div {
     min-height: 40px;
     padding: 6px 7px;
-  }
-
-  .public-lab-tracker__moves > div {
-    display: flex;
-    align-items: center;
   }
 
   .public-lab-tracker__season {
@@ -4084,18 +4061,9 @@ button.todays-field-note:focus-visible {
     line-height: 1.05;
   }
 
-  .public-lab-tracker__question {
-    gap: 5px;
-    font-size: 11px;
-    line-height: 1.25;
-  }
-
   .public-lab-calendar {
-    max-height: min(38dvh, 300px);
-    gap: 7px;
+    gap: 6px;
     padding: 8px;
-    overflow-y: auto;
-    overscroll-behavior: contain;
   }
 
   .public-lab-calendar__head h2 {
@@ -4111,7 +4079,7 @@ button.todays-field-note:focus-visible {
 
   .public-lab-calendar__weekdays,
   .public-lab-calendar__grid {
-    gap: 4px;
+    gap: 3px;
   }
 
   .public-lab-calendar__actions button,
@@ -4121,6 +4089,8 @@ button.todays-field-note:focus-visible {
   }
 
   .public-lab-calendar__day {
+    aspect-ratio: auto;
+    height: 28px;
     border-radius: 6px;
     font-size: 12px;
   }
@@ -4227,18 +4197,19 @@ button.todays-field-note:focus-visible {
   }
 
   .world-v2-menu-head {
-    grid-template-columns: minmax(0, 1fr) auto 38px;
+    grid-template-columns: minmax(134px, auto) minmax(0, 1fr) 38px;
     gap: 8px;
   }
 
   .world-v2-total-bal {
-    min-width: 116px;
-    padding: 6px 7px;
+    min-width: 134px;
+    max-width: 148px;
+    padding: 7px 8px;
   }
 
   .world-v2-total-bal strong {
-    max-width: 102px;
-    font-size: 13px;
+    max-width: 126px;
+    font-size: 18px;
   }
 
   .world-v2-total-bal em {
