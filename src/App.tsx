@@ -5,6 +5,7 @@ import { WorldV2Page } from './pages/WorldV2Page';
 import { TownSquarePage } from './pages/TownSquarePage';
 import { GymPage } from './pages/GymPage';
 import { TimeOfDayCog } from './components/chrome/TimeOfDayCog';
+import { useTimeOfDayPreference } from './lib/useTimeOfDayPreference';
 
 const DEV_EDITOR_ROUTES = import.meta.env.DEV;
 
@@ -32,16 +33,22 @@ const WorldV2WalkCycleEditorPage = DEV_EDITOR_ROUTES
  * keeps WorldLayer alive and its CSS room-crossfade smooth. Only /
  * (the plaza) is a full scene swap — by design, it's a different world.
  *
- * TimeOfDayCog mounts once outside <Routes> so the floating settings
- * cog persists across navigation and writes body[data-mode] globally.
+ * Time-of-day mode sync mounts outside route content for legacy/editor
+ * routes. The live world owns its mode directly so Phaser can receive it.
  */
-function RoutedTimeOfDayCog() {
+function TimeOfDayModeSync() {
+  useTimeOfDayPreference();
+  return null;
+}
+
+function RoutedTimeOfDayControl() {
   const location = useLocation();
-  return location.pathname === '/'
-    || (DEV_EDITOR_ROUTES && location.pathname === '/world-v2/manifest-editor')
+  if (location.pathname === '/') return null;
+
+  return (DEV_EDITOR_ROUTES && location.pathname === '/world-v2/manifest-editor')
     || (DEV_EDITOR_ROUTES && location.pathname === '/world-v2/sprite-frame-editor')
     || (DEV_EDITOR_ROUTES && location.pathname === '/world-v2/walk-cycle-editor')
-    ? null
+    ? <TimeOfDayModeSync />
     : <TimeOfDayCog />;
 }
 
@@ -72,7 +79,7 @@ export default function App() {
           <Route path="/town" element={<TownSquarePage />} />
           <Route path="/*" element={<GymPage />} />
         </Routes>
-        <RoutedTimeOfDayCog />
+        <RoutedTimeOfDayControl />
       </BrowserRouter>
     </GaleWeatherProvider>
   );

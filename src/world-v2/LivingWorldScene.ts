@@ -1,6 +1,7 @@
 import NavMeshRuntime from 'navmesh';
 import type { NavMesh as NavMeshInstance } from 'navmesh';
 import Phaser from 'phaser';
+import type { WorldMode } from '@/lib/timeOfDay';
 import {
   AUTHORED_PROP_TEXTURES,
   ACTOR_TEXTURES,
@@ -102,6 +103,11 @@ type ActorKind =
   | 'bacon-helper'
   | 'nova-helper';
 type WalkDirection = typeof WALK_DIRECTIONS[number];
+type GeneratedMapCandidate = 'sunset' | 'night';
+
+interface LivingWorldSceneOptions {
+  timeMode?: WorldMode;
+}
 
 interface LivingActor {
   id: string;
@@ -361,6 +367,8 @@ const GROUND_PREVIEW_FILES = {
 } as const;
 const GROUND_PREVIEW_ZONE = groundPreviewZoneFromQuery(queryParams?.get('groundZone'));
 const GROUND_PREVIEW_VARIANT = DEV_WORLD_TOOLS ? groundPreviewVariantFromQuery(queryParams) : null;
+const GENERATED_MAP_QUERY_CANDIDATE = DEV_WORLD_TOOLS ? generatedMapCandidateFromQuery(queryParams) : null;
+const GENERATED_FULL_MAP_CANDIDATE_BOUNDS = { x: -512, y: 0, width: 2048, height: 1536 } as const;
 const FOREGROUND_WORKSPACE_PREVIEW = DEV_WORLD_TOOLS && (queryParams?.has('foregroundWorkspace') ?? false);
 const GENERATED_GROUND_PREVIEW_ASSET = {
   key: `world-v2-${GROUND_PREVIEW_VARIANT ?? 'generated'}-ground-preview-${GROUND_PREVIEW_ZONE}`,
@@ -430,6 +438,25 @@ function groundPreviewVariantFromQuery(params: URLSearchParams | null) {
   return null;
 }
 
+function generatedMapCandidateFromQuery(params: URLSearchParams | null): GeneratedMapCandidate | null {
+  const value = params?.get('generatedMap');
+  if (value === 'sunset' || value === 'night') return value;
+  return null;
+}
+
+function generatedMapCandidateFromMode(mode: WorldMode | undefined): GeneratedMapCandidate | null {
+  if (mode === 'dusk') return 'sunset';
+  if (mode === 'moonlit') return 'night';
+  return null;
+}
+
+function generatedFullMapCandidateAsset(candidate: GeneratedMapCandidate) {
+  return {
+    key: `world-v2-fullmap-${candidate}-gpt2-v1`,
+    src: `/world-v2/layers/generated-candidates/fullmap-${candidate}-gpt2-v1.png`,
+  };
+}
+
 function manifestRuntimeFromQuery(params: URLSearchParams | null) {
   if (!params) return true;
   if (params.has('manifestRuntime')) return true;
@@ -459,6 +486,8 @@ function actorTuningNumber(queryKey: string, storageKey: string, fallback: numbe
 }
 
 export class LivingWorldScene extends Phaser.Scene {
+  private readonly generatedMapCandidate: GeneratedMapCandidate | null;
+  private readonly generatedFullMapCandidateAsset: ReturnType<typeof generatedFullMapCandidateAsset> | null;
   private actors: LivingActor[] = [];
   private props: Phaser.GameObjects.Image[] = [];
   private zoneNavMeshes = new Map<ZoneId, NavMeshInstance>();
@@ -500,8 +529,12 @@ export class LivingWorldScene extends Phaser.Scene {
   private cameraInteractionMoved = false;
   private cameraInteractionHadMultiplePointers = false;
 
-  constructor() {
+  constructor(options: LivingWorldSceneOptions = {}) {
     super('LivingWorldScene');
+    this.generatedMapCandidate = GENERATED_MAP_QUERY_CANDIDATE ?? generatedMapCandidateFromMode(options.timeMode);
+    this.generatedFullMapCandidateAsset = this.generatedMapCandidate
+      ? generatedFullMapCandidateAsset(this.generatedMapCandidate)
+      : null;
   }
 
   preload() {
@@ -512,6 +545,9 @@ export class LivingWorldScene extends Phaser.Scene {
     this.preloadWorldLayerChunks();
     if (GROUND_PREVIEW_VARIANT) {
       this.load.image(GENERATED_GROUND_PREVIEW_ASSET.key, GENERATED_GROUND_PREVIEW_ASSET.src);
+    }
+    if (this.generatedFullMapCandidateAsset) {
+      this.load.image(this.generatedFullMapCandidateAsset.key, this.generatedFullMapCandidateAsset.src);
     }
     if (!MANIFEST_RUNTIME) {
       for (const texture of AUTHORED_PROP_TEXTURES) {
@@ -1104,14 +1140,19 @@ export class LivingWorldScene extends Phaser.Scene {
     const sprites = workspace?.sprites ?? [];
     if (sprites.length === 0) return;
 
-    const pendingSprites = sprites.filter((sprite) => !this.textures.exists(manifestRuntimeTextureKey(sprite.id)));
+    const pendingSprites = sprites.filter((sprite) => (
+      !this.textures.exists(manifestRuntimeTextureKey(sprite.id, this.generatedMapCandidate))
+    ));
     if (pendingSprites.length === 0) {
       this.addManifestRuntimeOcclusionSprites(sprites);
       return;
     }
 
     for (const sprite of pendingSprites) {
-      this.load.image(manifestRuntimeTextureKey(sprite.id), sprite.sprite);
+      this.load.image(
+        manifestRuntimeTextureKey(sprite.id, this.generatedMapCandidate),
+        manifestRuntimeSpriteSource(sprite, this.generatedMapCandidate),
+      );
     }
     this.load.once('complete', () => this.addManifestRuntimeOcclusionSprites(sprites));
     this.load.start();
@@ -1119,7 +1160,7 @@ export class LivingWorldScene extends Phaser.Scene {
 
   private addManifestRuntimeOcclusionSprites(sprites: ForegroundWorkspaceSprite[]) {
     for (const sprite of sprites) {
-      const key = manifestRuntimeTextureKey(sprite.id);
+      const key = manifestRuntimeTextureKey(sprite.id, this.generatedMapCandidate);
       if (!this.textures.exists(key)) continue;
 
       const image = this.add.image(sprite.x, sprite.y, key)
@@ -1133,6 +1174,21 @@ export class LivingWorldScene extends Phaser.Scene {
   }
 
   private createBaseLayer() {
+    if ((DEBUG_MANIFEST_WORLD || MANIFEST_RUNTIME) && this.generatedFullMapCandidateAsset) {
+      this.createWorldLayerChunks(this.worldData.referenceChunks, DEPTH.ground);
+
+      const image = this.add.image(
+        GENERATED_FULL_MAP_CANDIDATE_BOUNDS.x,
+        GENERATED_FULL_MAP_CANDIDATE_BOUNDS.y,
+        this.generatedFullMapCandidateAsset.key,
+      )
+        .setOrigin(0, 0)
+        .setDepth(DEPTH.ground + 1);
+
+      image.setDisplaySize(GENERATED_FULL_MAP_CANDIDATE_BOUNDS.width, GENERATED_FULL_MAP_CANDIDATE_BOUNDS.height);
+      return;
+    }
+
     if (DEBUG_MANIFEST_WORLD || MANIFEST_RUNTIME) {
       this.createWorldLayerChunks(this.worldData.referenceChunks, DEPTH.ground);
       return;
@@ -2512,8 +2568,14 @@ function foregroundWorkspaceTextureKey(spriteId: string) {
   return `world-v2-foreground-workspace-${GROUND_PREVIEW_ZONE}-${spriteId}`;
 }
 
-function manifestRuntimeTextureKey(spriteId: string) {
-  return `world-v2-manifest-runtime-${spriteId}`;
+function manifestRuntimeTextureKey(spriteId: string, candidate: GeneratedMapCandidate | null = null) {
+  const variant = candidate ?? 'base';
+  return `world-v2-manifest-runtime-${variant}-${spriteId}`;
+}
+
+function manifestRuntimeSpriteSource(sprite: ForegroundWorkspaceSprite, candidate: GeneratedMapCandidate | null) {
+  if (!candidate) return sprite.sprite;
+  return `/world-v2/runtime/manifest-bacon-fullmap/generated-sprites/${candidate}/${sprite.id}.png`;
 }
 
 function manifestObjectsToWalkablePolygons(objects: ManifestObject[]): Partial<Record<ZoneId, WorldPoint[][]>> {

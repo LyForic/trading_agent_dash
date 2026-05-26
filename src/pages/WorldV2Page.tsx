@@ -38,8 +38,10 @@ import { useAgentWindow } from '@/lib/useAgentWindow';
 import { useBnfPortfolio } from '@/lib/useBnfPortfolio';
 import { usePublicLabEpisode } from '@/lib/usePublicLabEpisode';
 import { formatPnl, formatWinRate } from '@/lib/formatting';
+import type { WorldMode } from '@/lib/timeOfDay';
 import type { Agent, AgentId, AgentLearningPost, BnfPortfolioPoint, PerformanceWindow, TradeLogEntry } from '@/lib/types';
 import type { ZoneId } from '@/world-v2/worldMapData';
+import { useTimeOfDayPreference } from '@/lib/useTimeOfDayPreference';
 
 type LivingWorldSceneInstance = InstanceType<typeof import('@/world-v2/LivingWorldScene').LivingWorldScene>;
 type PhaserModule = typeof import('phaser');
@@ -275,14 +277,20 @@ function formatPublicLabAsOf(value: string | null | undefined) {
 }
 
 interface PhaserWorldProps {
+  timeMode: WorldMode;
   selectedAgentId: ZoneId | null;
   focusRequestId: number;
   onAgentAreaSelect: (agentId: ZoneId) => void;
 }
 
-function PhaserWorld({ selectedAgentId, focusRequestId, onAgentAreaSelect }: PhaserWorldProps) {
+function PhaserWorld({ timeMode, selectedAgentId, focusRequestId, onAgentAreaSelect }: PhaserWorldProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const sceneRef = useRef<LivingWorldSceneInstance | null>(null);
+  const selectedAgentRef = useRef<ZoneId | null>(selectedAgentId);
+
+  useEffect(() => {
+    selectedAgentRef.current = selectedAgentId;
+  }, [selectedAgentId]);
 
   useEffect(() => {
     if (!hostRef.current) return;
@@ -297,8 +305,9 @@ function PhaserWorld({ selectedAgentId, focusRequestId, onAgentAreaSelect }: Pha
       ]);
       if (disposed || !hostRef.current) return;
 
-      const scene = new LivingWorldScene();
+      const scene = new LivingWorldScene({ timeMode });
       sceneRef.current = scene;
+      scene.focusAgent(selectedAgentRef.current);
 
       game = new Phaser.Game({
         type: Phaser.WEBGL,
@@ -333,7 +342,7 @@ function PhaserWorld({ selectedAgentId, focusRequestId, onAgentAreaSelect }: Pha
       sceneRef.current = null;
       game?.destroy(true);
     };
-  }, []);
+  }, [timeMode]);
 
   useEffect(() => {
     sceneRef.current?.focusAgent(selectedAgentId);
@@ -570,6 +579,7 @@ function isMobileViewport() {
 }
 
 export function WorldV2Page() {
+  const { effectiveMode } = useTimeOfDayPreference();
   const worldTestParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
   const isolatedTestMode = worldTestParams?.has('apexTest') === true
     || worldTestParams?.has('treeTest') === true
@@ -1091,7 +1101,12 @@ export function WorldV2Page() {
 
   return (
     <main className="world-v2-page">
-      <PhaserWorld selectedAgentId={selectedAgentId} focusRequestId={focusRequestId} onAgentAreaSelect={selectAgent} />
+      <PhaserWorld
+        timeMode={effectiveMode}
+        selectedAgentId={selectedAgentId}
+        focusRequestId={focusRequestId}
+        onAgentAreaSelect={selectAgent}
+      />
 
       {!isolatedTestMode && <div className="world-v2-vignette" />}
 
