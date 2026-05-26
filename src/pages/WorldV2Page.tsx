@@ -111,9 +111,58 @@ const BNF_CHANGE_WINDOW_MS: Record<Exclude<BnfChangeWindow, 'lifetime'>, number>
   '7d': 7 * 24 * 60 * 60 * 1000,
 };
 
+const PUBLIC_LAB_STATE_STORAGE_KEY = 'gym:world-v2:public-lab-state:v1';
+const WORLD_GUIDE_SEEN_STORAGE_KEY = 'gym:world-v2:guide-seen:v1';
+
 interface BnfChange {
   cents: number;
   pct: number;
+}
+
+type PublicLabStoredState = 'open' | 'closed';
+
+function readStorage(key: string) {
+  if (typeof window === 'undefined') return null;
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function writeStorage(key: string, value: string) {
+  if (typeof window === 'undefined') return;
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    // Storage can fail in private or constrained contexts; UI state still updates.
+  }
+}
+
+function labStateFromSearch(search: string): PublicLabStoredState | null {
+  const value = new URLSearchParams(search).get('lab')?.toLowerCase();
+  if (!value) return null;
+  if (['open', '1', 'true'].includes(value)) return 'open';
+  if (['closed', 'close', 'collapsed', '0', 'false'].includes(value)) return 'closed';
+  return null;
+}
+
+function hasIntentionalContentLink(search: string) {
+  const params = new URLSearchParams(search);
+  return params.has('agent') || params.has('trade') || params.has('note') || labStateFromSearch(search) === 'open';
+}
+
+function initialPublicLabMinimized() {
+  if (typeof window === 'undefined') return true;
+  const queryState = labStateFromSearch(window.location.search);
+  if (queryState) return queryState !== 'open';
+  return readStorage(PUBLIC_LAB_STATE_STORAGE_KEY) !== 'open';
+}
+
+function shouldShowFirstRunGuide(isolatedTestMode: boolean) {
+  if (typeof window === 'undefined' || isolatedTestMode) return false;
+  if (hasIntentionalContentLink(window.location.search)) return false;
+  return readStorage(WORLD_GUIDE_SEEN_STORAGE_KEY) !== '1';
 }
 
 interface PhaserWorldProps {
@@ -361,14 +410,14 @@ export function WorldV2Page() {
   const [menuExpanded, setMenuExpanded] = useState(false);
   const [balanceWindow, setBalanceWindow] = useState<BnfChangeWindow>('24h');
   const [balanceMenuOpen, setBalanceMenuOpen] = useState(false);
-  const [labMinimized, setLabMinimized] = useState(false);
+  const [labMinimized, setLabMinimized] = useState(() => initialPublicLabMinimized());
   const [episodeMinimized, setEpisodeMinimized] = useState(true);
   const [selectedTrade, setSelectedTrade] = useState<TradeLogEntry | null>(null);
   const [replayCaptureMode, setReplayCaptureMode] = useState(false);
   const [learnMoreOpen, setLearnMoreOpen] = useState(false);
   const [highlightLatestNote, setHighlightLatestNote] = useState(false);
   const [pendingDeepLinkTrade, setPendingDeepLinkTrade] = useState<{ tradeId: string; surface: string } | null>(null);
-  const [worldIntroOpen, setWorldIntroOpen] = useState(false);
+  const [worldIntroOpen, setWorldIntroOpen] = useState(() => shouldShowFirstRunGuide(isolatedTestMode));
   const deepLinkAppliedRef = useRef(false);
   const dragStartY = useRef<number | null>(null);
   const balanceWrapRef = useRef<HTMLDivElement | null>(null);
@@ -604,6 +653,14 @@ export function WorldV2Page() {
     if (isMobileViewport()) setMenuHidden(false);
   };
 
+  const setPublicLabOpen = (open: boolean, options: { remember: boolean }) => {
+    setLabMinimized(!open);
+    setBalanceMenuOpen(false);
+    if (!options.remember) return;
+    writeStorage(PUBLIC_LAB_STATE_STORAGE_KEY, open ? 'open' : 'closed');
+    updateWorldDeepLink({ lab: open ? 'open' : null });
+  };
+
   const selectAgent = (id: WorldMenuAgentId, surface = 'agent_menu') => {
     trackPublicLabEvent('agent_open', { surface, agent_id: id });
     setSelectedAgentId(id);
@@ -703,8 +760,25 @@ export function WorldV2Page() {
   };
 
   const closeWorldIntro = () => {
+    writeStorage(WORLD_GUIDE_SEEN_STORAGE_KEY, '1');
     setWorldIntroOpen(false);
     updateWorldDeepLink({ agent: null, trade: null, note: null });
+    if (isMobileViewport()) setMenuHidden(false);
+  };
+
+  const openPublicLabFromIntro = () => {
+    writeStorage(WORLD_GUIDE_SEEN_STORAGE_KEY, '1');
+    setWorldIntroOpen(false);
+    setSelectedAgentId(null);
+    setSelectedTrade(null);
+    setReplayCaptureMode(false);
+    setLearnMoreOpen(false);
+    setHighlightLatestNote(false);
+    setPendingDeepLinkTrade(null);
+    updateWorldDeepLink({ agent: null, trade: null, note: null });
+    setPublicLabOpen(true, { remember: true });
+    setFocusRequestId((requestId) => requestId + 1);
+    setMenuExpanded(false);
     if (isMobileViewport()) setMenuHidden(false);
   };
 
@@ -792,20 +866,19 @@ export function WorldV2Page() {
             type="button"
             className="world-v2-help-button"
             onClick={openWorldIntro}
-            aria-label="About the Living World"
+            aria-label="How this works"
           >
             <CircleHelp size={20} aria-hidden />
           </button>
-          {labMinimized && (
-            <button
-              type="button"
-              className="world-v2-lab-toggle-button"
-              onClick={() => setLabMinimized(false)}
-              aria-label="Show public lab tracker"
-            >
-              <FlaskConical size={19} aria-hidden />
-            </button>
-          )}
+          <button
+            type="button"
+            className="world-v2-lab-toggle-button"
+            onClick={() => setPublicLabOpen(true, { remember: true })}
+            aria-label={labMinimized ? 'Show public lab tracker' : 'Public lab tracker open'}
+            aria-pressed={!labMinimized}
+          >
+            <FlaskConical size={19} aria-hidden />
+          </button>
           {episodeMinimized && (
             <button
               type="button"
@@ -834,7 +907,7 @@ export function WorldV2Page() {
               statement={publicLabStatement}
               points={bnf.data.points}
               onOpenMove={(agentId, trade) => openTradeForAgent(agentId, trade, 'public_lab_tracker')}
-              onMinimize={() => setLabMinimized(true)}
+              onMinimize={() => setPublicLabOpen(false, { remember: true })}
             />
             <FollowExperimentCta surface="public_lab_tracker" />
           </div>
@@ -1161,26 +1234,26 @@ export function WorldV2Page() {
           <div className="world-v2-modal-backdrop" aria-hidden />
           <section
             className="world-v2-stats-panel world-v2-stats-panel--world-intro"
-            aria-label="About the Living World"
+            aria-label="How this works"
             style={{ '--agent-accent': 'var(--color-nova)' } as React.CSSProperties}
           >
             <div className="world-v2-stats-head world-v2-intro-head">
               <div className="world-v2-stats-title">
-                <p>Living World</p>
-                <h2>About the World</h2>
-                <span>Trading agents, delayed data, and strategy notes</span>
+                <p>Gym Live</p>
+                <h2>How this works</h2>
+                <span>Follow @brandonnfongg and come back tomorrow.</span>
               </div>
               <button
                 type="button"
                 className="world-v2-icon-button world-v2-close-button"
                 onClick={closeWorldIntro}
-                aria-label="Close world introduction"
+                aria-label="Close guide"
               >
                 <X size={18} aria-hidden />
               </button>
             </div>
 
-            <WorldIntroPanel />
+            <WorldIntroPanel onStart={closeWorldIntro} onOpenLab={openPublicLabFromIntro} />
           </section>
         </>
       )}

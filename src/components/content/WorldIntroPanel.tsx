@@ -1,43 +1,37 @@
-const INTRO_SECTIONS = [
-  {
-    title: 'What This Is',
-    body:
-      'Gym Life Fork is the public proof layer for Brandon’s daily agent experiment: real agents, real trades, delayed proof, and notes on what changed.',
-  },
-  {
-    title: 'The Agents',
-    body:
-      'Apex, Metheus, Bacon, and Nova are the public trading cast. Gale is still in weather-market testing until Brandon promotes that agent publicly.',
-  },
-  {
-    title: 'How Trades Appear',
-    body:
-      'The dashboard reads from delayed public data. Settled trades, P&L, replay charts, and learning posts update from the database without requiring users to refresh the story manually.',
-  },
-  {
-    title: 'How To Explore',
-    body:
-      'Use the agent menu or tap an agent area on the map to open a trading card. From there you can inspect trades, replay a contract, or read the agent’s strategy notes.',
-  },
-];
+import { Compass, FlaskConical } from 'lucide-react';
 
-export function WorldIntroPanel() {
+interface Props {
+  onStart: () => void;
+  onOpenLab: () => void;
+}
+
+export function WorldIntroPanel({ onStart, onOpenLab }: Props) {
   return (
     <div className="world-v2-intro-panel">
       <div className="world-v2-intro-lede">
-        <span>Welcome</span>
+        <span>Public experiment</span>
         <p>
-          Follow @brandonnfongg and come back tomorrow to see what the agents did, what they learned, and what changed.
+          This is the public lab for Brandon's trading agents.
+        </p>
+        <p>
+          Each character is an autonomous agent trading delayed public markets. Click an agent to see performance,
+          field notes, and trade replays.
+        </p>
+        <p>
+          Use the flask for today's scoreboard. Use the TV for the latest video. Come back tomorrow to see what
+          changed.
         </p>
       </div>
 
-      <div className="world-v2-intro-sections">
-        {INTRO_SECTIONS.map((section) => (
-          <section key={section.title} className="world-v2-intro-section">
-            <h3>{section.title}</h3>
-            <p>{section.body}</p>
-          </section>
-        ))}
+      <div className="world-v2-intro-actions">
+        <button type="button" className="world-v2-intro-primary" onClick={onStart}>
+          <Compass size={16} aria-hidden />
+          <span>Start exploring</span>
+        </button>
+        <button type="button" className="world-v2-intro-secondary" onClick={onOpenLab}>
+          <FlaskConical size={16} aria-hidden />
+          <span>Open Public Lab</span>
+        </button>
       </div>
     </div>
   );

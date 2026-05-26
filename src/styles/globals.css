@@ -2254,9 +2254,9 @@ body[data-route="world-v2"] {
 .world-v2-modal-backdrop {
   position: absolute;
   inset: 0;
-  z-index: 9;
-  background: rgba(8, 6, 4, 0.44);
-  backdrop-filter: blur(2px);
+  z-index: 20;
+  background: rgba(8, 6, 4, 0.56);
+  backdrop-filter: blur(5px);
 }
 
 .world-v2-utility-stack {
@@ -2780,7 +2780,8 @@ body[data-route="world-v2"] {
 .world-v2-help-button:focus-visible,
 .world-v2-help-button[aria-pressed="true"],
 .world-v2-lab-toggle-button:hover,
-.world-v2-lab-toggle-button:focus-visible {
+.world-v2-lab-toggle-button:focus-visible,
+.world-v2-lab-toggle-button[aria-pressed="true"] {
   outline: none;
   border-color: rgba(255, 238, 199, 0.52);
   background: rgba(255, 247, 229, 0.16);
@@ -3248,9 +3249,11 @@ body[data-route="world-v2"] {
 }
 
 .world-v2-stats-panel--world-intro {
-  width: min(650px, calc(100vw - 44px));
-  max-height: min(760px, calc(100dvh - 48px));
-  gap: 14px;
+  z-index: 21;
+  width: min(540px, calc(100vw - 44px));
+  max-height: min(680px, calc(100dvh - 48px));
+  gap: 16px;
+  background: rgba(28, 20, 13, 0.96);
 }
 
 .world-v2-stats-head {
@@ -3854,22 +3857,18 @@ button.todays-field-note:focus-visible {
 
 .world-v2-intro-panel {
   display: grid;
-  gap: 13px;
+  gap: 16px;
   min-height: 0;
 }
 
 .world-v2-intro-lede {
+  display: grid;
+  gap: 10px;
   padding: 14px;
-  border: 1px solid rgba(255, 238, 199, 0.14);
-  border-radius: 7px;
-  background:
-    radial-gradient(circle at 88% 8%, color-mix(in srgb, var(--agent-accent) 16%, transparent), transparent 42%),
-    rgba(255, 247, 229, 0.07);
 }
 
 .world-v2-intro-lede span {
   display: block;
-  margin-bottom: 7px;
   color: rgba(255, 239, 201, 0.58);
   font-size: 11px;
   font-weight: 800;
@@ -3878,12 +3877,52 @@ button.todays-field-note:focus-visible {
   letter-spacing: 0.06em;
 }
 
-.world-v2-intro-lede p,
-.world-v2-intro-section p {
+.world-v2-intro-lede p {
   margin: 0;
   color: rgba(255, 239, 201, 0.78);
-  font-size: 14px;
-  line-height: 1.55;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.world-v2-intro-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.world-v2-intro-actions button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  min-width: 0;
+  min-height: 42px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 238, 199, 0.2);
+  border-radius: 7px;
+  color: #fff7e5;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.world-v2-intro-primary {
+  background:
+    linear-gradient(90deg, rgba(129, 216, 255, 0.22), rgba(255, 216, 109, 0.14)),
+    rgba(255, 247, 229, 0.1);
+}
+
+.world-v2-intro-secondary {
+  background: rgba(255, 247, 229, 0.08);
+}
+
+.world-v2-intro-actions button:hover,
+.world-v2-intro-actions button:focus-visible {
+  outline: none;
+  border-color: rgba(255, 238, 199, 0.46);
+  background-color: rgba(255, 247, 229, 0.16);
 }
 
 .world-v2-intro-sections {
@@ -4289,6 +4328,14 @@ button.todays-field-note:focus-visible {
   .world-v2-intro-lede p,
   .world-v2-intro-section p {
     font-size: 13px;
+  }
+
+  .world-v2-intro-lede {
+    padding: 2px 0;
+  }
+
+  .world-v2-intro-actions {
+    grid-template-columns: 1fr;
   }
 
   .agent-strategy-brief {
