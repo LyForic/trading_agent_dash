@@ -112,7 +112,6 @@ const BNF_CHANGE_WINDOW_MS: Record<Exclude<BnfChangeWindow, 'lifetime'>, number>
   '7d': 7 * 24 * 60 * 60 * 1000,
 };
 
-const PUBLIC_LAB_STATE_STORAGE_KEY = 'gym:world-v2:public-lab-state:v1';
 const WORLD_GUIDE_SEEN_STORAGE_KEY = 'gym:world-v2:guide-seen:v1';
 
 interface BnfChange {
@@ -131,7 +130,7 @@ interface PublicLabDateTradeState {
   tradeLogsByAgent: Partial<Record<AgentId, TradeLogEntry[]>>;
 }
 
-type PublicLabStoredState = 'open' | 'closed';
+type PublicLabQueryState = 'open' | 'closed';
 
 const PUBLIC_LAB_TIME_ZONE = 'America/Los_Angeles';
 const PUBLIC_LAB_DATE_FORMATTER = new Intl.DateTimeFormat('en-US', {
@@ -169,7 +168,7 @@ function writeStorage(key: string, value: string) {
   }
 }
 
-function labStateFromSearch(search: string): PublicLabStoredState | null {
+function labStateFromSearch(search: string): PublicLabQueryState | null {
   const value = new URLSearchParams(search).get('lab')?.toLowerCase();
   if (!value) return null;
   if (['open', '1', 'true'].includes(value)) return 'open';
@@ -186,7 +185,7 @@ function initialPublicLabMinimized() {
   if (typeof window === 'undefined') return true;
   const queryState = labStateFromSearch(window.location.search);
   if (queryState) return queryState !== 'open';
-  return readStorage(PUBLIC_LAB_STATE_STORAGE_KEY) !== 'open';
+  return true;
 }
 
 function shouldShowFirstRunGuide(isolatedTestMode: boolean) {
@@ -900,13 +899,11 @@ export function WorldV2Page() {
     if (isMobileViewport()) setMenuHidden(false);
   };
 
-  const setPublicLabOpen = (open: boolean, options: { remember: boolean }) => {
+  const setPublicLabOpen = (open: boolean) => {
     setLabMinimized(!open);
     setLabCalendarOpen(false);
     setBalanceMenuOpen(false);
-    if (!options.remember) return;
-    writeStorage(PUBLIC_LAB_STATE_STORAGE_KEY, open ? 'open' : 'closed');
-    updateWorldDeepLink({ lab: open ? 'open' : null });
+    if (!open) updateWorldDeepLink({ lab: null });
   };
 
   const selectAgent = (id: WorldMenuAgentId, surface = 'agent_menu') => {
@@ -1017,7 +1014,7 @@ export function WorldV2Page() {
     setHighlightLatestNote(false);
     setPendingDeepLinkTrade(null);
     updateWorldDeepLink({ agent: null, trade: null, note: null });
-    setPublicLabOpen(true, { remember: true });
+    setPublicLabOpen(true);
     setFocusRequestId((requestId) => requestId + 1);
     setMenuExpanded(false);
     if (isMobileViewport()) setMenuHidden(false);
@@ -1111,7 +1108,7 @@ export function WorldV2Page() {
           <button
             type="button"
             className="world-v2-lab-toggle-button"
-            onClick={() => setPublicLabOpen(true, { remember: true })}
+            onClick={() => setPublicLabOpen(true)}
             aria-label={labMinimized ? 'Show public lab tracker' : 'Public lab tracker open'}
             aria-pressed={!labMinimized}
           >
@@ -1167,7 +1164,7 @@ export function WorldV2Page() {
                     setBalanceMenuOpen(false);
                   }}
                   onOpenMove={(agentId, trade) => openTradeForAgent(agentId, trade, 'public_lab_tracker')}
-                  onMinimize={() => setPublicLabOpen(false, { remember: true })}
+                  onMinimize={() => setPublicLabOpen(false)}
                 />
                 <FollowExperimentCta surface="public_lab_tracker" />
               </>

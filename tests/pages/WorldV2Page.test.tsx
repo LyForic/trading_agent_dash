@@ -125,16 +125,31 @@ describe('WorldV2Page onboarding and Public Lab state', () => {
     expect(screen.getByRole('button', { name: /Show public lab tracker/i })).toBeInTheDocument();
   });
 
-  it('opens the lab from the flask and remembers that explicit choice', async () => {
+  it('opens the lab from the flask without making refreshes reopen it', async () => {
     const user = userEvent.setup();
     window.localStorage.setItem(GUIDE_STORAGE_KEY, '1');
-    renderWorld();
+    const { unmount } = renderWorld();
 
     await user.click(screen.getByRole('button', { name: /Show public lab tracker/i }));
 
     expect(screen.getByRole('region', { name: /Public lab tracker/i })).toBeInTheDocument();
-    expect(window.localStorage.getItem(LAB_STORAGE_KEY)).toBe('open');
-    expect(window.location.search).toContain('lab=open');
+    expect(window.localStorage.getItem(LAB_STORAGE_KEY)).toBeNull();
+    expect(window.location.search).not.toContain('lab=open');
+
+    unmount();
+    renderWorld();
+
+    expect(screen.queryByRole('region', { name: /Public lab tracker/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Show public lab tracker/i })).toBeInTheDocument();
+  });
+
+  it('ignores older persisted Public Lab open state on fresh loads', () => {
+    window.localStorage.setItem(GUIDE_STORAGE_KEY, '1');
+    window.localStorage.setItem(LAB_STORAGE_KEY, 'open');
+    renderWorld();
+
+    expect(screen.queryByRole('region', { name: /Public lab tracker/i })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Show public lab tracker/i })).toBeInTheDocument();
   });
 
   it('honors lab=open links without auto-showing onboarding', () => {

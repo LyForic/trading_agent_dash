@@ -855,6 +855,9 @@ body[data-room="metheus"] .room-agent--metheus {
   flex: 0 0 auto;
   font-weight: 760;
   line-height: 1;
+  min-width: max-content;
+  text-align: right;
+  white-space: nowrap;
 }
 .trade-log-featured-line {
   overflow: hidden;
