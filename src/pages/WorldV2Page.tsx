@@ -1,15 +1,21 @@
-import { useEffect, useLayoutEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
+import { useEffect, useMemo, useRef, useState, type PointerEvent } from 'react';
 import {
   ArrowLeft,
   BookOpen,
+  Check,
   ChevronDown,
   CircleHelp,
+  Clock3,
   FlaskConical,
   Menu,
+  Moon,
   PanelLeftClose,
   Sparkles,
+  Sun,
+  Sunset,
   Tv,
   X,
+  type LucideIcon,
 } from 'lucide-react';
 import {
   AccountValueChartPanel,
@@ -42,11 +48,11 @@ import { useAgentLearning } from '@/lib/useAgentLearning';
 import { useAgentWindow } from '@/lib/useAgentWindow';
 import { useBnfPortfolio } from '@/lib/useBnfPortfolio';
 import { usePublicLabEpisode } from '@/lib/usePublicLabEpisode';
+import { useTimeOfDayPreference } from '@/lib/useTimeOfDayPreference';
 import { formatPnl, formatWinRate } from '@/lib/formatting';
-import type { WorldMode } from '@/lib/timeOfDay';
+import type { TimeOfDayPreference, WorldMode } from '@/lib/timeOfDay';
 import type { Agent, AgentId, AgentLearningPost, BnfPortfolioPoint, PerformanceWindow, TradeLogEntry } from '@/lib/types';
 import type { ZoneId } from '@/world-v2/worldMapData';
-import { getDevModeOverride, useTimeOfDay } from '@/hooks/useTimeOfDay';
 
 type LivingWorldSceneInstance = InstanceType<typeof import('@/world-v2/LivingWorldScene').LivingWorldScene>;
 type PhaserModule = typeof import('phaser');
@@ -120,6 +126,13 @@ const BNF_CHANGE_WINDOW_MS: Record<Exclude<BnfChangeWindow, 'lifetime'>, number>
 };
 
 const WORLD_GUIDE_SEEN_STORAGE_KEY = 'gym:world-v2:guide-seen:v1';
+
+const TIME_MODE_OPTIONS: Array<{ value: TimeOfDayPreference; label: string; Icon: LucideIcon }> = [
+  { value: 'auto', label: 'Auto', Icon: Clock3 },
+  { value: 'daytime', label: 'Day', Icon: Sun },
+  { value: 'dusk', label: 'Sunset', Icon: Sunset },
+  { value: 'moonlit', label: 'Night', Icon: Moon },
+];
 
 interface BnfChange {
   cents: number;
@@ -596,11 +609,12 @@ function isMobileViewport() {
 }
 
 export function WorldV2Page() {
-  // The live world has no visible mode picker. Ignore stored manual mode so
-  // embedded browsers cannot get stuck on an old dusk/night test preference.
-  const autoMode = useTimeOfDay();
+  const {
+    mode: timeModePreference,
+    effectiveMode,
+    setMode: setTimeModePreference,
+  } = useTimeOfDayPreference();
   const worldTestParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
-  const effectiveMode = getDevModeOverride(worldTestParams?.toString() ? `?${worldTestParams.toString()}` : '') ?? autoMode;
   const isolatedTestMode = worldTestParams?.has('apexTest') === true
     || worldTestParams?.has('treeTest') === true
     || worldTestParams?.has('manifestWorld') === true
@@ -611,6 +625,7 @@ export function WorldV2Page() {
   const [menuExpanded, setMenuExpanded] = useState(false);
   const [balanceWindow, setBalanceWindow] = useState<BnfChangeWindow>('24h');
   const [balanceMenuOpen, setBalanceMenuOpen] = useState(false);
+  const [timeModeMenuOpen, setTimeModeMenuOpen] = useState(false);
   const [labMinimized, setLabMinimized] = useState(() => initialPublicLabMinimized());
   const [labCalendarOpen, setLabCalendarOpen] = useState(false);
   const [selectedLabDateKey, setSelectedLabDateKey] = useState<string | null>(() => initialPublicLabDateKey());
@@ -629,10 +644,6 @@ export function WorldV2Page() {
   const initialLabOpenTrackedRef = useRef(false);
   const dragStartY = useRef<number | null>(null);
   const balanceWrapRef = useRef<HTMLDivElement | null>(null);
-
-  useLayoutEffect(() => {
-    document.body.dataset.mode = effectiveMode;
-  }, [effectiveMode]);
 
   const [apexWindow, setApexWindow] = useAgentWindow('apex');
   const [galeWindow, setGaleWindow] = useAgentWindow('gale');
@@ -954,6 +965,7 @@ export function WorldV2Page() {
     setLabCalendarOpen(false);
     setAccountChartOpen(false);
     setBalanceMenuOpen(false);
+    setTimeModeMenuOpen(false);
     if (open) {
       setSelectedLabDateKey(null);
       updateWorldDeepLink({ lab: 'open', date: null, chart: null, period: null });
@@ -969,6 +981,7 @@ export function WorldV2Page() {
     setLabCalendarOpen(false);
     setAccountChartOpen(true);
     setBalanceMenuOpen(false);
+    setTimeModeMenuOpen(false);
     updateWorldDeepLink({
       lab: 'open',
       chart: 'account',
@@ -1003,6 +1016,7 @@ export function WorldV2Page() {
     updateWorldDeepLink({ agent: id, trade: null, note: null });
     setFocusRequestId((requestId) => requestId + 1);
     setBalanceMenuOpen(false);
+    setTimeModeMenuOpen(false);
     setMenuExpanded(false);
     if (isMobileViewport()) setMenuHidden(true);
   };
@@ -1050,6 +1064,7 @@ export function WorldV2Page() {
     updateWorldDeepLink({ agent: id, trade: row.id, note: null });
     setFocusRequestId((requestId) => requestId + 1);
     setBalanceMenuOpen(false);
+    setTimeModeMenuOpen(false);
     setMenuExpanded(false);
     if (isMobileViewport()) setMenuHidden(true);
   };
@@ -1065,6 +1080,7 @@ export function WorldV2Page() {
     updateWorldDeepLink({ agent: id, trade: tradeId, note: null });
     setFocusRequestId((requestId) => requestId + 1);
     setBalanceMenuOpen(false);
+    setTimeModeMenuOpen(false);
     setMenuExpanded(false);
     if (isMobileViewport()) setMenuHidden(true);
   };
@@ -1079,6 +1095,7 @@ export function WorldV2Page() {
     setWorldIntroOpen(true);
     setFocusRequestId((requestId) => requestId + 1);
     setBalanceMenuOpen(false);
+    setTimeModeMenuOpen(false);
     setMenuExpanded(false);
     if (isMobileViewport()) setMenuHidden(true);
   };
@@ -1175,6 +1192,8 @@ export function WorldV2Page() {
     : error?.kind === 'fetch-failed'
       ? 'Data unavailable'
       : 'Mock data';
+  const activeTimeModeOption = TIME_MODE_OPTIONS.find((option) => option.value === timeModePreference) ?? TIME_MODE_OPTIONS[0];
+  const ActiveTimeModeIcon = activeTimeModeOption.Icon;
 
   return (
     <main className="world-v2-page">
@@ -1197,6 +1216,40 @@ export function WorldV2Page() {
           >
             <CircleHelp size={20} aria-hidden />
           </button>
+          <div className="world-v2-time-mode-wrap">
+            <button
+              type="button"
+              className="world-v2-time-toggle-button"
+              onClick={() => setTimeModeMenuOpen((open) => !open)}
+              aria-label={`Map lighting: ${activeTimeModeOption.label}`}
+              aria-expanded={timeModeMenuOpen}
+              aria-haspopup="menu"
+              aria-pressed={timeModeMenuOpen}
+            >
+              <ActiveTimeModeIcon size={19} aria-hidden />
+            </button>
+            {timeModeMenuOpen && (
+              <div className="world-v2-time-menu" role="menu" aria-label="Map lighting">
+                {TIME_MODE_OPTIONS.map(({ value, label, Icon }) => {
+                  const active = value === timeModePreference;
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      role="menuitemradio"
+                      aria-checked={active}
+                      className={active ? 'world-v2-time-menu__option world-v2-time-menu__option--active' : 'world-v2-time-menu__option'}
+                      onClick={() => setTimeModePreference(value)}
+                    >
+                      <Icon size={15} aria-hidden />
+                      <span>{label}</span>
+                      {active && <Check size={13} aria-hidden />}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
           <button
             type="button"
             className="world-v2-lab-toggle-button"
