@@ -64,6 +64,7 @@ const PORTRAITS: Record<AgentId, string> = {
   gale: '/world-v2/actors/gale-idle.png',
   bacon: '/world-v2/actors/bacon-idle.png',
   nova: '/world-v2/actors/nova-idle.png',
+  meridian: '/world-v2/actors/meridian-idle.png',
 };
 
 const TAGLINES: Record<AgentId, string> = {
@@ -72,6 +73,7 @@ const TAGLINES: Record<AgentId, string> = {
   gale: 'Weather testing agent',
   bacon: 'Small-size BTC tester',
   nova: 'Disciplined ETH trader',
+  meridian: 'Qi-led ETH trader',
 };
 
 interface WorldMenuAgent {
@@ -100,9 +102,16 @@ const WORLD_MENU_AGENTS: Record<WorldMenuAgentId, WorldMenuAgent> = {
     tagline: TAGLINES.nova,
     portrait: PORTRAITS.nova,
   },
+  meridian: {
+    id: 'meridian',
+    liveId: 'meridian',
+    name: 'Meridian',
+    tagline: TAGLINES.meridian,
+    portrait: PORTRAITS.meridian,
+  },
 };
 
-const WORLD_AGENT_ORDER: WorldMenuAgentId[] = ['apex', 'metheus', 'gale', 'bacon', 'nova'];
+const WORLD_AGENT_ORDER: WorldMenuAgentId[] = ['apex', 'metheus', 'gale', 'bacon', 'nova', 'meridian'];
 const PUBLIC_WORLD_AGENT_ORDER = PUBLIC_AGENT_IDS;
 
 const BNF_CHANGE_WINDOWS = ['24h', '7d', 'lifetime'] as const;
@@ -334,12 +343,13 @@ function formatPublicLabAsOf(value: string | null | undefined) {
 
 interface PhaserWorldProps {
   timeMode: WorldMode;
+  sceneReloadKey: number;
   selectedAgentId: ZoneId | null;
   focusRequestId: number;
   onAgentAreaSelect: (agentId: ZoneId) => void;
 }
 
-function PhaserWorld({ timeMode, selectedAgentId, focusRequestId, onAgentAreaSelect }: PhaserWorldProps) {
+function PhaserWorld({ timeMode, sceneReloadKey, selectedAgentId, focusRequestId, onAgentAreaSelect }: PhaserWorldProps) {
   const hostRef = useRef<HTMLDivElement | null>(null);
   const sceneRef = useRef<LivingWorldSceneInstance | null>(null);
   const selectedAgentRef = useRef<ZoneId | null>(selectedAgentId);
@@ -398,7 +408,7 @@ function PhaserWorld({ timeMode, selectedAgentId, focusRequestId, onAgentAreaSel
       sceneRef.current = null;
       game?.destroy(true);
     };
-  }, [timeMode]);
+  }, [timeMode, sceneReloadKey]);
 
   useEffect(() => {
     sceneRef.current?.focusAgent(selectedAgentId);
@@ -626,6 +636,7 @@ export function WorldV2Page() {
   const [balanceWindow, setBalanceWindow] = useState<BnfChangeWindow>('24h');
   const [balanceMenuOpen, setBalanceMenuOpen] = useState(false);
   const [timeModeMenuOpen, setTimeModeMenuOpen] = useState(false);
+  const [timeModeSceneReloadKey, setTimeModeSceneReloadKey] = useState(0);
   const [labMinimized, setLabMinimized] = useState(() => initialPublicLabMinimized());
   const [labCalendarOpen, setLabCalendarOpen] = useState(false);
   const [selectedLabDateKey, setSelectedLabDateKey] = useState<string | null>(() => initialPublicLabDateKey());
@@ -650,10 +661,18 @@ export function WorldV2Page() {
   const [metheusWindow, setMetheusWindow] = useAgentWindow('metheus');
   const [baconWindow, setBaconWindow] = useAgentWindow('bacon');
   const [novaWindow, setNovaWindow] = useAgentWindow('nova');
+  const [meridianWindow, setMeridianWindow] = useAgentWindow('meridian');
 
   const windowsByAgent = useMemo<Record<AgentId, PerformanceWindow>>(
-    () => ({ apex: apexWindow, gale: galeWindow, metheus: metheusWindow, bacon: baconWindow, nova: novaWindow }),
-    [apexWindow, galeWindow, metheusWindow, baconWindow, novaWindow],
+    () => ({
+      apex: apexWindow,
+      gale: galeWindow,
+      metheus: metheusWindow,
+      bacon: baconWindow,
+      nova: novaWindow,
+      meridian: meridianWindow,
+    }),
+    [apexWindow, galeWindow, metheusWindow, baconWindow, novaWindow, meridianWindow],
   );
   const windowSetters = useMemo<Record<AgentId, (w: PerformanceWindow) => void>>(
     () => ({
@@ -662,8 +681,9 @@ export function WorldV2Page() {
       metheus: setMetheusWindow,
       bacon: setBaconWindow,
       nova: setNovaWindow,
+      meridian: setMeridianWindow,
     }),
-    [setApexWindow, setGaleWindow, setMetheusWindow, setBaconWindow, setNovaWindow],
+    [setApexWindow, setGaleWindow, setMetheusWindow, setBaconWindow, setNovaWindow, setMeridianWindow],
   );
 
   const { data, cardViewModels, source, error, loading } = useAgentData(windowsByAgent);
@@ -673,6 +693,7 @@ export function WorldV2Page() {
   const metheusLearning = useAgentLearning('metheus');
   const baconLearning = useAgentLearning('bacon');
   const novaLearning = useAgentLearning('nova');
+  const meridianLearning = useAgentLearning('meridian');
   const agentsById = useMemo(() => agentMap(data.agents), [data.agents]);
   const worldAgentOrder = WORLD_AGENT_ORDER;
   const primaryWorldAgentOrder = worldAgentOrder.slice(0, 3);
@@ -709,8 +730,9 @@ export function WorldV2Page() {
       ...metheusLearning.posts,
       ...baconLearning.posts,
       ...novaLearning.posts,
+      ...meridianLearning.posts,
     ],
-    [apexLearning.posts, metheusLearning.posts, baconLearning.posts, novaLearning.posts],
+    [apexLearning.posts, metheusLearning.posts, baconLearning.posts, novaLearning.posts, meridianLearning.posts],
   );
   const latestBnfPoint = bnf.data.points[bnf.data.points.length - 1];
   const publicLabStartDateKey = publicLabDateKey(new Date(PUBLIC_LAB_START_DATE));
@@ -796,6 +818,22 @@ export function WorldV2Page() {
     windowSetters.metheus(window);
     windowSetters.bacon(window);
     windowSetters.nova(window);
+    windowSetters.meridian(window);
+  };
+
+  const setTimeModeFromMenu = (value: TimeOfDayPreference) => {
+    const next = new URL(window.location.href);
+    const hadUrlOverride = next.searchParams.has('generatedMap') || next.searchParams.has('mode');
+    next.searchParams.delete('generatedMap');
+    next.searchParams.delete('mode');
+    const nextUrl = `${next.pathname}${next.search}${next.hash}`;
+    const currentUrl = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+    if (nextUrl !== currentUrl) window.history.replaceState(window.history.state, '', nextUrl);
+    setTimeModePreference(value);
+    if (hadUrlOverride || value === timeModePreference) {
+      setTimeModeSceneReloadKey((key) => key + 1);
+    }
+    setTimeModeMenuOpen(false);
   };
 
   useEffect(() => {
@@ -968,7 +1006,6 @@ export function WorldV2Page() {
     setTimeModeMenuOpen(false);
     if (open) {
       setSelectedLabDateKey(null);
-      updateWorldDeepLink({ lab: 'open', date: null, chart: null, period: null });
       trackPublicLabEvent('public_lab_open', { surface, date: latestPublicLabDateKey });
     } else {
       updateWorldDeepLink({ lab: null, date: null, chart: null, period: null });
@@ -1199,6 +1236,7 @@ export function WorldV2Page() {
     <main className="world-v2-page">
       <PhaserWorld
         timeMode={effectiveMode}
+        sceneReloadKey={timeModeSceneReloadKey}
         selectedAgentId={selectedAgentId}
         focusRequestId={focusRequestId}
         onAgentAreaSelect={selectAgent}
@@ -1239,7 +1277,7 @@ export function WorldV2Page() {
                       role="menuitemradio"
                       aria-checked={active}
                       className={active ? 'world-v2-time-menu__option world-v2-time-menu__option--active' : 'world-v2-time-menu__option'}
-                      onClick={() => setTimeModePreference(value)}
+                      onClick={() => setTimeModeFromMenu(value)}
                     >
                       <Icon size={15} aria-hidden />
                       <span>{label}</span>

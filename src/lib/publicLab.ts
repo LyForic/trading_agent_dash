@@ -111,6 +111,17 @@ export const AGENT_STRATEGY_PROFILES: Record<AgentId, AgentStrategyProfile> = {
     currentLearning:
       'The current test is finding the point where patience improves entries without missing the move.',
   },
+  meridian: {
+    plainThesis:
+      'Meridian watches ETH 15-minute markets for slower confirmation before entering a move.',
+    marketsTraded: 'ETH 15-minute contracts.',
+    riskPosture:
+      'Calm and selective. Meridian should wait for alignment instead of reacting to every spike.',
+    failureMode:
+      'It fails when patience turns into late entries or when a calm-looking setup is just weak momentum.',
+    currentLearning:
+      'The current test is whether stricter confirmation can keep losses smaller without missing clean ETH moves.',
+  },
 };
 
 export type PublicLabEventName =

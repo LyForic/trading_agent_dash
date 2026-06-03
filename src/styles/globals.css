@@ -24,6 +24,7 @@
   --color-metheus: hsl(35 75% 55%);
   --color-bacon: hsl(18 72% 58%);
   --color-nova: hsl(262 70% 66%);
+  --color-meridian: hsl(154 62% 48%);
 }
 
 /* World-layer tokens + time-of-day lighting.

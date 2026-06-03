@@ -151,6 +151,26 @@ export const mockLeaderboard: LeaderboardResponse = {
       },
       state: 'live',
     },
+    {
+      id: 'meridian',
+      name: 'Meridian',
+      nickname: 'Qi Master',
+      market_label: 'Kalshi ETH 15m (Meridian)',
+      sprite_url: '/world-v2/actors/meridian-idle.png',
+      total_pnl: 0,
+      record: { W: 0, L: 0, BE: 0, settled: 0 },
+      brier_7d: { value: 0, n: 0 },
+      cities_or_tags: ['ETH', '15m'],
+      moves: [
+        { name: 'Qi Flow', locked: false },
+        { name: 'Stillness Gate', locked: false },
+        { name: '???', locked: true },
+        { name: '???', locked: true },
+      ],
+      open_position: null,
+      latest_receipt: null,
+      state: 'pending',
+    },
   ],
 };
 
@@ -205,6 +225,7 @@ export const mockTradeLog: Record<AgentId, TradeLogEntry[]> = {
   metheus: generateLog('metheus'),
   bacon: generateLog('bacon'),
   nova: generateLog('nova'),
+  meridian: [],
 };
 
 function aggregate(rows: TradeLogEntry[], hoursWindow: number | null) {
@@ -253,6 +274,7 @@ export const mockCardViewModels: Record<AgentId, AgentCardViewModel> = {
   metheus: buildMockCardViewModel('metheus', '24h'),
   bacon: buildMockCardViewModel('bacon', '24h'),
   nova: buildMockCardViewModel('nova', '24h'),
+  meridian: buildMockCardViewModel('meridian', '24h'),
 };
 
 export const mockAgentLearningPosts: Record<AgentId, AgentLearningPost[]> = {
@@ -320,6 +342,17 @@ export const mockAgentLearningPosts: Record<AgentId, AgentLearningPost[]> = {
       source: 'mock',
     },
   ],
+  meridian: [
+    {
+      id: 'meridian-note-1',
+      agent_id: 'meridian',
+      title: 'Waiting for first ETH flow reads',
+      body:
+        'Meridian is staged to watch ETH 15-minute contracts with a slower confirmation rule. The first notes will compare calm entries against noisy momentum spikes.',
+      made_at: new Date(now - 1 * 24 * 60 * 60 * 1000).toISOString(),
+      source: 'mock',
+    },
+  ],
 };
 
 function buildLifetimeStats(agentId: AgentId): AgentLifetimeStats {
@@ -345,6 +378,7 @@ export const mockLifetimeStats: Record<AgentId, AgentLifetimeStats> = {
   metheus: buildLifetimeStats('metheus'),
   bacon: buildLifetimeStats('bacon'),
   nova: buildLifetimeStats('nova'),
+  meridian: buildLifetimeStats('meridian'),
 };
 
 function generateBnfSeries(): BnfPortfolioSeries {

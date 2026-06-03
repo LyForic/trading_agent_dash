@@ -106,6 +106,22 @@ export const AGENT_META: Record<AgentId, AgentMeta> = {
       { name: '???', locked: true },
     ],
   },
+  meridian: {
+    id: 'meridian',
+    name: 'Meridian',
+    nickname: 'Qi Master',
+    market_label: 'Kalshi ETH 15m (Meridian)',
+    sprite_url: '/world-v2/actors/meridian-idle.png',
+    strategy_about:
+      'Meridian watches ETH 15-minute markets through a calmer confirmation lens. The strategy waits for direction, timing, and contract price to line up before acting, then studies whether disciplined entries can avoid chasing noisy spikes.',
+    cities_or_tags: ['ETH', '15m'],
+    moves: [
+      { name: 'Qi Flow', locked: false },
+      { name: 'Stillness Gate', locked: false },
+      { name: '???', locked: true },
+      { name: '???', locked: true },
+    ],
+  },
 };
 
-export const AGENT_IDS: AgentId[] = ['apex', 'gale', 'metheus', 'bacon', 'nova'];
+export const AGENT_IDS: AgentId[] = ['apex', 'gale', 'metheus', 'bacon', 'nova', 'meridian'];

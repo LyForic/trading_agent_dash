@@ -35,6 +35,13 @@ const BACON_FULL_MAP_CHUNKS = [
   { src: '/world-v2/layers/bacon-fullmap-core-1-v1.png', x: 512, y: 0, width: 512, height: 1024 },
   { src: '/world-v2/layers/bacon-fullmap-core-2-v1.png', x: 1024, y: 0, width: 512, height: 1024 },
 ];
+const MANIFEST_RUNTIME_FULL_MAP = {
+  src: '/world-v2/layers/generated-candidates/fullmap-day-gpt2-v2.png',
+  x: -1024,
+  y: 0,
+  width: 2560,
+  height: 1536,
+};
 
 const pngSignature = Buffer.from([137, 80, 78, 71, 13, 10, 26, 10]);
 const crcTable = new Uint32Array(256).map((_, index) => {
@@ -151,6 +158,20 @@ function requiresForegroundOcclusion(object) {
 
 function readReferenceImage() {
   if (baconFullMapRuntime) {
+    const fullMapPath = path.join(root, 'public', MANIFEST_RUNTIME_FULL_MAP.src);
+    if (fs.existsSync(fullMapPath)) {
+      const image = readPng(fullMapPath);
+      if (image.width !== MANIFEST_RUNTIME_FULL_MAP.width || image.height !== MANIFEST_RUNTIME_FULL_MAP.height) {
+        throw new Error(`${MANIFEST_RUNTIME_FULL_MAP.src} must be ${MANIFEST_RUNTIME_FULL_MAP.width}x${MANIFEST_RUNTIME_FULL_MAP.height}`);
+      }
+      return {
+        ...image,
+        source: MANIFEST_RUNTIME_FULL_MAP.src,
+        x: MANIFEST_RUNTIME_FULL_MAP.x,
+        y: MANIFEST_RUNTIME_FULL_MAP.y,
+      };
+    }
+
     return composeImageChunks(BACON_FULL_MAP_CHUNKS, '/world-v2/layers/bacon-fullmap-*.png');
   }
 

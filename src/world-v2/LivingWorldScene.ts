@@ -81,6 +81,10 @@ const ACTOR_WALK_SHEETS = [
   'nova-helper-idle',
   'nova-helper-gem',
   'nova-helper-scroll',
+  'meridian-idle',
+  'meridian-helper-idle',
+  'meridian-helper-orb',
+  'meridian-helper-scroll',
 ] as const;
 const ACTOR_WALK_SHEET_SLUGS = new Set<string>(ACTOR_WALK_SHEETS);
 const NavMeshModule = NavMeshRuntime as unknown as NavMeshRuntimeShape;
@@ -97,13 +101,15 @@ type ActorKind =
   | 'gale'
   | 'bacon'
   | 'nova'
+  | 'meridian'
   | 'apex-helper'
   | 'metheus-helper'
   | 'gale-helper'
   | 'bacon-helper'
-  | 'nova-helper';
+  | 'nova-helper'
+  | 'meridian-helper';
 type WalkDirection = typeof WALK_DIRECTIONS[number];
-type GeneratedMapCandidate = 'sunset' | 'night';
+type GeneratedMapCandidate = 'day' | 'sunset' | 'night';
 
 interface LivingWorldSceneOptions {
   timeMode?: WorldMode;
@@ -208,6 +214,8 @@ const TEXTURE_SCALE: Partial<Record<string, number>> = {
   'actor-gale-globe': 1.08,
   'actor-gale-cast': 1.04,
   'actor-apex-meditate': 1.04,
+  'actor-meridian-channel': 1.03,
+  'actor-meridian-palm': 1.03,
 };
 const DEFAULT_ACTOR_TEXTURE_BOTTOM_PADDING = 8;
 const ACTOR_SHADOWS_ENABLED = false;
@@ -332,6 +340,29 @@ const NOVA_HELPER_CONFIG: Array<{ kind: ActorKind; zone: ZoneId; textures: strin
   },
 ];
 
+const MERIDIAN_AGENT_ACTOR_CONFIG: (typeof AGENT_ACTOR_CONFIG)[number] = {
+  id: 'meridian',
+  zone: 'meridian',
+  kind: 'meridian',
+  idleTexture: 'actor-meridian-idle',
+  actionTextures: ['actor-meridian-channel', 'actor-meridian-palm'],
+  x: -756,
+  y: 1298,
+  speed: 40,
+  scale: 0.56,
+};
+
+const MERIDIAN_HELPER_CONFIG: Array<{ kind: ActorKind; zone: ZoneId; textures: string[]; count: number; scale: number; speed: number }> = [
+  {
+    kind: 'meridian-helper',
+    zone: 'meridian',
+    textures: ['actor-meridian-helper-idle'],
+    count: 5,
+    scale: 0.39,
+    speed: 34,
+  },
+];
+
 const DEV_WORLD_TOOLS = import.meta.env.DEV;
 const queryParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
 const DEBUG_WORLD = DEV_WORLD_TOOLS && (queryParams?.has('debugWorld') ?? false);
@@ -346,6 +377,7 @@ const DEV_BACON_FULL_MAP_TEST = DEV_WORLD_TOOLS && (queryParams?.has('baconFullM
 const DEV_NOVA_SOUTH_TEST = DEV_WORLD_TOOLS && (queryParams?.has('novaSouthTest') ?? false);
 const BACON_WORLD_ENABLED = true;
 const NOVA_WORLD_ENABLED = true;
+const MERIDIAN_WORLD_ENABLED = true;
 const ACTIVE_DEV_TEST_CHUNKS: WorldMapChunk[] = [
   ...(DEV_CHUNK_TEST ? [DEV_TEST_EAST_EXPANSION_CHUNK] : []),
   ...(DEV_BACON_CHUNK_TEST && !DEV_BACON_FULL_MAP_TEST ? [DEV_TEST_BACON_WEST_EXPANSION_CHUNK] : []),
@@ -367,8 +399,8 @@ const GROUND_PREVIEW_FILES = {
 } as const;
 const GROUND_PREVIEW_ZONE = groundPreviewZoneFromQuery(queryParams?.get('groundZone'));
 const GROUND_PREVIEW_VARIANT = DEV_WORLD_TOOLS ? groundPreviewVariantFromQuery(queryParams) : null;
-const GENERATED_MAP_QUERY_CANDIDATE = DEV_WORLD_TOOLS ? generatedMapCandidateFromQuery(queryParams) : null;
-const GENERATED_FULL_MAP_CANDIDATE_BOUNDS = { x: -512, y: 0, width: 2048, height: 1536 } as const;
+const GENERATED_FULL_MAP_CANDIDATE_BOUNDS = { x: -1024, y: 0, width: 2560, height: 1536 } as const;
+const GENERATED_SUNSET_ALIGNMENT_OFFSET_X = -70;
 const FOREGROUND_WORKSPACE_PREVIEW = DEV_WORLD_TOOLS && (queryParams?.has('foregroundWorkspace') ?? false);
 const GENERATED_GROUND_PREVIEW_ASSET = {
   key: `world-v2-${GROUND_PREVIEW_VARIANT ?? 'generated'}-ground-preview-${GROUND_PREVIEW_ZONE}`,
@@ -419,6 +451,10 @@ const AGENT_AREA_HOTSPOTS: Record<ZoneId, { label: string; rect: { x: number; y:
     label: 'Open Nova trading card',
     rect: { x: 64, y: 960, width: 1376, height: 576 },
   },
+  meridian: {
+    label: 'Open Meridian trading card',
+    rect: { x: -1024, y: 640, width: 872, height: 896 },
+  },
 };
 
 function groundPreviewZoneFromQuery(zone: string | null | undefined) {
@@ -440,11 +476,17 @@ function groundPreviewVariantFromQuery(params: URLSearchParams | null) {
 
 function generatedMapCandidateFromQuery(params: URLSearchParams | null): GeneratedMapCandidate | null {
   const value = params?.get('generatedMap');
-  if (value === 'sunset' || value === 'night') return value;
+  if (value === 'day' || value === 'sunset' || value === 'night') return value;
   return null;
 }
 
+function generatedMapCandidateFromCurrentLocation(): GeneratedMapCandidate | null {
+  if (!DEV_WORLD_TOOLS || typeof window === 'undefined') return null;
+  return generatedMapCandidateFromQuery(new URLSearchParams(window.location.search));
+}
+
 function generatedMapCandidateFromMode(mode: WorldMode | undefined): GeneratedMapCandidate | null {
+  if (mode === 'daytime') return 'day';
   if (mode === 'dusk') return 'sunset';
   if (mode === 'moonlit') return 'night';
   return null;
@@ -452,8 +494,8 @@ function generatedMapCandidateFromMode(mode: WorldMode | undefined): GeneratedMa
 
 function generatedFullMapCandidateAsset(candidate: GeneratedMapCandidate) {
   return {
-    key: `world-v2-fullmap-${candidate}-gpt2-v1`,
-    src: `/world-v2/layers/generated-candidates/fullmap-${candidate}-gpt2-v1.png`,
+    key: `world-v2-fullmap-${candidate}-gpt2-v2`,
+    src: `/world-v2/layers/generated-candidates/fullmap-${candidate}-gpt2-v2.png`,
   };
 }
 
@@ -531,7 +573,7 @@ export class LivingWorldScene extends Phaser.Scene {
 
   constructor(options: LivingWorldSceneOptions = {}) {
     super('LivingWorldScene');
-    this.generatedMapCandidate = GENERATED_MAP_QUERY_CANDIDATE ?? generatedMapCandidateFromMode(options.timeMode);
+    this.generatedMapCandidate = generatedMapCandidateFromCurrentLocation() ?? generatedMapCandidateFromMode(options.timeMode);
     this.generatedFullMapCandidateAsset = this.generatedMapCandidate
       ? generatedFullMapCandidateAsset(this.generatedMapCandidate)
       : null;
@@ -1177,8 +1219,20 @@ export class LivingWorldScene extends Phaser.Scene {
     if ((DEBUG_MANIFEST_WORLD || MANIFEST_RUNTIME) && this.generatedFullMapCandidateAsset) {
       this.createWorldLayerChunks(this.worldData.referenceChunks, DEPTH.ground);
 
+      if (this.generatedMapCandidate === 'sunset') {
+        const edgeFill = this.add.image(
+          GENERATED_FULL_MAP_CANDIDATE_BOUNDS.x,
+          GENERATED_FULL_MAP_CANDIDATE_BOUNDS.y,
+          this.generatedFullMapCandidateAsset.key,
+        )
+          .setOrigin(0, 0)
+          .setDepth(DEPTH.ground + 0.9);
+        edgeFill.setDisplaySize(GENERATED_FULL_MAP_CANDIDATE_BOUNDS.width, GENERATED_FULL_MAP_CANDIDATE_BOUNDS.height);
+      }
+
       const image = this.add.image(
-        GENERATED_FULL_MAP_CANDIDATE_BOUNDS.x,
+        GENERATED_FULL_MAP_CANDIDATE_BOUNDS.x
+          + (this.generatedMapCandidate === 'sunset' ? GENERATED_SUNSET_ALIGNMENT_OFFSET_X : 0),
         GENERATED_FULL_MAP_CANDIDATE_BOUNDS.y,
         this.generatedFullMapCandidateAsset.key,
       )
@@ -1226,10 +1280,12 @@ export class LivingWorldScene extends Phaser.Scene {
   private createActors() {
     const canSpawnBaconActors = BACON_WORLD_ENABLED && this.manifestRuntimeWalkableZones.has('bacon');
     const canSpawnNovaActors = NOVA_WORLD_ENABLED && this.manifestRuntimeWalkableZones.has('nova');
+    const canSpawnMeridianActors = MERIDIAN_WORLD_ENABLED && this.manifestRuntimeWalkableZones.has('meridian');
     const activeAgentConfigs = [
       ...AGENT_ACTOR_CONFIG,
       ...(canSpawnBaconActors ? [BACON_AGENT_ACTOR_CONFIG] : []),
       ...(canSpawnNovaActors ? [NOVA_AGENT_ACTOR_CONFIG] : []),
+      ...(canSpawnMeridianActors ? [MERIDIAN_AGENT_ACTOR_CONFIG] : []),
     ];
     const agentConfigs = DEBUG_ISOLATED_TEST
       ? AGENT_ACTOR_CONFIG.filter((config) => config.id === 'apex')
@@ -1247,6 +1303,7 @@ export class LivingWorldScene extends Phaser.Scene {
       ...HELPER_CONFIG,
       ...(canSpawnBaconActors ? BACON_HELPER_CONFIG : []),
       ...(canSpawnNovaActors ? NOVA_HELPER_CONFIG : []),
+      ...(canSpawnMeridianActors ? MERIDIAN_HELPER_CONFIG : []),
     ];
     for (const helper of helperConfigs) {
       for (let i = 0; i < helper.count; i += 1) {
@@ -1843,6 +1900,14 @@ export class LivingWorldScene extends Phaser.Scene {
       this.harvestPop(x, y);
       return;
     }
+    if (poi.effect === 'meridian-qi') {
+      this.qiPulse(x, y - 34);
+      return;
+    }
+    if (poi.effect === 'meridian-palm') {
+      this.qiPalmWave(x + 8, y - 48);
+      return;
+    }
     this.helperSpark(x, y - 28);
   }
 
@@ -2050,6 +2115,60 @@ export class LivingWorldScene extends Phaser.Scene {
       ease: 'Sine.easeOut',
       onComplete: () => dot.destroy(),
     });
+  }
+
+  private qiPulse(x: number, y: number) {
+    for (let i = 0; i < 3; i += 1) {
+      this.time.delayedCall(i * 160, () => this.ringPulse(x, y, 0x60f2b6, 54 + i * 18));
+    }
+    for (let i = 0; i < 9; i += 1) {
+      const angle = (Math.PI * 2 * i) / 9;
+      const mote = this.add.circle(
+        x + Math.cos(angle) * 18,
+        y + Math.sin(angle) * 8,
+        Phaser.Math.FloatBetween(2.2, 4.2),
+        Phaser.Math.RND.pick([0x66ffc0, 0xb8ffe0, 0x37d99c]),
+        0.86,
+      ).setBlendMode(Phaser.BlendModes.ADD).setDepth(DEPTH.effectBase + y);
+      this.tweens.add({
+        targets: mote,
+        x: x + Math.cos(angle) * Phaser.Math.Between(42, 68),
+        y: y + Math.sin(angle) * Phaser.Math.Between(18, 34) - Phaser.Math.Between(12, 26),
+        alpha: 0,
+        scale: 1.7,
+        duration: Phaser.Math.Between(620, 980),
+        delay: i * 35,
+        ease: 'Sine.easeOut',
+        onComplete: () => mote.destroy(),
+      });
+    }
+  }
+
+  private qiPalmWave(x: number, y: number) {
+    this.ringPulse(x - 10, y + 16, 0x4fe8ad, 46);
+    for (let i = 0; i < 5; i += 1) {
+      const lineObj = this.add.rectangle(
+        x + i * 7,
+        y + i * 4,
+        34 - i * 3,
+        4,
+        Phaser.Math.RND.pick([0x68ffc4, 0xc7ffe4, 0x39d99f]),
+        0.82,
+      )
+        .setRotation(Phaser.Math.DegToRad(-28 + i * 12))
+        .setBlendMode(Phaser.BlendModes.ADD)
+        .setDepth(DEPTH.effectBase + y);
+      this.tweens.add({
+        targets: lineObj,
+        x: lineObj.x + 42,
+        y: lineObj.y - Phaser.Math.Between(8, 20),
+        alpha: 0,
+        scaleX: 1.4,
+        duration: 420 + i * 50,
+        ease: 'Cubic.easeOut',
+        onComplete: () => lineObj.destroy(),
+      });
+    }
   }
 
   private ovenFlare(x: number, y: number) {
@@ -2569,12 +2688,12 @@ function foregroundWorkspaceTextureKey(spriteId: string) {
 }
 
 function manifestRuntimeTextureKey(spriteId: string, candidate: GeneratedMapCandidate | null = null) {
-  const variant = candidate ?? 'base';
+  const variant = candidate === 'day' || candidate === null ? 'base' : candidate;
   return `world-v2-manifest-runtime-${variant}-${spriteId}`;
 }
 
 function manifestRuntimeSpriteSource(sprite: ForegroundWorkspaceSprite, candidate: GeneratedMapCandidate | null) {
-  if (!candidate) return sprite.sprite;
+  if (!candidate || candidate === 'day') return sprite.sprite;
   return `/world-v2/runtime/manifest-bacon-fullmap/generated-sprites/${candidate}/${sprite.id}.png`;
 }
 
@@ -2636,10 +2755,11 @@ function manifestObjectToPoi(object: ManifestObject): Poi | null {
     label: object.label || object.id,
     actionTexture: behavior.actionTexture,
     effect: behavior.effect,
+    helperOnly: behavior.helperOnly,
   };
 }
 
-function manifestPoiBehavior(zone: ZoneId, object: ManifestObject): Pick<Poi, 'actionTexture' | 'effect'> {
+function manifestPoiBehavior(zone: ZoneId, object: ManifestObject): Pick<Poi, 'actionTexture' | 'effect' | 'helperOnly'> {
   const searchableText = `${object.id} ${object.label ?? ''}`.toLowerCase();
 
   if (zone === 'apex') {
@@ -2667,6 +2787,19 @@ function manifestPoiBehavior(zone: ZoneId, object: ManifestObject): Pick<Poi, 'a
     return { effect: 'helper' };
   }
 
+  if (zone === 'meridian') {
+    if (searchableText.includes('orb')) {
+      return { actionTexture: 'actor-meridian-helper-orb', effect: 'helper', helperOnly: true };
+    }
+    if (searchableText.includes('scroll')) {
+      return { actionTexture: 'actor-meridian-helper-scroll', effect: 'helper', helperOnly: true };
+    }
+    if (searchableText.includes('circle') || searchableText.includes('breath') || searchableText.includes('qi')) {
+      return { actionTexture: 'actor-meridian-channel', effect: 'meridian-qi' };
+    }
+    return { actionTexture: 'actor-meridian-palm', effect: 'meridian-palm' };
+  }
+
   if (searchableText.includes('scope') || searchableText.includes('observatory')) {
     return { actionTexture: 'actor-metheus-telescope', effect: 'metheus-telescope' };
   }
@@ -2674,7 +2807,14 @@ function manifestPoiBehavior(zone: ZoneId, object: ManifestObject): Pick<Poi, 'a
 }
 
 function agentZoneFromString(zone: string): ZoneId | null {
-  if (zone === 'apex' || zone === 'gale' || zone === 'metheus' || zone === 'bacon' || zone === 'nova') return zone;
+  if (
+    zone === 'apex'
+    || zone === 'gale'
+    || zone === 'metheus'
+    || zone === 'bacon'
+    || zone === 'nova'
+    || zone === 'meridian'
+  ) return zone;
   return null;
 }
 

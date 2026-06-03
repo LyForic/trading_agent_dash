@@ -13,6 +13,7 @@ const ACCENT_COLOR: Record<AgentId, string> = {
   metheus: 'var(--color-metheus)',
   bacon: 'var(--color-bacon)',
   nova: 'var(--color-nova)',
+  meridian: 'var(--color-meridian)',
 };
 
 /**

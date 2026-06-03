@@ -102,6 +102,14 @@ const RESIZE_HANDLE_SIZE = 14;
 const MIN_ZOOM = 0.6;
 const MAX_ZOOM = 5;
 const ZOOM_STEP = 0.2;
+const MERIDIAN_FULL_MAP_REFERENCE_CHUNK: ManifestImageChunk = {
+  id: 'meridian-full-map-day',
+  src: '/world-v2/layers/meridian-fullmap-day-v2.png',
+  x: -1024,
+  y: 0,
+  width: 2560,
+  height: 1536,
+};
 
 const ROLE_COLORS: Record<ManifestRole, string> = {
   'ground-baked': '#5de4ff',
@@ -165,6 +173,7 @@ export function WorldV2ManifestEditorPage() {
   const editorParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
   const baconFullMapMode = editorParams?.has('baconFullMapTest') === true;
   const novaSouthMode = editorParams?.has('novaSouthTest') === true;
+  const meridianFullMapMode = editorParams?.has('meridianFullMapTest') === true;
   const [manifest, setManifest] = useState<Manifest | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
@@ -232,7 +241,9 @@ export function WorldV2ManifestEditorPage() {
   const imageHeight = manifest?.source.imageSize.height ?? 1024;
   const imageSize = useMemo(() => ({ width: imageWidth, height: imageHeight }), [imageHeight, imageWidth]);
   const referenceChunks = useMemo(() => {
-    const chunks = baconFullMapMode
+    const chunks = meridianFullMapMode
+      ? [MERIDIAN_FULL_MAP_REFERENCE_CHUNK]
+      : baconFullMapMode
       ? DEV_TEST_BACON_FULL_MAP_REPLACEMENT_CHUNKS
       : manifest?.source.referenceChunks?.length
         ? manifest.source.referenceChunks
@@ -247,7 +258,7 @@ export function WorldV2ManifestEditorPage() {
 
     if (!novaSouthMode || chunks.some((chunk) => chunk.id === DEV_TEST_NOVA_SOUTH_CHUNK.id)) return chunks;
     return [...chunks, DEV_TEST_NOVA_SOUTH_CHUNK];
-  }, [baconFullMapMode, imageSize.height, imageSize.width, manifest, novaSouthMode]);
+  }, [baconFullMapMode, imageSize.height, imageSize.width, manifest, meridianFullMapMode, novaSouthMode]);
   const coordinateBounds = useMemo(
     () => boundsFromChunks(referenceChunks, imageSize),
     [imageSize, referenceChunks],

@@ -1,7 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { act, renderHook } from '@testing-library/react';
-import { MemoryRouter } from 'react-router-dom';
 
 vi.mock('@/hooks/useTimeOfDay', () => ({
   useTimeOfDay: vi.fn(),
@@ -13,20 +12,17 @@ import { useTimeOfDayPreference } from '@/lib/useTimeOfDayPreference';
 
 const STORAGE_KEY = 'gym:settings:time-mode';
 
-/** Wrap the hook in a MemoryRouter so useLocation is available. */
 function makeWrapper(initialSearch = '') {
+  window.history.pushState(null, '', initialSearch ? `/${initialSearch}` : '/');
   return function Wrapper({ children }: { children: React.ReactNode }) {
-    return React.createElement(
-      MemoryRouter,
-      { initialEntries: [{ pathname: '/', search: initialSearch }] },
-      children,
-    );
+    return React.createElement(React.Fragment, null, children);
   };
 }
 
 describe('useTimeOfDayPreference', () => {
   beforeEach(() => {
     window.localStorage.clear();
+    window.history.pushState(null, '', '/');
     document.body.removeAttribute('data-mode');
     vi.mocked(useTimeOfDay).mockReturnValue('daytime');
     vi.mocked(getDevModeOverride).mockReturnValue(null);

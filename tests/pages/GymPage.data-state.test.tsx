@@ -20,6 +20,7 @@ const emptyCardViewModels: Record<AgentId, AgentCardViewModel> = {
   metheus: EMPTY_VM,
   bacon: EMPTY_VM,
   nova: EMPTY_VM,
+  meridian: EMPTY_VM,
 };
 
 const fetchFailed: AgentDataError = {

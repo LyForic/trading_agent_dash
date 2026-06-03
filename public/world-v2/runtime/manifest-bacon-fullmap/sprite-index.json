@@ -4,10 +4,10 @@
     "id": "all",
     "label": "All manifest zones",
     "bbox": {
-      "x": -512,
+      "x": -1024,
       "y": 0,
-      "width": 2048,
-      "height": 1024
+      "width": 2560,
+      "height": 1536
     }
   },
   "zones": [
@@ -70,11 +70,35 @@
       },
       "status": "needs-layer-generation",
       "notes": "West cooking and food area. Use with the baconFullMapTest editor/runtime route so labels stay in world coordinates from x=-512 to x=0."
+    },
+    {
+      "id": "nova",
+      "label": "Nova celestial garden",
+      "bbox": {
+        "x": 64,
+        "y": 880,
+        "width": 1376,
+        "height": 656
+      },
+      "status": "needs-layer-generation",
+      "notes": "South celestial phoenix expansion. Use with the baconFullMapTest + novaSouthTest editor/runtime route so labels are authored in merged-world coordinates."
+    },
+    {
+      "id": "meridian",
+      "label": "Meridian Qi sanctuary",
+      "bbox": {
+        "x": -1024,
+        "y": 520,
+        "width": 920,
+        "height": 1016
+      },
+      "status": "needs-layer-generation",
+      "notes": "Southwest Qi-master expansion. First scaffold for merged-world coordinates; refine occluders/blockers after area approval."
     }
   ],
   "sourceImages": {
-    "reference": "/world-v2/layers/bacon-fullmap-*.png",
-    "cleanGround": "/world-v2/layers/bacon-fullmap-*.png"
+    "reference": "/world-v2/layers/generated-candidates/fullmap-day-gpt2-v2.png",
+    "cleanGround": "/world-v2/layers/generated-candidates/fullmap-day-gpt2-v2.png"
   },
   "outputs": {
     "placementPreviewFull": "/world-v2/runtime/manifest-bacon-fullmap/foreground-placement-preview-full.png",
@@ -2970,6 +2994,38 @@
       "notes": "Created in the manifest editor."
     },
     {
+      "id": "meridian-new-occluder-5",
+      "zone": "meridian",
+      "label": "meridian-new-occluder-5",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/meridian-new-occluder-5.png",
+      "sourceBbox": {
+        "x": -498,
+        "y": 748,
+        "width": 60,
+        "height": 53
+      },
+      "spriteCrop": {
+        "x": -503,
+        "y": 743,
+        "width": 71,
+        "height": 54
+      },
+      "x": -503,
+      "y": 743,
+      "depthY": 801,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 2034,
+      "spriteAlphaCoverage": 0.531,
+      "removalMaskPoints": 14,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
       "id": "bacon-new-occluder-15",
       "zone": "bacon",
       "label": "bacon-new-occluder-15",
@@ -3258,6 +3314,70 @@
       "notes": "Created in the manifest editor."
     },
     {
+      "id": "meridian-new-occluder-7",
+      "zone": "meridian",
+      "label": "meridian-new-occluder-7",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/meridian-new-occluder-7.png",
+      "sourceBbox": {
+        "x": -727,
+        "y": 839,
+        "width": 117,
+        "height": 80
+      },
+      "spriteCrop": {
+        "x": -727,
+        "y": 841,
+        "width": 125,
+        "height": 81
+      },
+      "x": -727,
+      "y": 841,
+      "depthY": 919,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 5663,
+      "spriteAlphaCoverage": 0.559,
+      "removalMaskPoints": 26,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "meridian-new-occluder-4",
+      "zone": "meridian",
+      "label": "meridian-new-occluder-4",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/meridian-new-occluder-4.png",
+      "sourceBbox": {
+        "x": -384,
+        "y": 894,
+        "width": 272,
+        "height": 80
+      },
+      "spriteCrop": {
+        "x": -371,
+        "y": 797,
+        "width": 267,
+        "height": 204
+      },
+      "x": -371,
+      "y": 797,
+      "depthY": 974,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 19907,
+      "spriteAlphaCoverage": 0.365,
+      "removalMaskPoints": 60,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
       "id": "cloud-machine-copy",
       "zone": "gale",
       "label": "gale-new-occluder copy",
@@ -3283,6 +3403,166 @@
       "alphaPixels": 3810,
       "spriteAlphaCoverage": 0.545,
       "removalMaskPoints": 28,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "meridian-new-occluder-3",
+      "zone": "meridian",
+      "label": "meridian-new-occluder-3",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/meridian-new-occluder-3.png",
+      "sourceBbox": {
+        "x": -72,
+        "y": 978,
+        "width": 105,
+        "height": 80
+      },
+      "spriteCrop": {
+        "x": -77,
+        "y": 966,
+        "width": 119,
+        "height": 95
+      },
+      "x": -77,
+      "y": 966,
+      "depthY": 1058,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 5727,
+      "spriteAlphaCoverage": 0.507,
+      "removalMaskPoints": 23,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "meridian-new-occluder-8",
+      "zone": "meridian",
+      "label": "meridian-new-occluder-8",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/meridian-new-occluder-8.png",
+      "sourceBbox": {
+        "x": -619,
+        "y": 915,
+        "width": 235,
+        "height": 147
+      },
+      "spriteCrop": {
+        "x": -638,
+        "y": 814,
+        "width": 266,
+        "height": 249
+      },
+      "x": -638,
+      "y": 814,
+      "depthY": 1062,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 33330,
+      "spriteAlphaCoverage": 0.503,
+      "removalMaskPoints": 68,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "meridian-new-occluder-2",
+      "zone": "meridian",
+      "label": "meridian-new-occluder-2",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/meridian-new-occluder-2.png",
+      "sourceBbox": {
+        "x": 25,
+        "y": 1093,
+        "width": 80,
+        "height": 80
+      },
+      "spriteCrop": {
+        "x": 31,
+        "y": 1063,
+        "width": 73,
+        "height": 125
+      },
+      "x": 31,
+      "y": 1063,
+      "depthY": 1173,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 3710,
+      "spriteAlphaCoverage": 0.407,
+      "removalMaskPoints": 15,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "meridian-new-occluder",
+      "zone": "meridian",
+      "label": "meridian-new-occluder",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/meridian-new-occluder.png",
+      "sourceBbox": {
+        "x": -253,
+        "y": 1188,
+        "width": 80,
+        "height": 80
+      },
+      "spriteCrop": {
+        "x": -246,
+        "y": 1166,
+        "width": 66,
+        "height": 111
+      },
+      "x": -246,
+      "y": 1166,
+      "depthY": 1268,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 3544,
+      "spriteAlphaCoverage": 0.484,
+      "removalMaskPoints": 30,
+      "status": [
+        "inventoried",
+        "needs-layer-generation"
+      ],
+      "notes": "Created in the manifest editor."
+    },
+    {
+      "id": "meridian-new-occluder-6",
+      "zone": "meridian",
+      "label": "meridian-new-occluder-6",
+      "role": "occluder",
+      "category": "decor",
+      "sprite": "/world-v2/runtime/manifest-bacon-fullmap/sprites/meridian-new-occluder-6.png",
+      "sourceBbox": {
+        "x": -360,
+        "y": 1284,
+        "width": 28,
+        "height": 62
+      },
+      "spriteCrop": {
+        "x": -365,
+        "y": 1279,
+        "width": 34,
+        "height": 77
+      },
+      "x": -365,
+      "y": 1279,
+      "depthY": 1346,
+      "maskSource": "manual-removalMask",
+      "alphaPixels": 1142,
+      "spriteAlphaCoverage": 0.436,
+      "removalMaskPoints": 14,
       "status": [
         "inventoried",
         "needs-layer-generation"

@@ -54,10 +54,18 @@ export function GymPage() {
   const [metheusWindow, setMetheusWindow] = useAgentWindow('metheus');
   const [baconWindow, setBaconWindow] = useAgentWindow('bacon');
   const [novaWindow, setNovaWindow] = useAgentWindow('nova');
+  const [meridianWindow, setMeridianWindow] = useAgentWindow('meridian');
 
   const windowsByAgent = useMemo<Record<AgentId, PerformanceWindow>>(
-    () => ({ apex: apexWindow, gale: galeWindow, metheus: metheusWindow, bacon: baconWindow, nova: novaWindow }),
-    [apexWindow, galeWindow, metheusWindow, baconWindow, novaWindow],
+    () => ({
+      apex: apexWindow,
+      gale: galeWindow,
+      metheus: metheusWindow,
+      bacon: baconWindow,
+      nova: novaWindow,
+      meridian: meridianWindow,
+    }),
+    [apexWindow, galeWindow, metheusWindow, baconWindow, novaWindow, meridianWindow],
   );
   const windowSetters = useMemo<Record<AgentId, (w: PerformanceWindow) => void>>(
     () => ({
@@ -66,8 +74,9 @@ export function GymPage() {
       metheus: setMetheusWindow,
       bacon: setBaconWindow,
       nova: setNovaWindow,
+      meridian: setMeridianWindow,
     }),
-    [setApexWindow, setGaleWindow, setMetheusWindow, setBaconWindow, setNovaWindow],
+    [setApexWindow, setGaleWindow, setMetheusWindow, setBaconWindow, setNovaWindow, setMeridianWindow],
   );
 
   const setWindowForAgent = (id: AgentId): ((w: PerformanceWindow) => void) => {

@@ -291,6 +291,7 @@ const EMPTY_CARD_VIEW_MODELS: Record<AgentId, AgentCardViewModel> = {
   metheus: EMPTY_VM,
   bacon: EMPTY_VM,
   nova: EMPTY_VM,
+  meridian: EMPTY_VM,
 };
 
 function makeEmptyLeaderboard(): LeaderboardResponse {

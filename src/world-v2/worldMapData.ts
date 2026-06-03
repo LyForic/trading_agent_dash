@@ -29,6 +29,8 @@ export interface Poi {
     | 'gale-globe'
     | 'bacon-cook'
     | 'bacon-harvest'
+    | 'meridian-qi'
+    | 'meridian-palm'
     | 'helper';
   effectX?: number;
   effectY?: number;
@@ -212,9 +214,31 @@ export const DEV_TEST_NOVA_SOUTH_CHUNK: WorldMapChunk = {
   height: 656,
 };
 
+export const MERIDIAN_WEST_EXTENSION_CHUNK: WorldMapChunk = {
+  id: 'meridian-west-extension',
+  key: 'world-v2-meridian-west-extension',
+  src: '/world-v2/layers/meridian-west-extension-v1.png',
+  x: -1024,
+  y: 0,
+  width: 512,
+  height: 1536,
+};
+
+export const MERIDIAN_LOWER_ALPHA_CHUNK: WorldMapChunk = {
+  id: 'meridian-lower-alpha',
+  key: 'world-v2-meridian-lower-alpha',
+  src: '/world-v2/layers/meridian-lower-alpha-chunk-v1.png',
+  x: -512,
+  y: 760,
+  width: 1040,
+  height: 776,
+};
+
 export const EXPANDED_WORLD_CHUNKS: WorldMapChunk[] = [
   ...DEV_TEST_BACON_FULL_MAP_REPLACEMENT_CHUNKS,
   DEV_TEST_NOVA_SOUTH_CHUNK,
+  MERIDIAN_WEST_EXTENSION_CHUNK,
+  MERIDIAN_LOWER_ALPHA_CHUNK,
 ];
 
 export const TILED_WORLD_MAP = {
@@ -253,6 +277,11 @@ export const ZONES: Record<ZoneId, ZoneBounds> = {
     center: { x: 752, y: 1240 },
     rect: { x: 64, y: 880, width: 1376, height: 656 },
   },
+  meridian: {
+    id: 'meridian',
+    center: { x: -760, y: 1136 },
+    rect: { x: -1024, y: 520, width: 920, height: 1016 },
+  },
 };
 
 export const NAV_MESH_POLYGONS: Record<ZoneId, WorldPoint[][]> = {
@@ -288,6 +317,25 @@ export const NAV_MESH_POLYGONS: Record<ZoneId, WorldPoint[][]> = {
     ],
   ],
   nova: [],
+  meridian: [
+    [
+      { x: -986, y: 186 },
+      { x: -706, y: 128 },
+      { x: -548, y: 232 },
+      { x: -548, y: 618 },
+      { x: -682, y: 790 },
+      { x: -966, y: 748 },
+    ],
+    [
+      { x: -1002, y: 730 },
+      { x: -664, y: 624 },
+      { x: -410, y: 700 },
+      { x: -168, y: 880 },
+      { x: -150, y: 1480 },
+      { x: -954, y: 1490 },
+      { x: -1010, y: 1268 },
+    ],
+  ],
 };
 
 export const POIS: Poi[] = [
@@ -314,6 +362,12 @@ export const POIS: Poi[] = [
   { id: 'bacon-produce-bed', zone: 'bacon', x: -292, y: 170, label: 'Carry produce', actionTexture: 'actor-bacon-helper-basket', effect: 'helper', helperOnly: true },
   { id: 'bacon-stir-pot', zone: 'bacon', x: -194, y: 574, label: 'Stir pot', actionTexture: 'actor-bacon-helper-stir', effect: 'helper', helperOnly: true },
   { id: 'bacon-herb-bed', zone: 'bacon', x: -362, y: 840, label: 'Pick herbs', actionTexture: 'actor-bacon-helper-basket', effect: 'helper', helperOnly: true },
+
+  { id: 'meridian-qi-circle', zone: 'meridian', x: -756, y: 1298, label: 'Center breath', actionTexture: 'actor-meridian-channel', effect: 'meridian-qi' },
+  { id: 'meridian-pavilion', zone: 'meridian', x: -780, y: 1040, label: 'Study Qi flow', actionTexture: 'actor-meridian-palm', effect: 'meridian-palm' },
+  { id: 'meridian-bamboo-path', zone: 'meridian', x: -906, y: 644, label: 'Walk bamboo path', actionTexture: 'actor-meridian-helper-idle', effect: 'helper', helperOnly: true },
+  { id: 'meridian-orb-stand', zone: 'meridian', x: -520, y: 1142, label: 'Tune jade orb', actionTexture: 'actor-meridian-helper-orb', effect: 'helper', helperOnly: true },
+  { id: 'meridian-scroll-stand', zone: 'meridian', x: -328, y: 1392, label: 'Carry scrolls', actionTexture: 'actor-meridian-helper-scroll', effect: 'helper', helperOnly: true },
 ];
 
 export const WORLD_PROPS: WorldProp[] = [];
@@ -478,6 +532,12 @@ export const ACTOR_TEXTURES = [
   'nova-helper-idle',
   'nova-helper-gem',
   'nova-helper-scroll',
+  'meridian-idle',
+  'meridian-channel',
+  'meridian-palm',
+  'meridian-helper-idle',
+  'meridian-helper-orb',
+  'meridian-helper-scroll',
 ];
 
 function rectPoly(x1: number, y1: number, x2: number, y2: number): WorldPoint[] {
