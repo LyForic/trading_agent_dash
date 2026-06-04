@@ -204,8 +204,8 @@ export function GymPage() {
               </h2>
               <p>
                 {error?.kind === 'fetch-failed'
-                  ? 'The public 30-minute-delayed data view did not respond. No private live trade data is exposed in this browser.'
-                  : 'Reading the public 30-minute-delayed agent views.'}
+                  ? 'The public agent data view did not respond. No private live trade data is exposed in this browser.'
+                  : 'Reading the public agent views.'}
               </p>
               {error?.kind === 'fetch-failed' && (
                 <p className="gym-data-state-muted">

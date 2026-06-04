@@ -54,7 +54,7 @@ export interface TradeLogEntry {
 }
 
 export interface TradeReplayTick {
-  captured_at: string;            // ISO timestamp, delayed by the public view
+  captured_at: string;            // ISO timestamp, public once the trade is settled
   yes_price_cents: number;
   no_price_cents: number;
   underlying_label: string | null;
@@ -115,7 +115,7 @@ export interface Snapshot {
 }
 
 export interface BnfPortfolioPoint {
-  captured_at: string;            // ISO timestamp (already 30-min delayed by the view)
+  captured_at: string;            // ISO timestamp from the public account snapshot view
   combined_cleared_cents: number;
   combined_baseline_cents: number;
   brandon_source: 'kalshi' | 'reconstructed';

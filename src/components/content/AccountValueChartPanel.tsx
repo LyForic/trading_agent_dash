@@ -59,9 +59,9 @@ function formatSignedPercent(value: number) {
 }
 
 function formatAsOf(value: string | null | undefined) {
-  if (!value) return 'Delayed data pending';
+  if (!value) return 'Public data pending';
   const date = new Date(value);
-  if (!Number.isFinite(date.getTime())) return 'Delayed data pending';
+  if (!Number.isFinite(date.getTime())) return 'Public data pending';
   const label = new Intl.DateTimeFormat('en-US', {
     timeZone: 'America/Los_Angeles',
     month: 'short',
@@ -69,7 +69,7 @@ function formatAsOf(value: string | null | undefined) {
     hour: 'numeric',
     minute: '2-digit',
   }).format(date);
-  return `As of ${label} PT - delayed data`;
+  return `As of ${label} PT - public data`;
 }
 
 function filteredPoints(points: BnfPortfolioPoint[], period: AccountChartPeriod) {

@@ -31,6 +31,6 @@ describe('BattleArena', () => {
     render(<BattleArena agent={idleAgent} titleId="battle-title" now={now} />);
     expect(screen.getByRole('heading', { name: /No active battle/ })).toHaveAttribute('id', 'battle-title');
     expect(screen.getByText(/Gale is idle/i)).toBeInTheDocument();
-    expect(screen.getByText(/trade log after the 30-minute delay/i)).toBeInTheDocument();
+    expect(screen.getByText(/public ledger updates/i)).toBeInTheDocument();
   });
 });

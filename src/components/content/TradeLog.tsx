@@ -152,7 +152,7 @@ export function TradeLog({
         )}
       </div>
       <p className="trade-log-delay-note">
-        Settlements shown after 30-minute delay.
+        Settled outcomes update when the public ledger updates.
       </p>
     </div>
   );

@@ -158,7 +158,7 @@ describe('WorldV2Page onboarding and Public Lab state', () => {
     expect(screen.queryByRole('region', { name: 'How this works' })).not.toBeInTheDocument();
     expect(screen.getByRole('region', { name: /Public lab tracker/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /public agent account/i })).toBeInTheDocument();
-    expect(screen.getByText(/delayed data/i)).toBeInTheDocument();
+    expect(screen.getByText(/public data/i)).toBeInTheDocument();
     expect(screen.getByText(/Today's lesson/i)).toBeInTheDocument();
     expect(screen.getByText(/Tomorrow watch/i)).toBeInTheDocument();
   });

@@ -16,7 +16,7 @@ interface Props {
 }
 
 const DELAY_COPY =
-  "Entries and settlements shown after 30-minute delay. Public Kalshi mid-price can update live when connected; this build's battle bar uses an entry-anchored preview.";
+  "Open entry details appear after the 30-minute delay. Settled outcomes update when the public ledger updates; this build's battle bar uses an entry-anchored preview.";
 
 /**
  * Status chip that doubles as the invite to the Battle Arena overlay.

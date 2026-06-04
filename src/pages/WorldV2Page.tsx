@@ -321,15 +321,15 @@ function formatPublicLabDateLabel(dateKey: string) {
 }
 
 function formatPublicLabAsOf(value: string | null | undefined) {
-  if (!value) return 'Delayed public data pending';
+  if (!value) return 'Public data pending';
   const date = new Date(value);
-  if (!Number.isFinite(date.getTime())) return 'Delayed public data pending';
+  if (!Number.isFinite(date.getTime())) return 'Public data pending';
   const time = new Intl.DateTimeFormat('en-US', {
     timeZone: PUBLIC_LAB_TIME_ZONE,
     hour: 'numeric',
     minute: '2-digit',
   }).format(date);
-  return `As of ${time} PT · delayed data`;
+  return `As of ${time} PT · public data`;
 }
 
 interface PhaserWorldProps {
@@ -1169,7 +1169,7 @@ export function WorldV2Page() {
   };
 
   const dataSourceLabel = source === 'live'
-    ? 'Live delayed data'
+    ? 'Settled outcomes live'
     : error?.kind === 'fetch-failed'
       ? 'Data unavailable'
       : 'Mock data';

@@ -76,7 +76,7 @@ describe('GymPage launch data states', () => {
     renderGym('/gym');
 
     expect(screen.getByRole('alert')).toHaveTextContent('Live data unavailable');
-    expect(screen.getByText(/public 30-minute-delayed data view did not respond/i)).toBeInTheDocument();
+    expect(screen.getByText(/public agent data view did not respond/i)).toBeInTheDocument();
     expect(screen.getByText(/No private live trade data is exposed/i)).toBeInTheDocument();
   });
 

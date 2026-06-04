@@ -12,17 +12,17 @@ live dashboard.
   All three bots keep their canonical trade history in `pm_bets`; the
   gym just reads the mirror.
   **Anon `SELECT` is REVOKED on this table** (see security boundary below).
-- **`agent_trades_public`** — 30-min-delayed view over `agent_trades`.
-  Only rows where `entered_at` and (if settled) `settled_at` are both
-  older than 30 minutes are visible. This is the primary read path for
-  the frontend and the `leaderboard` Edge Function. Anon `SELECT`
-  GRANTED.
+- **`agent_trades_public`** — public projection over `agent_trades`.
+  Settled outcomes are visible immediately. Non-final/open rows remain hidden
+  until 30 minutes after entry, so public clients cannot see live entries as
+  they are opened. This is the primary read path for the frontend and the
+  `leaderboard` Edge Function. Anon `SELECT` GRANTED.
 - **`agent_lifetime_stats`** — per-agent aggregate view built on top of
   `agent_trades_public`. Emits one row per agent with `settled`, `wins`,
   `losses`, `breakeven`, `total_pnl`, and `open_count`. Used by the
-  frontend's Lifetime mode. The 30-min delay floor is inherited from the
-  underlying view. Anon `SELECT` GRANTED. No row is emitted for an agent
-  with zero qualifying rows — clients must handle the missing-row case.
+  frontend's Lifetime mode. Settled outcomes update as soon as they enter the
+  public projection. Anon `SELECT` GRANTED. No row is emitted for an agent with
+  zero qualifying rows — clients must handle the missing-row case.
 - **`agent_trade_replay_ticks`** — privileged bot-written probability
   snapshots for replaying an individual trade chart. Bots insert one row per
   sampled timestamp with `trade_id`, `captured_at`, `yes_price_cents`,
@@ -30,10 +30,9 @@ live dashboard.
   (`underlying_label`, `underlying_value`, `underlying_unit`). Anon access is
   revoked on the base table. Nova's 15-minute ETH contracts use this same
   table with `underlying_label = 'ETH'` and `underlying_unit = 'USD'`.
-- **`agent_trade_replay_ticks_public`** — 30-min-delayed view over replay
-  ticks, joined through `agent_trades_public` so a tick is only visible when
-  both the trade and the tick satisfy the public delay boundary. Anon `SELECT`
-  GRANTED.
+- **`agent_trade_replay_ticks_public`** — public replay projection over replay
+  ticks, joined through `agent_trades_public` so ticks are only visible for
+  settled trades. Anon `SELECT` GRANTED.
 - **`agent_learning_posts`** — privileged bot-written public learning notes
   for the Living World "Learn More" cards. Bots insert rows with `agent_id`,
   `title`, `body`, optional `source`, and `made_at`; unpublished drafts can be
@@ -108,20 +107,20 @@ curl -s "${VITE_SUPABASE_URL}/rest/v1/agent_trades?select=agent_id" \
 # Expected: permission denied error (anon SELECT revoked).
 ```
 
-## Security boundary — delay enforcement
+## Security boundary — public outcome enforcement
 
-The 30-minute delay is a **brand-integrity constraint** (see `2026-04-21-design.md` §7).
-It is enforced at the database layer so no client-side bypass is possible:
+The public boundary is enforced at the database layer so no client-side bypass
+is possible:
 
-1. **`agent_trades_public`** filters out rows where `entered_at` or
-   `settled_at` is within the last 30 minutes. This is the only anon-readable
-   path to trade-level data.
-2. **`agent_lifetime_stats`** is built on `agent_trades_public`, so the delay
-   floor applies to aggregates too.
+1. **`agent_trades_public`** publishes settled outcomes immediately, because
+   finalized trades cannot be copied. Open/non-final rows remain hidden until
+   30 minutes after entry.
+2. **`agent_lifetime_stats`** is built on `agent_trades_public`, so aggregates
+   can update immediately for settled outcomes without exposing live entries.
 3. **Anon/authenticated/public access is REVOKED on base tables and legacy
    views** (migration `20260512000000_harden_public_read_boundary.sql`). Even
-   with the anon key in the browser bundle, a client cannot read undelayed
-   trade rows, `pm_bets`, `bots`, or `v_leaderboard`.
+   with the anon key in the browser bundle, a client cannot read live/open
+   base trade rows, `pm_bets`, `bots`, or `v_leaderboard`.
 4. The **`leaderboard` Edge Function** reads from `agent_trades_public`, not
    the base table.
 
@@ -135,7 +134,7 @@ credentials used by the trading daemons.
 |------|---------|
 | `20260423000000_lock_down_writes.sql` | Revoke anon INSERT/UPDATE/DELETE on `pm_bets`, `agent_trades`, `bots` |
 | `20260423010000_mirror_pm_bets_to_agent_trades.sql` | Trigger: mirror Apex/Gale settles from `pm_bets` → `agent_trades` |
-| `20260426000000_track_b_views.sql` | Create `agent_trades_public` (30-min-delayed view) and `agent_lifetime_stats` (per-agent rollup); grant anon SELECT on both |
+| `20260426000000_track_b_views.sql` | Create original delayed `agent_trades_public` and `agent_lifetime_stats` views; grant anon SELECT on both |
 | `20260426000001_revoke_base_anon_select.sql` | Revoke anon SELECT on base `agent_trades`; views are now the only anon-readable paths |
 | `20260512000000_harden_public_read_boundary.sql` | Revoke anon/authenticated/public access on base sensitive tables and legacy leaderboard; keep anon SELECT only on delayed/sanitized public views |
 | `20260512001000_tighten_public_view_grants.sql` | Revoke inherited/previous non-SELECT privileges on delayed public views; re-grant anon SELECT only |
@@ -143,6 +142,7 @@ credentials used by the trading daemons.
 | `20260522001000_generalize_trade_replay_ticks.sql` | Add generic YES/NO probability + underlying fields for all markets |
 | `20260522002000_agent_learning_posts.sql` | Create privileged agent learning posts and public published view |
 | `20260524001000_public_lab_episodes.sql` | Create privileged public lab episode feed and published read-only view |
+| `20260603002000_publish_settled_outcomes_without_delay.sql` | Publish settled outcomes/account snapshots immediately while keeping open entries delayed |
 
 ## Frontend read paths (current)
 

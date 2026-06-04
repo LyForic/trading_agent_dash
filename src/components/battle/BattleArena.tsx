@@ -50,7 +50,7 @@ export function BattleArena({ agent, titleId, now = new Date() }: Props) {
         <p className="battle-kicker">Battle Arena</p>
         <h2 id={titleId} className="battle-title">No active battle</h2>
         <p className="battle-copy">
-          {agent.name} is idle. Settled trades appear in the trade log after the 30-minute delay.
+          {agent.name} is idle. Settled trades appear when the public ledger updates.
         </p>
       </section>
     );
@@ -114,8 +114,8 @@ export function BattleArena({ agent, titleId, now = new Date() }: Props) {
       </dl>
 
       <p className="battle-copy">
-        Entry details are shown after the 30-minute delay floor. Public market prices can update live
-        once a Kalshi quote feed is connected; this build shows an entry-anchored preview, not a private live signal.
+        Open entry details are shown after the 30-minute delay floor. Settled outcomes update when the public
+        ledger updates; this build shows an entry-anchored preview, not a private live signal.
       </p>
     </section>
   );
