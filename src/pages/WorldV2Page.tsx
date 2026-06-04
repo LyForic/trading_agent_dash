@@ -48,10 +48,11 @@ import { useAgentLearning } from '@/lib/useAgentLearning';
 import { useAgentWindow } from '@/lib/useAgentWindow';
 import { useBnfPortfolio } from '@/lib/useBnfPortfolio';
 import { usePublicLabEpisode } from '@/lib/usePublicLabEpisode';
+import { useSettledAgentPnl } from '@/lib/useSettledAgentPnl';
 import { useTimeOfDayPreference } from '@/lib/useTimeOfDayPreference';
 import { formatPnl, formatWinRate } from '@/lib/formatting';
 import type { TimeOfDayPreference, WorldMode } from '@/lib/timeOfDay';
-import type { Agent, AgentId, AgentLearningPost, BnfPortfolioPoint, PerformanceWindow, TradeLogEntry } from '@/lib/types';
+import type { Agent, AgentId, AgentLearningPost, PerformanceWindow, TradeLogEntry } from '@/lib/types';
 import type { ZoneId } from '@/world-v2/worldMapData';
 
 type LivingWorldSceneInstance = InstanceType<typeof import('@/world-v2/LivingWorldScene').LivingWorldScene>;
@@ -129,11 +130,6 @@ const BNF_CHANGE_WINDOW_MENU_LABELS: Record<BnfChangeWindow, string> = {
   lifetime: 'Lifetime',
 };
 
-const BNF_CHANGE_WINDOW_MS: Record<Exclude<BnfChangeWindow, 'lifetime'>, number> = {
-  '24h': 24 * 60 * 60 * 1000,
-  '7d': 7 * 24 * 60 * 60 * 1000,
-};
-
 const WORLD_GUIDE_SEEN_STORAGE_KEY = 'gym:world-v2:guide-seen:v1';
 
 const TIME_MODE_OPTIONS: Array<{ value: TimeOfDayPreference; label: string; Icon: LucideIcon }> = [
@@ -142,11 +138,6 @@ const TIME_MODE_OPTIONS: Array<{ value: TimeOfDayPreference; label: string; Icon
   { value: 'dusk', label: 'Sunset', Icon: Sunset },
   { value: 'moonlit', label: 'Night', Icon: Moon },
 ];
-
-interface BnfChange {
-  cents: number;
-  pct: number;
-}
 
 interface PublicLabNarrative {
   lesson: string;
@@ -463,11 +454,6 @@ function formatCurrencyChange(cents: number | null) {
   })}`;
 }
 
-function formatPercent(value: number | null) {
-  if (value === null || !Number.isFinite(value)) return '—';
-  return `${value >= 0 ? '+' : ''}${value.toFixed(2)}%`;
-}
-
 function changeClassName(value: number | null) {
   if (value === null || !Number.isFinite(value)) return 'world-v2-balance-change world-v2-balance-change--flat';
   if (value > 0) return 'world-v2-balance-change world-v2-gain';
@@ -475,46 +461,9 @@ function changeClassName(value: number | null) {
   return 'world-v2-balance-change world-v2-balance-change--flat';
 }
 
-function closestWindowStart(points: BnfPortfolioPoint[], latest: BnfPortfolioPoint, window: Exclude<BnfChangeWindow, 'lifetime'>) {
-  const latestTime = Date.parse(latest.captured_at);
-  if (!Number.isFinite(latestTime)) return null;
-  const cutoff = latestTime - BNF_CHANGE_WINDOW_MS[window];
-  let start: BnfPortfolioPoint | null = null;
-
-  for (const point of points) {
-    const pointTime = Date.parse(point.captured_at);
-    if (!Number.isFinite(pointTime)) continue;
-    if (pointTime <= cutoff) {
-      start = point;
-    } else {
-      break;
-    }
-  }
-
-  return start && start !== latest ? start : null;
-}
-
-function calculateBnfChange(points: BnfPortfolioPoint[], window: BnfChangeWindow): BnfChange | null {
-  const latest = points[points.length - 1];
-  if (!latest) return null;
-
-  if (window === 'lifetime') {
-    return Number.isFinite(latest.pct_vs_baseline)
-      ? {
-          cents: latest.combined_cleared_cents - latest.combined_baseline_cents,
-          pct: latest.pct_vs_baseline,
-        }
-      : null;
-  }
-
-  const start = closestWindowStart(points, latest, window);
-  if (!start || start.combined_cleared_cents === 0) return null;
-  const cents = latest.combined_cleared_cents - start.combined_cleared_cents;
-
-  return {
-    cents,
-    pct: (cents / start.combined_cleared_cents) * 100,
-  };
+function formatSettledCount(value: number | null | undefined) {
+  if (value === null || value === undefined || !Number.isFinite(value)) return 'settled P&L';
+  return `${value.toLocaleString('en-US')} settled`;
 }
 
 function cleanStatementFragment(value: string) {
@@ -688,6 +637,7 @@ export function WorldV2Page() {
 
   const { data, cardViewModels, source, error, loading } = useAgentData(windowsByAgent);
   const bnf = useBnfPortfolio();
+  const settledAgentPnl = useSettledAgentPnl();
   const publicLabEpisode = usePublicLabEpisode();
   const apexLearning = useAgentLearning('apex');
   const metheusLearning = useAgentLearning('metheus');
@@ -787,14 +737,8 @@ export function WorldV2Page() {
   const publicLabLifePnlCents = publicLabBnfPoint
     ? publicLabBnfPoint.combined_cleared_cents - PUBLIC_LAB_STARTING_BANKROLL_CENTS
     : null;
-  const bnfChanges = useMemo(
-    () => BNF_CHANGE_WINDOWS.reduce<Record<BnfChangeWindow, BnfChange | null>>((acc, window) => {
-      acc[window] = calculateBnfChange(bnf.data.points, window);
-      return acc;
-    }, { '24h': null, '7d': null, lifetime: null }),
-    [bnf.data.points],
-  );
-  const selectedBnfChange = bnfChanges[balanceWindow];
+  const settledPnlWindows = settledAgentPnl.windows;
+  const selectedSettledPnl = settledPnlWindows[balanceWindow];
   const totalBalanceCopy = latestBnfPoint
     ? formatTotalBalance(latestBnfPoint.combined_cleared_cents)
     : bnf.loading
@@ -1432,23 +1376,23 @@ export function WorldV2Page() {
             <button
               type="button"
               className="world-v2-total-bal"
-              aria-label="Total balance"
+              aria-label="Public account value and settled agent P&L"
               aria-live="polite"
               aria-expanded={balanceMenuOpen}
               aria-controls="world-v2-balance-menu"
               onClick={() => setBalanceMenuOpen((open) => !open)}
             >
               <strong>{totalBalanceCopy}</strong>
-              <em className={changeClassName(selectedBnfChange?.pct ?? null)}>
+              <em className={changeClassName(selectedSettledPnl?.cents ?? null)}>
                 <span>{BNF_CHANGE_WINDOW_LABELS[balanceWindow]}</span>
-                <span>{formatCurrencyChange(selectedBnfChange?.cents ?? null)}</span>
-                <span>{formatPercent(selectedBnfChange?.pct ?? null)}</span>
+                <span>{formatCurrencyChange(selectedSettledPnl?.cents ?? null)}</span>
+                <span>{formatSettledCount(selectedSettledPnl?.settled)}</span>
               </em>
             </button>
             {balanceMenuOpen && (
-              <div id="world-v2-balance-menu" className="world-v2-balance-menu" role="menu" aria-label="Balance change window">
+              <div id="world-v2-balance-menu" className="world-v2-balance-menu" role="menu" aria-label="Settled agent P&L window">
                 {BNF_CHANGE_WINDOWS.map((changeWindow) => {
-                  const change = bnfChanges[changeWindow];
+                  const change = settledPnlWindows[changeWindow];
                   const active = balanceWindow === changeWindow;
                   return (
                     <button
@@ -1463,9 +1407,9 @@ export function WorldV2Page() {
                       }}
                     >
                       <span>{BNF_CHANGE_WINDOW_MENU_LABELS[changeWindow]}</span>
-                      <strong className={changeClassName(change?.pct ?? null)}>
+                      <strong className={changeClassName(change?.cents ?? null)}>
                         <span>{formatCurrencyChange(change?.cents ?? null)}</span>
-                        <span>{formatPercent(change?.pct ?? null)}</span>
+                        <span>{formatSettledCount(change?.settled)}</span>
                       </strong>
                     </button>
                   );
