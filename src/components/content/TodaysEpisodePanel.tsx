@@ -89,6 +89,11 @@ function thumbnailCandidates(episode: PublicLabEpisode | null) {
   return urls.filter((url, index, all): url is string => Boolean(url) && all.indexOf(url) === index);
 }
 
+function youtubeEmbedUrl(videoId: string | null) {
+  if (!videoId) return null;
+  return `https://www.youtube-nocookie.com/embed/${videoId}?rel=0&playsinline=1&modestbranding=1`;
+}
+
 export function TodaysEpisodePanel({
   agentName,
   agentId,
@@ -101,6 +106,8 @@ export function TodaysEpisodePanel({
   onOpenTradeId,
 }: Props) {
   const episodePlatform = episode ? SOCIAL_LINKS.find((link) => link.id === episode.platform) : null;
+  const videoId = youtubeVideoIdFromUrl(episode?.episodeUrl);
+  const embedUrl = youtubeEmbedUrl(videoId);
   const thumbnails = useMemo(() => thumbnailCandidates(episode), [episode]);
   const thumbnailKey = `${episode?.id ?? 'none'}:${episode?.episodeUrl ?? ''}:${episode?.thumbnailUrl ?? ''}`;
   const [thumbnailAttempt, setThumbnailAttempt] = useState({ key: '', index: 0 });
@@ -131,8 +138,16 @@ export function TodaysEpisodePanel({
           <ChevronDown size={15} aria-hidden />
         </button>
       )}
-      <div className="todays-episode-panel__thumb" aria-hidden>
-        {thumbnailUrl ? (
+      <div className="todays-episode-panel__thumb" aria-hidden={!embedUrl}>
+        {embedUrl ? (
+          <iframe
+            src={embedUrl}
+            title={title}
+            loading="lazy"
+            allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+          />
+        ) : thumbnailUrl ? (
           <img
             key={thumbnailUrl}
             src={thumbnailUrl}
@@ -154,7 +169,7 @@ export function TodaysEpisodePanel({
             <span>{title}</span>
           </div>
         )}
-        {thumbnailUrl && (
+        {thumbnailUrl && !embedUrl && (
           <span>
             <Play size={14} />
           </span>
@@ -184,7 +199,7 @@ export function TodaysEpisodePanel({
             }}
           >
             <ReceiptText size={14} aria-hidden />
-            <span>See proof</span>
+            <span>Check live proof</span>
           </button>
         )}
         {displayAgentId && (

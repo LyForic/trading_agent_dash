@@ -103,7 +103,7 @@ describe('WorldV2Page onboarding and Public Lab state', () => {
   it('shows the first-run guide without opening Public Lab', () => {
     renderWorld();
 
-    expect(screen.getByRole('region', { name: 'How this works' })).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'How this works' })).toBeInTheDocument();
     expect(screen.getByText(/How Gym Live works/i)).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /Agents/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /Proof/i })).toBeInTheDocument();
@@ -118,7 +118,7 @@ describe('WorldV2Page onboarding and Public Lab state', () => {
     await user.click(screen.getByRole('button', { name: /Start exploring/i }));
 
     await waitFor(() => {
-      expect(screen.queryByRole('region', { name: 'How this works' })).not.toBeInTheDocument();
+      expect(screen.queryByRole('dialog', { name: 'How this works' })).not.toBeInTheDocument();
     });
     expect(window.localStorage.getItem(GUIDE_STORAGE_KEY)).toBe('1');
     expect(screen.queryByRole('region', { name: /Public lab tracker/i })).not.toBeInTheDocument();
@@ -155,7 +155,7 @@ describe('WorldV2Page onboarding and Public Lab state', () => {
   it('honors lab=open links without auto-showing onboarding', () => {
     renderWorld('/?lab=open');
 
-    expect(screen.queryByRole('region', { name: 'How this works' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('dialog', { name: 'How this works' })).not.toBeInTheDocument();
     expect(screen.getByRole('region', { name: /Public lab tracker/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: /public agent account/i })).toBeInTheDocument();
     expect(screen.getByText(/public data/i)).toBeInTheDocument();
@@ -182,6 +182,15 @@ describe('WorldV2Page onboarding and Public Lab state', () => {
     expect(screen.queryByRole('region', { name: /Public lab calendar/i })).not.toBeInTheDocument();
   });
 
+  it('opens the account chart from URL with All selected by default', () => {
+    window.localStorage.setItem(GUIDE_STORAGE_KEY, '1');
+    renderWorld('/?lab=open&chart=account');
+
+    expect(screen.getByRole('region', { name: /Account value chart/i })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /^All$/i })).toHaveAttribute('aria-pressed', 'true');
+    expect(screen.getByText(/Pre-tracking lead-in/i)).toBeInTheDocument();
+  });
+
   it('reopens the guide from the help icon after onboarding is seen', async () => {
     const user = userEvent.setup();
     window.localStorage.setItem(GUIDE_STORAGE_KEY, '1');
@@ -189,6 +198,20 @@ describe('WorldV2Page onboarding and Public Lab state', () => {
 
     await user.click(screen.getByRole('button', { name: /How this works/i }));
 
-    expect(screen.getByRole('region', { name: 'How this works' })).toBeInTheDocument();
+    expect(screen.getByRole('dialog', { name: 'How this works' })).toBeInTheDocument();
+  });
+
+  it('closes the guide with Escape and returns focus to the help button', async () => {
+    const user = userEvent.setup();
+    window.localStorage.setItem(GUIDE_STORAGE_KEY, '1');
+    renderWorld();
+
+    await user.click(screen.getByRole('button', { name: /How this works/i }));
+    await user.keyboard('{Escape}');
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: 'How this works' })).not.toBeInTheDocument();
+    });
+    expect(screen.getByRole('button', { name: /How this works/i })).toHaveFocus();
   });
 });

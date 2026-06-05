@@ -1,4 +1,4 @@
-import { CalendarDays, ChartNoAxesCombined, FlaskConical, Minimize2, ReceiptText } from 'lucide-react';
+import { CalendarDays, ChartNoAxesCombined, FlaskConical, Minimize2, ReceiptText, Share2 } from 'lucide-react';
 import { formatPnl } from '@/lib/formatting';
 import { PUBLIC_LAB_STARTING_BANKROLL_CENTS, publicLabDay } from '@/lib/publicLab';
 import type { AgentId, TradeLogEntry } from '@/lib/types';
@@ -23,6 +23,7 @@ interface Props {
   dateLabel?: string;
   onOpenChart?: () => void;
   onOpenCalendar?: () => void;
+  onShare?: () => void;
   onMinimize?: () => void;
 }
 
@@ -62,6 +63,7 @@ export function PublicLabTracker({
   dateLabel,
   onOpenChart,
   onOpenCalendar,
+  onShare,
   onMinimize,
 }: Props) {
   const day = publicLabDay(labDate);
@@ -90,6 +92,11 @@ export function PublicLabTracker({
           {onOpenCalendar && (
             <button type="button" onClick={onOpenCalendar} aria-label="Open public lab calendar">
               <CalendarDays size={14} aria-hidden />
+            </button>
+          )}
+          {onShare && (
+            <button type="button" onClick={onShare} aria-label="Copy Public Lab link">
+              <Share2 size={14} aria-hidden />
             </button>
           )}
           {onMinimize && (

@@ -5,6 +5,8 @@ import type { AgentId, AgentLearningPost } from '@/lib/types';
 interface Props {
   agentId: AgentId;
   onOpenHistory: (options?: { noteId?: string; surface?: string }) => void;
+  scopeLabel?: string;
+  reconciliation?: string | null;
 }
 
 function formatAsOf(value: string) {
@@ -28,7 +30,7 @@ function chipsFor(post: AgentLearningPost) {
     .slice(0, 3);
 }
 
-export function TodaysFieldNote({ agentId, onOpenHistory }: Props) {
+export function TodaysFieldNote({ agentId, onOpenHistory, scopeLabel, reconciliation }: Props) {
   const { posts, loading, error } = useAgentLearning(agentId);
   const latest = posts[0] ?? null;
 
@@ -66,8 +68,10 @@ export function TodaysFieldNote({ agentId, onOpenHistory }: Props) {
           <span>Today's Field Note</span>
           <time dateTime={latest.made_at}>As of {formatAsOf(latest.made_at)}</time>
         </div>
+        {scopeLabel && <span className="todays-field-note__scope">{scopeLabel}</span>}
         <strong>{latest.title}</strong>
         <p>{excerpt(latest.body)}</p>
+        {reconciliation && <p className="todays-field-note__reconcile">{reconciliation}</p>}
         {chipsFor(latest).length > 0 && (
           <div className="todays-field-note__chips">
             {chipsFor(latest).map((chip) => (

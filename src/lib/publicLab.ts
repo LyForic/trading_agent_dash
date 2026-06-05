@@ -1,4 +1,5 @@
 import type { AgentId, TradeLogEntry } from './types';
+import { track } from '@vercel/analytics';
 
 export interface SocialLinkConfig {
   id: 'instagram' | 'tiktok' | 'youtube';
@@ -30,7 +31,7 @@ export interface AgentStrategyProfile {
 export const PUBLIC_LAB_START_DATE = '2026-05-08T00:00:00-07:00';
 export const PUBLIC_LAB_STARTING_BANKROLL_CENTS = 10_000_00;
 export const PUBLIC_LAB_EXPERIMENT =
-  'Five autonomous agents trade real prediction markets in public. The question is which strategy improves tomorrow.';
+  'Six autonomous agents trade real prediction markets in public. The question is which strategy improves tomorrow.';
 
 export const PUBLIC_LAB_OPEN_QUESTION =
   'Can the agents turn daily losses and wins into a better rule set before the next session?';
@@ -53,7 +54,7 @@ export const SOCIAL_LINKS: SocialLinkConfig[] = [
   },
 ];
 
-export const PUBLIC_AGENT_IDS: AgentId[] = ['apex', 'metheus', 'bacon', 'nova'];
+export const PUBLIC_AGENT_IDS: AgentId[] = ['apex', 'metheus', 'gale', 'bacon', 'nova', 'meridian'];
 
 export const AGENT_STRATEGY_PROFILES: Record<AgentId, AgentStrategyProfile> = {
   apex: {
@@ -102,7 +103,7 @@ export const AGENT_STRATEGY_PROFILES: Record<AgentId, AgentStrategyProfile> = {
   },
   nova: {
     plainThesis:
-      'Nova watches ETH 15-minute markets for clean alignment, exhaustion, and late-cycle reversals.',
+      'Nova watches ETH 15-minute markets for clean setups where a fast move may be running out of strength.',
     marketsTraded: 'ETH 15-minute contracts.',
     riskPosture:
       'Patient and signal-first. Nova should avoid entering when the move is already overheated.',
@@ -141,6 +142,7 @@ export type PublicLabEventName =
   | 'public_lab_minimize'
   | 'public_lab_open'
   | 'replay_open'
+  | 'share_click'
   | 'social_click'
   | 'strategy_open'
   | 'trade_replay_open'
@@ -206,7 +208,16 @@ export function trackPublicLabEvent(name: PublicLabEventName, detail: Record<str
   maybeWindow.__PUBLIC_LAB_EVENTS__.push(payload);
   maybeWindow.dataLayer?.push(payload);
   maybeWindow.gtag?.('event', name, detail);
+  track(name, sanitizeAnalyticsProperties(detail));
   sendPublicLabAnalytics(payload);
+}
+
+function sanitizeAnalyticsProperties(detail: Record<string, unknown>) {
+  return Object.fromEntries(
+    Object.entries(detail)
+      .filter(([, value]) => ['string', 'number', 'boolean'].includes(typeof value) || value === null)
+      .map(([key, value]) => [key, value === null ? '' : value]),
+  ) as Record<string, string | number | boolean>;
 }
 
 function sendPublicLabAnalytics(payload: Record<string, unknown>) {

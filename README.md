@@ -71,17 +71,30 @@ npm run build
 
 Supabase credentials are optional for local work. Without `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`, the app uses mock data. With credentials configured, the app reads only the public delayed views documented in `supabase/README.md`.
 
-Public Lab analytics events always dispatch to `window.dataLayer`, `gtag`, and
-the in-browser `window.__PUBLIC_LAB_EVENTS__` debug queue when those collectors
-exist. To send the same payloads to a custom collector, configure
+Public Lab analytics events dispatch to Vercel Analytics, `window.dataLayer`,
+`gtag`, and the in-browser `window.__PUBLIC_LAB_EVENTS__` debug queue when those
+collectors exist. To send the same payloads to a custom collector, configure
 `VITE_PUBLIC_LAB_ANALYTICS_ENDPOINT` and optionally
 `VITE_PUBLIC_LAB_ANALYTICS_TOKEN`.
+
+Episode and platform links should use this UTM convention:
+
+```text
+?utm_source=<platform>&utm_medium=<short|reel|bio>&utm_campaign=<yyyy-mm-dd>-<slug>
+```
+
+UTMs are composable with deep links, for example:
+`/?agent=apex&trade=<trade-id>&utm_source=tiktok&utm_medium=short&utm_campaign=2026-06-04-apex-proof`.
 
 ## People
 
 - **Brandon Fong** — frontend, Apex + Gale daemons, product
 - **Justin** — Metheus daemon, Supabase edge functions, shared `pm_signals` schema
 
-## Delay policy
+## Public outcome policy
 
-All trade-level data (entries, settlements, P&L on closed trades) is shown with a **30-minute delay**. Only public Kalshi mid-price can be surfaced in real time. This is a brand-integrity constraint, not a technical one. See `2026-04-21-design.md` §7 for enforcement rules.
+Settled outcomes, settled-trade P&L, public replay ticks for settled trades, and
+public account snapshots are shown when the public ledger updates. Open entries
+remain hidden until they are safe to publish through the public views. The UI
+must not imply investment advice, copy trading, guaranteed returns, or private
+live signals.

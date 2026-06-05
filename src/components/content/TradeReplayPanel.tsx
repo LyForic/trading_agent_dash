@@ -1,6 +1,7 @@
-import { Pause, Play, RotateCcw } from 'lucide-react';
+import { Copy, Pause, Play, RotateCcw } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { formatPnl } from '@/lib/formatting';
+import { tradePlainText } from '@/lib/tradePlainText';
 import { buildReplay } from '@/lib/tradeReplay';
 import type { ReplayPoint } from '@/lib/tradeReplay';
 import type { TradeLogEntry } from '@/lib/types';
@@ -157,6 +158,19 @@ export function TradeReplayPanel({ row }: Props) {
         <div className="trade-replay-timebox">
           {replay.sourceLabel} · {formatClock(replay.contractStart)}-{formatClock(replay.contractEnd)}
         </div>
+      </div>
+
+      <div className="trade-replay-plain">
+        <p>{tradePlainText(row)}</p>
+        <button
+          type="button"
+          onClick={() => void navigator.clipboard?.writeText(row.id)}
+          aria-label="Copy full trade id"
+          title={row.id}
+        >
+          <Copy size={13} aria-hidden />
+          <span>Copy ID</span>
+        </button>
       </div>
 
       <div className="trade-replay-chart" aria-label="15 minute trade replay chart showing probabilities">

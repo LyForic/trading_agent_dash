@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import type { LeaderboardResponse } from '@/lib/types';
 import { formatPnl } from '@/lib/formatting';
 import type { AgentDataError } from '@/lib/useAgentData';
+import { PUBLIC_LAB_STARTING_BANKROLL_CENTS, publicLabDay } from '@/lib/publicLab';
 
 /**
  * Sticky 48px header giving the page a constant liveness signal:
@@ -23,6 +24,7 @@ interface Props {
 export function TrustStrip({ data, error }: Props) {
   const totalPnl = data.agents.reduce((sum, a) => sum + a.total_pnl, 0);
   const settledTotal = data.agents.reduce((sum, a) => sum + a.record.settled, 0);
+  const allTimePct = (totalPnl / PUBLIC_LAB_STARTING_BANKROLL_CENTS) * 100;
   const minutesAgo = useMemo(
     () => Math.max(0, Math.round((new Date().getTime() - new Date(data.updated_at).getTime()) / 60_000)),
     [data.updated_at],
@@ -43,20 +45,20 @@ export function TrustStrip({ data, error }: Props) {
         Updated {minutesAgo}m ago
       </span>
       <span className="tabular-nums font-medium">
-        Total P&amp;L:{' '}
+        Day {publicLabDay(new Date(data.updated_at))} · Start $10k ·{' '}
         <span
           style={{
             color: totalPnl >= 0 ? 'var(--color-gain)' : 'var(--color-loss)',
           }}
         >
-          {formatPnl(totalPnl)}
+          {allTimePct >= 0 ? '+' : ''}{allTimePct.toFixed(1)}% all-time
         </span>
       </span>
       <span
         className="tabular-nums"
         style={{ color: 'var(--color-ink-muted)' }}
       >
-        {settledTotal} settled
+        24h P&amp;L {formatPnl(totalPnl)} · {settledTotal} settled
       </span>
       {error?.kind === 'fetch-failed' && (
         <span

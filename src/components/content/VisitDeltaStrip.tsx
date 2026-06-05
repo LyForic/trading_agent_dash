@@ -1,6 +1,7 @@
 import { motion, AnimatePresence } from 'framer-motion';
 import type { VisitDelta } from '@/lib/useVisitDelta';
 import { formatPnl } from '@/lib/formatting';
+import { SOCIAL_LINKS, trackPublicLabEvent } from '@/lib/publicLab';
 
 /**
  * "Since your last visit" strip. Renders above the agent cards when the
@@ -29,6 +30,8 @@ export function VisitDeltaStrip({
   delta: VisitDelta | null;
   onDismiss: () => void;
 }) {
+  const primary = SOCIAL_LINKS.find((link) => link.id === 'tiktok') ?? SOCIAL_LINKS[0];
+
   return (
     <AnimatePresence>
       {delta && (
@@ -38,7 +41,7 @@ export function VisitDeltaStrip({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
           transition={{ duration: 0.3, ease: 'easeOut' }}
-          className="rounded-xl border px-3 py-2 text-[12px] flex items-start gap-2"
+          className="rounded-xl border px-3 py-2 text-[12px] grid gap-2"
           style={{
             backgroundColor: 'color-mix(in srgb, var(--color-paper) 88%, transparent)',
             borderColor: 'var(--color-border-default)',
@@ -47,49 +50,68 @@ export function VisitDeltaStrip({
             WebkitBackdropFilter: 'blur(4px)',
           }}
         >
-          <div className="flex-1">
-            <div className="font-medium">
-              Welcome back — {delta.totalNewTrades} new trade
-              {delta.totalNewTrades === 1 ? '' : 's'}{' '}
+          <div className="flex items-start gap-2">
+            <div className="flex-1">
+              <div className="font-medium">
+                Since you were last here: {delta.totalNewTrades} new settled trade
+                {delta.totalNewTrades === 1 ? '' : 's'} · account {formatPnl(delta.totalPnlDelta)}
               <span style={{ color: 'var(--color-ink-muted)' }}>
-                · {timeAgo(delta.daysSince)}
+                {' '}· away {timeAgo(delta.daysSince)}
               </span>
-            </div>
-            <div
-              className="mt-0.5 tabular-nums"
-              style={{ color: 'var(--color-ink-muted)' }}
-            >
-              {delta.perAgent.map((a, i) => (
-                <span key={a.id}>
-                  {i > 0 && <span> · </span>}
-                  <span style={{ color: 'var(--color-ink)' }}>{a.name}</span>{' '}
-                  <span
-                    style={{
-                      color:
-                        a.pnlDelta > 0
-                          ? 'var(--color-gain)'
-                          : a.pnlDelta < 0
-                          ? 'var(--color-loss)'
-                          : 'var(--color-ink-muted)',
-                    }}
-                  >
-                    {formatPnl(a.pnlDelta)}
+              </div>
+              <div
+                className="mt-0.5 tabular-nums"
+                style={{ color: 'var(--color-ink-muted)' }}
+              >
+                {delta.perAgent.map((a, i) => (
+                  <span key={a.id}>
+                    {i > 0 && <span> · </span>}
+                    <span style={{ color: 'var(--color-ink)' }}>{a.name}</span>{' '}
+                    <span
+                      style={{
+                        color:
+                          a.pnlDelta > 0
+                            ? 'var(--color-gain)'
+                            : a.pnlDelta < 0
+                            ? 'var(--color-loss)'
+                            : 'var(--color-ink-muted)',
+                      }}
+                    >
+                      {formatPnl(a.pnlDelta)}
+                    </span>
                   </span>
-                </span>
-              ))}
+                ))}
+              </div>
             </div>
+            <button
+              onClick={onDismiss}
+              aria-label="Dismiss"
+              className="shrink-0 px-1.5 py-0.5 rounded-md text-base leading-none"
+              style={{
+                color: 'var(--color-ink-muted)',
+                backgroundColor: 'transparent',
+              }}
+            >
+              ×
+            </button>
           </div>
-          <button
-            onClick={onDismiss}
-            aria-label="Dismiss"
-            className="shrink-0 px-1.5 py-0.5 rounded-md text-base leading-none"
+          <a
+            href={primary.href}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center justify-center rounded-md px-2.5 py-1.5 font-semibold no-underline"
             style={{
-              color: 'var(--color-ink-muted)',
-              backgroundColor: 'transparent',
+              backgroundColor: 'color-mix(in srgb, var(--color-gain) 18%, var(--color-paper-raised))',
+              color: 'var(--color-ink)',
             }}
+            onClick={() => trackPublicLabEvent('follow_click', {
+              surface: 'visit_delta_strip',
+              platform: primary.id,
+              destination: primary.href,
+            })}
           >
-            ×
-          </button>
+            Down about 35% - follow @brandonnfongg
+          </a>
         </motion.aside>
       )}
     </AnimatePresence>

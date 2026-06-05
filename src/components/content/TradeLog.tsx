@@ -1,6 +1,7 @@
 import { Fragment, useState } from 'react';
 import type { PerformanceWindow, TradeLogEntry } from '@/lib/types';
 import { formatPnl } from '@/lib/formatting';
+import { tradePlainText } from '@/lib/tradePlainText';
 import { TradeReplayPanel } from './TradeReplayPanel';
 
 interface Props {
@@ -42,6 +43,7 @@ function FirstRow({ row, selected, onSelect }: { row: TradeLogEntry; selected: b
       className={selected ? 'trade-log-featured trade-log-featured--active' : 'trade-log-featured'}
       onClick={onSelect}
       aria-expanded={selected}
+      aria-label={`${shortReceiptId(row.id)}${row.side.toUpperCase()} ${tradePlainText(row)}`}
     >
       <div className="trade-log-featured-head">
         <span className="trade-log-receipt-id">
@@ -69,6 +71,7 @@ function LedgerRow({ row, selected, onSelect }: { row: TradeLogEntry; selected: 
       className={selected ? 'trade-log-row trade-log-row--active tabular-nums' : 'trade-log-row tabular-nums'}
       onClick={onSelect}
       aria-expanded={selected}
+      aria-label={`${shortReceiptId(row.id)}${row.side.toUpperCase()} ${tradePlainText(row)}`}
     >
       <span className="trade-log-receipt-id">
         {shortReceiptId(row.id)}
@@ -136,12 +139,24 @@ export function TradeLog({
         <span>Trades · {WINDOW_LABEL[window]}</span>
         <span>{windowSettledCount} settled</span>
       </div>
+      <div className="trade-log-glossary" aria-label="Trade terms">
+        <abbr title="One yes/no market bet">contract</abbr>
+        <abbr title="YES or NO is the side the agent bought">YES/NO</abbr>
+        <abbr title="Cents are chance out of 100, so 87c is about 87% implied">cents</abbr>
+        <abbr title="Size is number of contracts, not dollars">size</abbr>
+      </div>
       <div className="trade-log-ledger">
         <FirstRow row={first} selected={selectedTradeId === first.id} onSelect={() => selectTrade(first)} />
+        {selectedRow?.id === first.id && (
+          <p className="trade-log-plain-caption">{tradePlainText(selectedRow)}</p>
+        )}
         {showInlineReplay && selectedRow?.id === first.id && <TradeReplayPanel key={selectedRow.id} row={selectedRow} />}
         {rest.map((row) => (
           <Fragment key={row.id}>
             <LedgerRow row={row} selected={selectedTradeId === row.id} onSelect={() => selectTrade(row)} />
+            {selectedRow?.id === row.id && (
+              <p className="trade-log-plain-caption">{tradePlainText(selectedRow)}</p>
+            )}
             {showInlineReplay && selectedRow?.id === row.id && <TradeReplayPanel key={selectedRow.id} row={selectedRow} />}
           </Fragment>
         ))}

@@ -104,6 +104,17 @@ function formatDateTick(value: string, period: AccountChartPeriod) {
   }).format(date);
 }
 
+function formatSnapshotDate(value: string | null | undefined) {
+  if (!value) return 'the first snapshot';
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return 'the first snapshot';
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: 'America/Los_Angeles',
+    month: 'short',
+    day: 'numeric',
+  }).format(date);
+}
+
 function buildChart(points: BnfPortfolioPoint[], period: AccountChartPeriod) {
   if (points.length < 2) return null;
   const xMin = Date.parse(points[0].captured_at);
@@ -111,9 +122,10 @@ function buildChart(points: BnfPortfolioPoint[], period: AccountChartPeriod) {
   const values = points.map((point) => point.combined_cleared_cents);
   const min = Math.min(...values);
   const max = Math.max(...values);
-  const yPad = Math.max(100, (max - min) * 0.16);
+  const anchoredMax = period === 'all' ? Math.max(max, PUBLIC_LAB_STARTING_BANKROLL_CENTS) : max;
+  const yPad = Math.max(100, (anchoredMax - min) * 0.14);
   const yMin = min - yPad;
-  const yMax = max + yPad;
+  const yMax = anchoredMax + yPad;
   const xSpan = Math.max(1, xMax - xMin);
   const ySpan = Math.max(1, yMax - yMin);
 
@@ -143,6 +155,9 @@ function buildChart(points: BnfPortfolioPoint[], period: AccountChartPeriod) {
     { label: formatDateTick(middle.captured_at, period), x: (CHART.plotLeft + CHART.plotRight) / 2, anchor: 'middle' as const },
     { label: formatDateTick(points[points.length - 1].captured_at, period), x: CHART.plotRight, anchor: 'end' as const },
   ];
+  const startLineY = PUBLIC_LAB_STARTING_BANKROLL_CENTS >= yMin && PUBLIC_LAB_STARTING_BANKROLL_CENTS <= yMax
+    ? CHART.plotBottom - ((PUBLIC_LAB_STARTING_BANKROLL_CENTS - yMin) / ySpan) * (CHART.plotBottom - CHART.plotTop)
+    : null;
 
   return {
     areaPath,
@@ -150,6 +165,7 @@ function buildChart(points: BnfPortfolioPoint[], period: AccountChartPeriod) {
     latestPoint: last,
     yTicks,
     xTicks,
+    startLineY,
   };
 }
 
@@ -230,6 +246,24 @@ export function AccountValueChartPanel({ points, period, onPeriodChange, onBack,
                 </text>
               </g>
             ))}
+            {chart.startLineY !== null && (
+              <g>
+                <line
+                  x1={CHART.plotLeft}
+                  x2={CHART.plotRight}
+                  y1={chart.startLineY}
+                  y2={chart.startLineY}
+                  className="account-chart-panel__start-line"
+                />
+                <text
+                  x={CHART.plotLeft + 6}
+                  y={Math.max(CHART.plotTop + 12, chart.startLineY - 6)}
+                  className="account-chart-panel__start-label"
+                >
+                  $10,000 reset
+                </text>
+              </g>
+            )}
             <path d={chart.areaPath} className="account-chart-panel__area" fill="url(#account-chart-fill)" />
             <path d={chart.linePath} className="account-chart-panel__line" />
             <circle cx={chart.latestPoint.x} cy={chart.latestPoint.y} r="3.5" className="account-chart-panel__latest-dot" />
@@ -269,6 +303,12 @@ export function AccountValueChartPanel({ points, period, onPeriodChange, onBack,
           </button>
         ))}
       </div>
+
+      {period === 'all' && series[0] && series[0].combined_cleared_cents < PUBLIC_LAB_STARTING_BANKROLL_CENTS && (
+        <p className="account-chart-panel__lead-in">
+          Pre-tracking lead-in: daily snapshots began {formatSnapshotDate(series[0].captured_at)}. The dashed line marks the $10,000 reset.
+        </p>
+      )}
 
       <div className="account-chart-panel__metrics" aria-label="Account chart metrics">
         <div>
