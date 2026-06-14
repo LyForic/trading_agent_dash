@@ -1,4 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
+import { useRef, type PointerEvent } from 'react';
 import type { VisitDelta } from '@/lib/useVisitDelta';
 import { formatPnl } from '@/lib/formatting';
 import { SOCIAL_LINKS, trackPublicLabEvent } from '@/lib/publicLab';
@@ -9,8 +10,8 @@ import { SOCIAL_LINKS, trackPublicLabEvent } from '@/lib/publicLab';
  * Null-safe — caller passes `delta = null` during first-ever visit, when
  * nothing has changed, or after dismissal.
  *
- * Paper pill so it reads on any world mode; dismissible X commits a new
- * snapshot so the strip stays away until more trades land.
+ * iOS-style notification. Desktop keeps a dismiss button; mobile dismisses
+ * with the same upward swipe pattern as the agent sheet.
  */
 
 function timeAgo(days: number): string {
@@ -21,6 +22,19 @@ function timeAgo(days: number): string {
   }
   const rounded = Math.round(days);
   return `${rounded} day${rounded === 1 ? '' : 's'} ago`;
+}
+
+function notificationTimeLabel() {
+  return new Intl.DateTimeFormat(undefined, {
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(new Date());
+}
+
+function pnlTone(value: number) {
+  if (value > 0) return 'visit-delta-notification__pnl visit-delta-notification__pnl--gain';
+  if (value < 0) return 'visit-delta-notification__pnl visit-delta-notification__pnl--loss';
+  return 'visit-delta-notification__pnl';
 }
 
 export function VisitDeltaStrip({
@@ -38,6 +52,23 @@ export function VisitDeltaStrip({
     : allTimePct < 0
       ? `Watch a real $10k try to climb out of ${allTimePct.toFixed(1)}%, one lesson a day. follow @brandonnfongg`
       : `Watch a real $10k build on +${allTimePct.toFixed(1)}%, one lesson a day. follow @brandonnfongg`;
+  const dragStartY = useRef<number | null>(null);
+  const handlePointerDown = (event: PointerEvent<HTMLElement>) => {
+    dragStartY.current = event.clientY;
+    event.currentTarget.setPointerCapture(event.pointerId);
+  };
+  const handlePointerUp = (event: PointerEvent<HTMLElement>) => {
+    if (dragStartY.current === null) return;
+    const dragged = event.clientY - dragStartY.current;
+    dragStartY.current = null;
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+    if (dragged < -42) onDismiss();
+  };
+  const handlePointerCancel = () => {
+    dragStartY.current = null;
+  };
 
   return (
     <AnimatePresence>
@@ -48,69 +79,43 @@ export function VisitDeltaStrip({
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -8 }}
           transition={{ duration: 0.3, ease: 'easeOut' }}
-          className="rounded-xl border px-3 py-2 text-[12px] grid gap-2"
-          style={{
-            backgroundColor: 'color-mix(in srgb, var(--color-paper) 88%, transparent)',
-            borderColor: 'var(--color-border-default)',
-            color: 'var(--color-ink)',
-            backdropFilter: 'blur(4px)',
-            WebkitBackdropFilter: 'blur(4px)',
-          }}
+          className="visit-delta-notification"
+          onPointerDown={handlePointerDown}
+          onPointerUp={handlePointerUp}
+          onPointerCancel={handlePointerCancel}
         >
-          <div className="flex items-start gap-2">
-            <div className="flex-1">
-              <div className="font-medium">
-                Since you were last here: {delta.totalNewTrades} new settled trade
-                {delta.totalNewTrades === 1 ? '' : 's'} · account {formatPnl(delta.totalPnlDelta)}
-              <span style={{ color: 'var(--color-ink-muted)' }}>
-                {' '}· away {timeAgo(delta.daysSince)}
-              </span>
-              </div>
-              <div
-                className="mt-0.5 tabular-nums"
-                style={{ color: 'var(--color-ink-muted)' }}
-              >
-                {delta.perAgent.map((a, i) => (
-                  <span key={a.id}>
-                    {i > 0 && <span> · </span>}
-                    <span style={{ color: 'var(--color-ink)' }}>{a.name}</span>{' '}
-                    <span
-                      style={{
-                        color:
-                          a.pnlDelta > 0
-                            ? 'var(--color-gain)'
-                            : a.pnlDelta < 0
-                            ? 'var(--color-loss)'
-                            : 'var(--color-ink-muted)',
-                      }}
-                    >
-                      {formatPnl(a.pnlDelta)}
-                    </span>
-                  </span>
-                ))}
-              </div>
-            </div>
-            <button
-              onClick={onDismiss}
-              aria-label="Dismiss"
-              className="shrink-0 px-1.5 py-0.5 rounded-md text-base leading-none"
-              style={{
-                color: 'var(--color-ink-muted)',
-                backgroundColor: 'transparent',
-              }}
-            >
-              ×
-            </button>
+          <div className="visit-delta-notification__header">
+            <span>Gym Live</span>
+            <time>{notificationTimeLabel()}</time>
           </div>
+          <button
+            type="button"
+            onClick={onDismiss}
+            aria-label="Dismiss"
+            className="visit-delta-notification__close"
+          >
+            ×
+          </button>
+          <strong className="visit-delta-notification__title">While you were away</strong>
+          <p className="visit-delta-notification__body">
+            {delta.totalNewTrades} new settled trade{delta.totalNewTrades === 1 ? '' : 's'}.
+            Account <span className={pnlTone(delta.totalPnlDelta)}>{formatPnl(delta.totalPnlDelta)}</span>
+            {' '}since {timeAgo(delta.daysSince)}.
+          </p>
+          <p className="visit-delta-notification__agents">
+            {delta.perAgent.map((a, i) => (
+              <span key={a.id}>
+                {i > 0 && <span> · </span>}
+                <span>{a.name}</span>{' '}
+                <span className={pnlTone(a.pnlDelta)}>{formatPnl(a.pnlDelta)}</span>
+              </span>
+            ))}
+          </p>
           <a
             href={primary.href}
             target="_blank"
             rel="noreferrer"
-            className="inline-flex items-center justify-center rounded-md px-2.5 py-1.5 font-semibold no-underline"
-            style={{
-              backgroundColor: 'color-mix(in srgb, var(--color-gain) 18%, var(--color-paper-raised))',
-              color: 'var(--color-ink)',
-            }}
+            className="visit-delta-notification__follow"
             onClick={() => trackPublicLabEvent('follow_click', {
               surface: 'visit_delta_strip',
               platform: primary.id,

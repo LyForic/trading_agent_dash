@@ -1,4 +1,4 @@
-import { BookOpen, Bot, Compass, FlaskConical, ReceiptText, Tv, type LucideIcon } from 'lucide-react';
+import { BookOpen, Bot, Compass, FlaskConical, ReceiptText, type LucideIcon } from 'lucide-react';
 import { useState } from 'react';
 
 interface Props {
@@ -77,25 +77,6 @@ export function WorldIntroPanel({ onStart, onOpenLab }: Props) {
           <p>{activeStep.body}</p>
         </div>
       </article>
-
-      <div className="world-v2-intro-rail" aria-label="Key controls">
-        <div>
-          <Bot size={15} aria-hidden />
-          <span>Agent tray</span>
-        </div>
-        <div>
-          <FlaskConical size={15} aria-hidden />
-          <span>Public Lab</span>
-        </div>
-        <div>
-          <Tv size={15} aria-hidden />
-          <span>Latest short</span>
-        </div>
-        <div>
-          <BookOpen size={15} aria-hidden />
-          <span>Notes and replays</span>
-        </div>
-      </div>
 
       <div className="world-v2-intro-actions">
         <button type="button" className="world-v2-intro-primary" onClick={onStart}>
