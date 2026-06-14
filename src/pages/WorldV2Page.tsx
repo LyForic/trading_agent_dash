@@ -1326,8 +1326,10 @@ export function WorldV2Page() {
     setTimeModeMenuOpen(false);
     if (open) {
       setSelectedLabDateKey(null);
-      setMenuExpanded(false);
-      if (isMobileViewport()) setMenuHidden(true);
+      if (isMobileViewport()) {
+        setMenuExpanded(false);
+        setMenuHidden(true);
+      }
       trackPublicLabEvent('public_lab_open', { surface, date: latestPublicLabDateKey });
     } else {
       updateWorldDeepLink({ lab: null, date: null, chart: null, period: null });
@@ -1352,8 +1354,10 @@ export function WorldV2Page() {
     setAccountChartOpen(true);
     setBalanceMenuOpen(false);
     setTimeModeMenuOpen(false);
-    setMenuExpanded(false);
-    if (isMobileViewport()) setMenuHidden(true);
+    if (isMobileViewport()) {
+      setMenuExpanded(false);
+      setMenuHidden(true);
+    }
     updateWorldDeepLink({
       lab: 'open',
       chart: 'account',
@@ -1517,8 +1521,6 @@ export function WorldV2Page() {
     updateWorldDeepLink({ agent: null, trade: null, note: null });
     setPublicLabOpen(true, 'guide');
     setFocusRequestId((requestId) => requestId + 1);
-    setMenuExpanded(false);
-    if (isMobileViewport()) setMenuHidden(true);
   };
 
   useEffect(() => {
@@ -1592,6 +1594,8 @@ export function WorldV2Page() {
     const dragged = event.clientY - dragStartY.current;
     dragStartY.current = null;
     if (dragged < -42) {
+      if (!labMinimized || accountChartOpen) setPublicLabOpen(false, 'agent_menu_swipe');
+      setMenuHidden(false);
       setMenuExpanded(true);
       setBalanceMenuOpen(false);
       return;
@@ -1662,17 +1666,14 @@ export function WorldV2Page() {
   const publicLabSurfaceOpen = !labMinimized || accountChartOpen;
 
   useEffect(() => {
-    if (!publicLabSurfaceOpen || selectedAgentId || worldIntroOpen) return;
-    const shouldHideMobileMenu = isMobileViewport();
-    if (!balanceMenuOpen && !menuExpanded && (!shouldHideMobileMenu || menuHidden)) return;
+    if (!publicLabSurfaceOpen || selectedAgentId || worldIntroOpen || !isMobileViewport()) return;
+    if (!balanceMenuOpen && !menuExpanded && menuHidden) return;
 
     // Public Lab is a blocking mobile surface; keep the agent sheet from covering it.
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setBalanceMenuOpen(false);
     setMenuExpanded(false);
-    if (shouldHideMobileMenu) {
-      setMenuHidden(true);
-    }
+    setMenuHidden(true);
   }, [balanceMenuOpen, menuExpanded, menuHidden, publicLabSurfaceOpen, selectedAgentId, worldIntroOpen]);
 
   return (
@@ -1884,6 +1885,7 @@ export function WorldV2Page() {
           type="button"
           className="world-v2-menu-peek"
           onClick={() => {
+            if (publicLabSurfaceOpen && isMobileViewport()) setPublicLabOpen(false, 'agent_menu_peek');
             setMenuHidden(false);
             setMenuExpanded(false);
           }}
