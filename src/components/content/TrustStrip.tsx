@@ -1,8 +1,9 @@
 import { useMemo } from 'react';
-import type { LeaderboardResponse } from '@/lib/types';
+import type { BnfPortfolioSeries, LeaderboardResponse } from '@/lib/types';
 import { formatPnl } from '@/lib/formatting';
 import type { AgentDataError } from '@/lib/useAgentData';
-import { PUBLIC_LAB_STARTING_BANKROLL_CENTS, publicLabDay } from '@/lib/publicLab';
+import { publicLabDay } from '@/lib/publicLab';
+import { bnfPortfolioSnapshot } from '@/lib/useBnfPortfolio';
 
 /**
  * Sticky 48px header giving the page a constant liveness signal:
@@ -19,16 +20,30 @@ import { PUBLIC_LAB_STARTING_BANKROLL_CENTS, publicLabDay } from '@/lib/publicLa
 interface Props {
   data: LeaderboardResponse;
   error?: AgentDataError | null;
+  portfolio?: BnfPortfolioSeries;
 }
 
-export function TrustStrip({ data, error }: Props) {
+function minutesSince(value: string | null | undefined) {
+  if (!value) return null;
+  const time = new Date(value).getTime();
+  if (!Number.isFinite(time)) return null;
+  return Math.max(0, Math.round((Date.now() - time) / 60_000));
+}
+
+export function TrustStrip({ data, error, portfolio }: Props) {
   const totalPnl = data.agents.reduce((sum, a) => sum + a.total_pnl, 0);
   const settledTotal = data.agents.reduce((sum, a) => sum + a.record.settled, 0);
-  const allTimePct = (totalPnl / PUBLIC_LAB_STARTING_BANKROLL_CENTS) * 100;
-  const minutesAgo = useMemo(
-    () => Math.max(0, Math.round((new Date().getTime() - new Date(data.updated_at).getTime()) / 60_000)),
-    [data.updated_at],
+  const portfolioSnapshot = useMemo(
+    () => (portfolio ? bnfPortfolioSnapshot(portfolio) : null),
+    [portfolio],
   );
+  const allTimePct = portfolioSnapshot?.allTimePct ?? null;
+  const updatedAt = portfolioSnapshot?.updatedAt ?? data.updated_at;
+  const minutesAgo = useMemo(
+    () => minutesSince(updatedAt),
+    [updatedAt],
+  );
+  const day = publicLabDay(updatedAt ? new Date(updatedAt) : new Date(data.updated_at));
 
   return (
     <header
@@ -42,23 +57,27 @@ export function TrustStrip({ data, error }: Props) {
       }}
     >
       <span style={{ color: 'var(--color-ink-muted)' }}>
-        Updated {minutesAgo}m ago
+        Updated {minutesAgo === null ? '—' : `${minutesAgo}m ago`}
       </span>
       <span className="tabular-nums font-medium">
-        Day {publicLabDay(new Date(data.updated_at))} · Start $10k ·{' '}
+        Day {day} · Start $10k ·{' '}
         <span
           style={{
-            color: totalPnl >= 0 ? 'var(--color-gain)' : 'var(--color-loss)',
+            color: allTimePct === null
+              ? 'var(--color-ink-muted)'
+              : allTimePct >= 0
+                ? 'var(--color-gain)'
+                : 'var(--color-loss)',
           }}
         >
-          {allTimePct >= 0 ? '+' : ''}{allTimePct.toFixed(1)}% all-time
+          {allTimePct === null ? '—' : `${allTimePct >= 0 ? '+' : ''}${allTimePct.toFixed(1)}%`} all-time
         </span>
       </span>
       <span
         className="tabular-nums"
         style={{ color: 'var(--color-ink-muted)' }}
       >
-        24h P&amp;L {formatPnl(totalPnl)} · {settledTotal} settled
+        Agent P&amp;L {formatPnl(totalPnl)} · {settledTotal} settled
       </span>
       {error?.kind === 'fetch-failed' && (
         <span

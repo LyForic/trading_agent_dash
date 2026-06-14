@@ -32,9 +32,25 @@ function isSameLocalDay(value: string | null) {
     && date.getDate() === now.getDate();
 }
 
-function episodeKicker(value: string | null) {
-  if (!value) return 'Latest Episode';
-  return isSameLocalDay(value) ? "Today's Episode" : 'Latest Episode';
+const LATEST_EPISODE_MAX_AGE_DAYS = 5;
+
+function episodeAgeDays(value: string | null) {
+  if (!value) return null;
+  const time = new Date(value).getTime();
+  if (!Number.isFinite(time)) return null;
+  return (Date.now() - time) / 86_400_000;
+}
+
+function isRecentEpisodeDate(value: string | null) {
+  const ageDays = episodeAgeDays(value);
+  return ageDays !== null && ageDays >= 0 && ageDays <= LATEST_EPISODE_MAX_AGE_DAYS;
+}
+
+function episodeEyebrow(value: string | null) {
+  if (!value) return 'Featured walkthrough · Start here';
+  if (isSameLocalDay(value)) return `Today's short · ${formatDate(value)}`;
+  if (isRecentEpisodeDate(value)) return `Latest short · ${formatDate(value)}`;
+  return 'Featured walkthrough · Start here';
 }
 
 function cleanEpisodeText(value: string | null | undefined, maxLength: number) {
@@ -111,6 +127,7 @@ export function TodaysEpisodePanel({
   const thumbnails = useMemo(() => thumbnailCandidates(episode), [episode]);
   const thumbnailKey = `${episode?.id ?? 'none'}:${episode?.episodeUrl ?? ''}:${episode?.thumbnailUrl ?? ''}`;
   const [thumbnailAttempt, setThumbnailAttempt] = useState({ key: '', index: 0 });
+  const [playingEmbedUrl, setPlayingEmbedUrl] = useState<string | null>(null);
   const thumbnailIndex = thumbnailAttempt.key === thumbnailKey ? thumbnailAttempt.index : 0;
   const thumbnailUrl = thumbnails[thumbnailIndex] ?? null;
   const displayAgentId = episode?.agentId ?? agentId;
@@ -126,6 +143,8 @@ export function TodaysEpisodePanel({
       ? `${trade.side.toUpperCase()} on ${trade.contract_ticker} settled ${formatPnl(trade.pnl)}.`
       : 'The latest short connects the video claim back to the live proof layer.';
 
+  const videoPlaying = embedUrl !== null && playingEmbedUrl === embedUrl;
+
   return (
     <section className="todays-episode-panel" aria-label="Watch today's episode">
       {onMinimize && (
@@ -138,15 +157,55 @@ export function TodaysEpisodePanel({
           <ChevronDown size={15} aria-hidden />
         </button>
       )}
-      <div className="todays-episode-panel__thumb" aria-hidden={!embedUrl}>
-        {embedUrl ? (
+      <div className="todays-episode-panel__thumb">
+        {embedUrl && videoPlaying ? (
           <iframe
-            src={embedUrl}
+            src={`${embedUrl}&autoplay=1`}
             title={title}
             loading="lazy"
-            allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen
           />
+        ) : embedUrl ? (
+          <button
+            type="button"
+            className="todays-episode-panel__poster"
+            aria-label={`Play ${title}`}
+            onClick={() => {
+              trackPublicLabEvent('episode_click', {
+                surface: 'todays_episode_poster',
+                episode_id: episode?.id,
+                platform: episode?.platform,
+              });
+              setPlayingEmbedUrl(embedUrl);
+            }}
+          >
+            {thumbnailUrl ? (
+              <img
+                key={thumbnailUrl}
+                src={thumbnailUrl}
+                alt=""
+                loading="lazy"
+                decoding="async"
+                referrerPolicy="no-referrer"
+                onError={() => {
+                  setThumbnailAttempt((attempt) => ({
+                    key: thumbnailKey,
+                    index: attempt.key === thumbnailKey ? attempt.index + 1 : 1,
+                  }));
+                }}
+              />
+            ) : (
+              <div className="todays-episode-panel__fallback">
+                {episodePlatform ? <SocialPlatformIcon id={episodePlatform.id} className="todays-episode-panel__fallback-icon" /> : <Play size={24} />}
+                <strong>{episodePlatform?.label ?? 'BNF'}</strong>
+                <span>{title}</span>
+              </div>
+            )}
+            <span className="todays-episode-panel__play">
+              <Play size={14} aria-hidden />
+            </span>
+          </button>
         ) : thumbnailUrl ? (
           <img
             key={thumbnailUrl}
@@ -169,14 +228,9 @@ export function TodaysEpisodePanel({
             <span>{title}</span>
           </div>
         )}
-        {thumbnailUrl && !embedUrl && (
-          <span>
-            <Play size={14} />
-          </span>
-        )}
       </div>
       <div className="todays-episode-panel__body">
-        <span>{episodeKicker(episode?.publishedAt ?? trade?.settled_at ?? null)} · {formatDate(episode?.publishedAt ?? trade?.settled_at ?? null)}</span>
+        <span>{episodeEyebrow(episode?.publishedAt ?? trade?.settled_at ?? null)}</span>
         <h2>{title}</h2>
         <p>{dek}</p>
       </div>

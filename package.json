@@ -19,6 +19,7 @@
     "visual:town": "playwright test -c playwright.visual.config.ts --grep @town",
     "visual:rooms": "playwright test -c playwright.visual.config.ts --grep @rooms",
     "visual:report": "playwright show-report artifacts/visual/html-report",
+    "insights:publish": "node scripts/publish_agent_insight.mjs",
     "world-v2:actor-walk-sheets": "node scripts/process_world_v2_actor_walk_sheets.mjs",
     "world-v2:bacon-actor-sources": "node scripts/process_world_v2_bacon_actor_sources.mjs bacon",
     "world-v2:nova-actor-sources": "node scripts/process_world_v2_bacon_actor_sources.mjs nova",

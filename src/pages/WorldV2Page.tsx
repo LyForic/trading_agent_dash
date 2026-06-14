@@ -37,6 +37,20 @@ import { VisitDeltaStrip } from '@/components/content/VisitDeltaStrip';
 import { WorldIntroPanel } from '@/components/content/WorldIntroPanel';
 import { AGENT_META } from '@/lib/agentMeta';
 import {
+  buildAgentTradeInsight,
+  buildDailyTradeInsight,
+  insightEvidenceList,
+  insightSampleSize,
+  isActionableTradeInsight,
+  type AgentTradeInsight,
+} from '@/lib/agentInsights';
+import {
+  agentInsightPacketToTradeInsight,
+  bestAgentInsightPacket,
+  type AgentInsightPacket,
+} from '@/lib/agentInsightContract';
+import { describeKalshiContract } from '@/lib/kalshiContracts';
+import {
   biggestMoveAcrossAgents,
   latestTradeAcrossAgents,
   PUBLIC_AGENT_IDS,
@@ -47,7 +61,8 @@ import {
   publicLabDay,
   trackPublicLabEvent,
 } from '@/lib/publicLab';
-import { fetchPublicTradeById, fetchPublicTradesInRange, useAgentData } from '@/lib/useAgentData';
+import { fetchPublicTradeById, fetchPublicTradesInRange, isPublicTradeId, useAgentData } from '@/lib/useAgentData';
+import { useAgentInsights } from '@/lib/useAgentInsights';
 import { useAgentLearning } from '@/lib/useAgentLearning';
 import { useAgentWindow } from '@/lib/useAgentWindow';
 import { useBnfPortfolio } from '@/lib/useBnfPortfolio';
@@ -57,7 +72,7 @@ import { useTimeOfDayPreference } from '@/lib/useTimeOfDayPreference';
 import { useVisitDelta } from '@/lib/useVisitDelta';
 import { formatPnl, formatWinRate } from '@/lib/formatting';
 import type { TimeOfDayPreference, WorldMode } from '@/lib/timeOfDay';
-import type { Agent, AgentId, AgentLearningPost, PerformanceWindow, TradeLogEntry } from '@/lib/types';
+import type { Agent, AgentId, AgentLearningPost, BnfPortfolioPoint, PerformanceWindow, TradeLogEntry } from '@/lib/types';
 import type { ZoneId } from '@/world-v2/worldMapData';
 
 type LivingWorldSceneInstance = InstanceType<typeof import('@/world-v2/LivingWorldScene').LivingWorldScene>;
@@ -136,6 +151,7 @@ const BNF_CHANGE_WINDOW_MENU_LABELS: Record<BnfChangeWindow, string> = {
 };
 
 const WORLD_GUIDE_SEEN_STORAGE_KEY = 'gym:world-v2:guide-seen:v1';
+const INVALID_TRADE_LINK_MESSAGE = 'That trade link looks invalid or has settled out of view.';
 
 const TIME_MODE_OPTIONS: Array<{ value: TimeOfDayPreference; label: string; Icon: LucideIcon }> = [
   { value: 'auto', label: 'Auto', Icon: Clock3 },
@@ -147,12 +163,20 @@ const TIME_MODE_OPTIONS: Array<{ value: TimeOfDayPreference; label: string; Icon
 interface PublicLabNarrative {
   lesson: string;
   lessonSource: string;
+  lessonEvidence?: string[] | null;
+  lessonConfidence?: string | null;
+  lessonSampleSize?: number | null;
   tomorrowWatch: string;
 }
 
 interface PublicLabDateTradeState {
   dateKey: string;
   tradeLogsByAgent: Partial<Record<AgentId, TradeLogEntry[]>>;
+}
+
+interface PublicLabDailyMove {
+  dateKey: string;
+  deltaCents: number;
 }
 
 type PublicLabQueryState = 'open' | 'closed';
@@ -175,15 +199,6 @@ const PUBLIC_LAB_DATE_TIME_FORMATTER = new Intl.DateTimeFormat('en-US', {
   minute: '2-digit',
   second: '2-digit',
 });
-
-function readStorage(key: string) {
-  if (typeof window === 'undefined') return null;
-  try {
-    return window.localStorage.getItem(key);
-  } catch {
-    return null;
-  }
-}
 
 function writeStorage(key: string, value: string) {
   if (typeof window === 'undefined') return;
@@ -254,7 +269,7 @@ function initialAccountChartPeriod() {
 function shouldShowFirstRunGuide(isolatedTestMode: boolean) {
   if (typeof window === 'undefined' || isolatedTestMode) return false;
   if (hasIntentionalContentLink(window.location.search)) return false;
-  return readStorage(WORLD_GUIDE_SEEN_STORAGE_KEY) !== '1';
+  return new URLSearchParams(window.location.search).get('guide') === 'open';
 }
 
 function formatterPart(parts: Intl.DateTimeFormatPart[], type: Intl.DateTimeFormatPartTypes) {
@@ -349,40 +364,58 @@ function formatPanelAsOf(value: string | null | undefined) {
   return `as of ${time} PT`;
 }
 
-function windowScopeLabel(window: PerformanceWindow, updatedAt: string | null | undefined) {
-  if (window === 'lifetime') return `Lifetime totals (${formatPanelAsOf(updatedAt)})`;
-  return `Last ${window} (rolling, ${formatPanelAsOf(updatedAt)})`;
+function windowScopeLabel(window: PerformanceWindow, updatedAt: string | null | undefined, updating = false) {
+  const freshness = `${formatPanelAsOf(updatedAt)}${updating ? ' · updating' : ''}`;
+  if (window === 'lifetime') return `Lifetime totals (${freshness})`;
+  return `Last ${window} (rolling, ${freshness})`;
 }
 
-function sign(value: number) {
-  if (value > 0) return 1;
-  if (value < 0) return -1;
-  return 0;
-}
-
-function samePublicLabDay(left: string, right: string) {
-  return publicLabDateKeyFromIso(left) === publicLabDateKeyFromIso(right);
-}
-
-function noteWindowPnl(rows: TradeLogEntry[], note: AgentLearningPost | null) {
+function windowPnlThroughNote(rows: TradeLogEntry[], note: AgentLearningPost | null) {
   if (!note) return null;
   const noteTime = Date.parse(note.made_at);
   if (!Number.isFinite(noteTime)) return null;
   const scopedRows = rows.filter((trade) => {
     const settledTime = Date.parse(trade.settled_at);
-    return Number.isFinite(settledTime)
-      && settledTime <= noteTime
-      && samePublicLabDay(trade.settled_at, note.made_at);
+    return Number.isFinite(settledTime) && settledTime <= noteTime;
   });
   if (scopedRows.length === 0) return null;
   return scopedRows.reduce((sum, trade) => sum + trade.pnl, 0);
 }
 
-function reconciliationCopy(windowPnl: number, notePnl: number | null, note: AgentLearningPost | null) {
+function reconciliationScopeLabel(window: PerformanceWindow) {
+  if (window === 'lifetime') return 'lifetime view';
+  return `${window} window`;
+}
+
+function reconciliationCopy(
+  windowPnl: number,
+  notePnl: number | null,
+  note: AgentLearningPost | null,
+  window: PerformanceWindow,
+) {
   if (!note || notePnl === null) return null;
-  if (sign(windowPnl) === 0 || sign(notePnl) === 0 || sign(windowPnl) === sign(notePnl)) return null;
-  const laterResult = windowPnl > 0 ? 'green' : 'red';
-  return `Later trades after ${formatPanelAsOf(note.made_at).replace(/^as of /, '')} turned this rolling window ${laterResult}.`;
+  const laterPnl = windowPnl - notePnl;
+  if (Math.abs(laterPnl) < 0.005) return null;
+
+  const noteTime = formatPanelAsOf(note.made_at).replace(/^as of /, '');
+  const amount = formatPnl(Math.abs(laterPnl));
+  const scope = reconciliationScopeLabel(window);
+
+  if (notePnl < 0) {
+    return laterPnl > 0
+      ? `Later trades after ${noteTime} recovered ${amount} of the ${scope}'s loss.`
+      : `Later trades after ${noteTime} deepened the ${scope}'s loss by ${amount}.`;
+  }
+
+  if (notePnl > 0) {
+    return laterPnl > 0
+      ? `Later trades after ${noteTime} added ${amount} to the ${scope}'s gain.`
+      : `Later trades after ${noteTime} gave back ${amount} of the ${scope}'s gain.`;
+  }
+
+  return laterPnl > 0
+    ? `Later trades after ${noteTime} added ${amount} in the ${scope}.`
+    : `Later trades after ${noteTime} cost ${amount} in the ${scope}.`;
 }
 
 interface PhaserWorldProps {
@@ -597,7 +630,20 @@ function tomorrowWatchFromPost(post: AgentLearningPost) {
 function publicLabNarrative(
   posts: AgentLearningPost[],
   biggestMove: { agentId: AgentId; trade: TradeLogEntry } | null,
+  tradeInsight: AgentTradeInsight | null,
 ): PublicLabNarrative {
+  if (tradeInsight) {
+    const name = WORLD_MENU_AGENTS[tradeInsight.agentId].name;
+    return {
+      lesson: tradeInsight.summary,
+      lessonSource: `Data insight from ${name}`,
+      lessonEvidence: insightEvidenceList(tradeInsight),
+      lessonConfidence: tradeInsight.confidence,
+      lessonSampleSize: insightSampleSize(tradeInsight),
+      tomorrowWatch: tradeInsight.nextRule,
+    };
+  }
+
   const signalPost = highestSignalPost(posts);
   if (signalPost) {
     const name = WORLD_MENU_AGENTS[signalPost.agent_id].name;
@@ -625,6 +671,46 @@ function publicLabNarrative(
   };
 }
 
+function publicLabDailyMoves(
+  points: BnfPortfolioPoint[],
+  minDateKey: string,
+  maxDateKey: string,
+): PublicLabDailyMove[] {
+  const pointsByDate = new Map<string, BnfPortfolioPoint[]>();
+  const sorted = points
+    .filter((point) => Number.isFinite(Date.parse(point.captured_at)))
+    .slice()
+    .sort((a, b) => Date.parse(a.captured_at) - Date.parse(b.captured_at));
+
+  for (const point of sorted) {
+    const dateKey = publicLabDateKeyFromIso(point.captured_at);
+    if (!dateKey || dateKey < minDateKey || dateKey > maxDateKey) continue;
+    const rows = pointsByDate.get(dateKey) ?? [];
+    rows.push(point);
+    pointsByDate.set(dateKey, rows);
+  }
+
+  return Array.from(pointsByDate.entries())
+    .map(([dateKey, rows]) => ({
+      dateKey,
+      deltaCents: rows[rows.length - 1].combined_cleared_cents - rows[0].combined_cleared_cents,
+    }))
+    .sort((a, b) => a.dateKey.localeCompare(b.dateKey));
+}
+
+function publicLabInsightPacketForDate(
+  packets: AgentInsightPacket[],
+  dateKey: string,
+  latestDateKey: string,
+) {
+  const matchingPackets = packets.filter((packet) => {
+    if (packet.insightDate) return packet.insightDate === dateKey;
+    return dateKey === latestDateKey;
+  });
+
+  return bestAgentInsightPacket(matchingPackets);
+}
+
 function updateWorldDeepLink(params: Record<string, string | null>) {
   const next = new URL(window.location.href);
   for (const [key, value] of Object.entries(params)) {
@@ -639,6 +725,22 @@ function updateWorldDeepLink(params: Record<string, string | null>) {
 
 function isMobileViewport() {
   return window.matchMedia('(max-width: 760px)').matches;
+}
+
+function focusablePanelElements(container: HTMLElement) {
+  return Array.from(
+    container.querySelectorAll<HTMLElement>(
+      [
+        'a[href]',
+        'button:not([disabled])',
+        'input:not([disabled])',
+        'select:not([disabled])',
+        'textarea:not([disabled])',
+        'summary',
+        '[tabindex]:not([tabindex="-1"])',
+      ].join(','),
+    ),
+  ).filter((element) => !element.hasAttribute('disabled') && element.getClientRects().length > 0);
 }
 
 export function WorldV2Page() {
@@ -672,6 +774,7 @@ export function WorldV2Page() {
   const [learnMoreOpen, setLearnMoreOpen] = useState(false);
   const [highlightLatestNote, setHighlightLatestNote] = useState(false);
   const [pendingDeepLinkTrade, setPendingDeepLinkTrade] = useState<{ tradeId: string; surface: string } | null>(null);
+  const [tradeLinkMessage, setTradeLinkMessage] = useState<string | null>(null);
   const [worldIntroOpen, setWorldIntroOpen] = useState(() => shouldShowFirstRunGuide(isolatedTestMode));
   const deepLinkAppliedRef = useRef(false);
   const guideOpenTrackedRef = useRef(false);
@@ -679,6 +782,8 @@ export function WorldV2Page() {
   const dragStartY = useRef<number | null>(null);
   const balanceWrapRef = useRef<HTMLDivElement | null>(null);
   const helpButtonRef = useRef<HTMLButtonElement | null>(null);
+  const statsPanelRef = useRef<HTMLElement | null>(null);
+  const statsReturnFocusRef = useRef<HTMLElement | null>(null);
   const introReturnFocusRef = useRef<HTMLElement | null>(null);
   const introPanelRef = useRef<HTMLElement | null>(null);
   const [shareToast, setShareToast] = useState<string | null>(null);
@@ -719,10 +824,17 @@ export function WorldV2Page() {
   const settledAgentPnl = useSettledAgentPnl();
   const publicLabEpisode = usePublicLabEpisode();
   const apexLearning = useAgentLearning('apex');
+  const galeLearning = useAgentLearning('gale');
   const metheusLearning = useAgentLearning('metheus');
   const baconLearning = useAgentLearning('bacon');
   const novaLearning = useAgentLearning('nova');
   const meridianLearning = useAgentLearning('meridian');
+  const apexInsights = useAgentInsights('apex');
+  const galeInsights = useAgentInsights('gale');
+  const metheusInsights = useAgentInsights('metheus');
+  const baconInsights = useAgentInsights('bacon');
+  const novaInsights = useAgentInsights('nova');
+  const meridianInsights = useAgentInsights('meridian');
   const agentsById = useMemo(() => agentMap(data.agents), [data.agents]);
   const worldAgentOrder = useMemo(() => (
     WORLD_AGENT_ORDER.slice().sort((a, b) => {
@@ -744,6 +856,9 @@ export function WorldV2Page() {
   const selectedAgent = selectedLiveAgentId ? agentsById[selectedLiveAgentId] : undefined;
   const selectedVm = selectedLiveAgentId ? cardViewModels[selectedLiveAgentId] : undefined;
   const selectedPanelMode = selectedTrade ? 'replay' : learnMoreOpen ? 'learn' : 'stats';
+  const selectedPanelTitleId = selectedLiveAgentId
+    ? `world-v2-${selectedLiveAgentId}-${selectedPanelMode}-title`
+    : undefined;
   const publicTradeLogsByAgent = useMemo(
     () => PUBLIC_WORLD_AGENT_ORDER.reduce<Partial<Record<AgentId, TradeLogEntry[]>>>((acc, id) => {
       acc[id] = cardViewModels[id]?.tradeLog ?? [];
@@ -769,31 +884,83 @@ export function WorldV2Page() {
   const publicLearningPosts = useMemo(
     () => [
       ...apexLearning.posts,
+      ...galeLearning.posts,
       ...metheusLearning.posts,
       ...baconLearning.posts,
       ...novaLearning.posts,
       ...meridianLearning.posts,
     ],
-    [apexLearning.posts, metheusLearning.posts, baconLearning.posts, novaLearning.posts, meridianLearning.posts],
+    [apexLearning.posts, galeLearning.posts, metheusLearning.posts, baconLearning.posts, novaLearning.posts, meridianLearning.posts],
+  );
+  const agentInsightPackets = useMemo(
+    () => [
+      ...apexInsights.insights,
+      ...galeInsights.insights,
+      ...metheusInsights.insights,
+      ...baconInsights.insights,
+      ...novaInsights.insights,
+      ...meridianInsights.insights,
+    ],
+    [
+      apexInsights.insights,
+      galeInsights.insights,
+      metheusInsights.insights,
+      baconInsights.insights,
+      novaInsights.insights,
+      meridianInsights.insights,
+    ],
+  );
+  const latestAgentInsightPacketByAgent = useMemo<Record<AgentId, AgentInsightPacket | null>>(
+    () => ({
+      apex: apexInsights.latestInsight,
+      gale: galeInsights.latestInsight,
+      metheus: metheusInsights.latestInsight,
+      bacon: baconInsights.latestInsight,
+      nova: novaInsights.latestInsight,
+      meridian: meridianInsights.latestInsight,
+    }),
+    [
+      apexInsights.latestInsight,
+      galeInsights.latestInsight,
+      metheusInsights.latestInsight,
+      baconInsights.latestInsight,
+      novaInsights.latestInsight,
+      meridianInsights.latestInsight,
+    ],
   );
   const selectedLatestNote = selectedLiveAgentId
     ? publicLearningPosts.find((post) => post.agent_id === selectedLiveAgentId) ?? null
     : null;
-  const selectedFieldNotePnl = selectedVm ? noteWindowPnl(selectedVm.tradeLog, selectedLatestNote) : null;
+  const selectedExternalInsight = useMemo(
+    () => {
+      if (!selectedLiveAgentId) return null;
+      const packet = latestAgentInsightPacketByAgent[selectedLiveAgentId];
+      return packet ? agentInsightPacketToTradeInsight(packet) : null;
+    },
+    [latestAgentInsightPacketByAgent, selectedLiveAgentId],
+  );
+  const selectedTradeInsight = useMemo(
+    () => {
+      if (selectedExternalInsight) return selectedExternalInsight;
+      return selectedLiveAgentId && selectedVm
+        ? buildAgentTradeInsight(selectedLiveAgentId, selectedVm.tradeLog, { includeSmallSample: true })
+        : null;
+    },
+    [selectedExternalInsight, selectedLiveAgentId, selectedVm],
+  );
+  const selectedWindow = selectedLiveAgentId ? windowsByAgent[selectedLiveAgentId] : '24h';
+  const selectedFieldNotePnl = selectedVm ? windowPnlThroughNote(selectedVm.tradeLog, selectedLatestNote) : null;
   const selectedReconciliationCopy = selectedVm
-    ? reconciliationCopy(selectedVm.total_pnl, selectedFieldNotePnl, selectedLatestNote)
+    ? reconciliationCopy(selectedVm.total_pnl, selectedFieldNotePnl, selectedLatestNote, selectedWindow)
     : null;
-  const latestBnfPoint = bnf.data.points[bnf.data.points.length - 1];
-  const latestPublicAccountCents = latestBnfPoint?.combined_cleared_cents ?? null;
-  const lifetimePnlPct = latestPublicAccountCents === null
-    ? null
-    : ((latestPublicAccountCents - PUBLIC_LAB_STARTING_BANKROLL_CENTS) / PUBLIC_LAB_STARTING_BANKROLL_CENTS) * 100;
-  const lifetimeArcCopy = latestPublicAccountCents === null
+  const latestBnfPoint = bnf.snapshot.latestPoint;
+  const lifetimePnlPct = bnf.snapshot.allTimePct;
+  const lifetimeArcCopy = latestBnfPoint === null
     ? 'Public account syncing'
-    : `Day ${publicLabDay(new Date(latestBnfPoint.captured_at))} · Start ${formatKCurrency(PUBLIC_LAB_STARTING_BANKROLL_CENTS)} · ${formatPercentChange(lifetimePnlPct)} all-time`;
-  const coldScreenPrimary = latestPublicAccountCents === null
-    ? '6 AI agents are trading a real $10,000 on live prediction markets.'
-    : `6 AI agents are trading a real $10,000 on live prediction markets. Day ${publicLabDay(new Date(latestBnfPoint.captured_at))}: ${lifetimePnlPct !== null && lifetimePnlPct < 0 ? 'down' : 'up'} ${Math.abs(lifetimePnlPct ?? 0).toFixed(1)}%. Watch them try to climb back.`;
+    : `6 strategies · ${formatKCurrency(PUBLIC_LAB_STARTING_BANKROLL_CENTS)} · Day ${publicLabDay(new Date(latestBnfPoint.captured_at))} · ${formatPercentChange(lifetimePnlPct)} all-time`;
+  const coldScreenPrimary = latestBnfPoint === null
+    ? '6 strategies are trading one real $10,000 account on live prediction markets.'
+    : `6 strategies, one real $10,000 account. Day ${publicLabDay(new Date(latestBnfPoint.captured_at))}: ${lifetimePnlPct !== null && lifetimePnlPct < 0 ? 'down' : 'up'} ${Math.abs(lifetimePnlPct ?? 0).toFixed(1)}%. Testing them live is the point.`;
   const publicLabStartDateKey = publicLabDateKey(new Date(PUBLIC_LAB_START_DATE));
   const latestPublicLabDateKey = latestBnfPoint
     ? publicLabDateKeyFromIso(latestBnfPoint.captured_at)
@@ -816,6 +983,20 @@ export function WorldV2Page() {
     if (dateKeys.size === 0 && latestPublicLabDateKey) dateKeys.add(latestPublicLabDateKey);
     return Array.from(dateKeys).sort();
   }, [bnf.data.points, latestPublicLabDateKey, publicLabStartDateKey, selectedLabDateKey]);
+  const publicLabPortfolioRedDayMove = useMemo(() => {
+    const moves = publicLabDailyMoves(bnf.data.points, publicLabStartDateKey, latestPublicLabDateKey);
+    const latestMove = moves.find((move) => move.dateKey === latestPublicLabDateKey) ?? moves[moves.length - 1] ?? null;
+    if (!latestMove || latestMove.deltaCents >= 0) return null;
+    const worstDelta = Math.min(...moves.map((move) => move.deltaCents));
+    const isWorst = latestMove.deltaCents <= worstDelta;
+    return {
+      deltaCents: latestMove.deltaCents,
+      days: moves.length,
+      copy: isWorst
+        ? `Worst day in ${moves.length} day${moves.length === 1 ? '' : 's'}`
+        : 'Red day',
+    };
+  }, [bnf.data.points, latestPublicLabDateKey, publicLabStartDateKey]);
   const publicLabDateKeyForView =
     selectedLabDateKey && publicLabAvailableDateKeys.includes(selectedLabDateKey)
       ? selectedLabDateKey
@@ -831,13 +1012,27 @@ export function WorldV2Page() {
     [publicLabDateKeyForView, publicLabDateTrades],
   );
   const largestSettledTrade = useMemo(() => biggestMoveAcrossAgents(publicLabTradeLogsByAgent), [publicLabTradeLogsByAgent]);
+  const publicLabTradeInsight = useMemo(
+    () => buildDailyTradeInsight(publicLabTradeLogsByAgent),
+    [publicLabTradeLogsByAgent],
+  );
+  const publicLabExternalInsightPacket = useMemo(
+    () => publicLabInsightPacketForDate(agentInsightPackets, publicLabDateKeyForView, latestPublicLabDateKey),
+    [agentInsightPackets, latestPublicLabDateKey, publicLabDateKeyForView],
+  );
+  const publicLabInsight = useMemo(
+    () => publicLabExternalInsightPacket
+      ? agentInsightPacketToTradeInsight(publicLabExternalInsightPacket)
+      : publicLabTradeInsight,
+    [publicLabExternalInsightPacket, publicLabTradeInsight],
+  );
   const publicLabPostsForDate = useMemo(
     () => publicLearningPosts.filter((post) => publicLabDateKeyFromIso(post.made_at) === publicLabDateKeyForView),
     [publicLabDateKeyForView, publicLearningPosts],
   );
   const publicLabCopy = useMemo(
-    () => publicLabNarrative(publicLabPostsForDate, largestSettledTrade),
-    [publicLabPostsForDate, largestSettledTrade],
+    () => publicLabNarrative(publicLabPostsForDate, largestSettledTrade, publicLabInsight),
+    [publicLabPostsForDate, largestSettledTrade, publicLabInsight],
   );
   const publicLabAsOfLabel = useMemo(
     () => formatPublicLabAsOf(publicLabBnfPoint?.captured_at),
@@ -847,6 +1042,20 @@ export function WorldV2Page() {
     ? publicLabBnfPoint.combined_cleared_cents - PUBLIC_LAB_STARTING_BANKROLL_CENTS
     : null;
   const settledPnlWindows = settledAgentPnl.windows;
+  const redDayMove = publicLabPortfolioRedDayMove
+    ?? ((settledPnlWindows['24h']?.cents ?? 0) < 0
+      ? {
+          deltaCents: settledPnlWindows['24h']?.cents ?? 0,
+          copy: 'Red day',
+        }
+      : null);
+  const redDayLessonAnchor = redDayMove && isActionableTradeInsight(publicLabInsight)
+    ? {
+        ...redDayMove,
+        headline: publicLabInsight.headline,
+        summary: publicLabInsight.summary,
+      }
+    : null;
   const selectedSettledPnl = settledPnlWindows[balanceWindow];
   const totalBalanceCopy = latestBnfPoint
     ? formatTotalBalance(latestBnfPoint.combined_cleared_cents)
@@ -972,13 +1181,20 @@ export function WorldV2Page() {
     const note = params.get('note');
     if (tradeId) {
       windowSetters[agent]('lifetime');
-      setPendingDeepLinkTrade({ tradeId, surface: 'deep_link' });
+      if (isPublicTradeId(tradeId)) {
+        setPendingDeepLinkTrade({ tradeId, surface: 'deep_link' });
+        setTradeLinkMessage(null);
+      } else {
+        setPendingDeepLinkTrade(null);
+        setTradeLinkMessage(INVALID_TRADE_LINK_MESSAGE);
+      }
       setLearnMoreOpen(false);
       setHighlightLatestNote(false);
     } else if (note === 'latest') {
       setSelectedTrade(null);
       setLearnMoreOpen(true);
       setHighlightLatestNote(true);
+      setTradeLinkMessage(null);
     }
   }, [windowSetters]);
 
@@ -992,6 +1208,7 @@ export function WorldV2Page() {
     setLearnMoreOpen(false);
     setHighlightLatestNote(false);
     setPendingDeepLinkTrade(null);
+    setTradeLinkMessage(null);
     trackPublicLabEvent('trade_replay_open', {
       surface: pendingDeepLinkTrade.surface,
       agent_id: selectedLiveAgentId,
@@ -1007,11 +1224,20 @@ export function WorldV2Page() {
 
     let cancelled = false;
     void fetchPublicTradeById(selectedLiveAgentId, pendingDeepLinkTrade.tradeId).then((row) => {
-      if (cancelled || !row) return;
+      if (cancelled) return;
+      if (!row) {
+        setSelectedTrade(null);
+        setLearnMoreOpen(false);
+        setHighlightLatestNote(false);
+        setPendingDeepLinkTrade(null);
+        setTradeLinkMessage(INVALID_TRADE_LINK_MESSAGE);
+        return;
+      }
       setSelectedTrade(row);
       setLearnMoreOpen(false);
       setHighlightLatestNote(false);
       setPendingDeepLinkTrade(null);
+      setTradeLinkMessage(null);
       trackPublicLabEvent('trade_replay_open', {
         surface: pendingDeepLinkTrade.surface,
         agent_id: selectedLiveAgentId,
@@ -1046,16 +1272,35 @@ export function WorldV2Page() {
     };
   }, [balanceMenuOpen]);
 
-  const closeFocus = () => {
+  const rememberStatsReturnFocus = () => {
+    const active = document.activeElement;
+    if (active instanceof HTMLElement && !statsPanelRef.current?.contains(active)) {
+      statsReturnFocusRef.current = active;
+    }
+  };
+
+  const restoreStatsReturnFocus = useCallback(() => {
+    window.setTimeout(() => {
+      const target = statsReturnFocusRef.current?.isConnected
+        ? statsReturnFocusRef.current
+        : helpButtonRef.current;
+      target?.focus();
+      statsReturnFocusRef.current = null;
+    }, 0);
+  }, []);
+
+  const closeFocus = useCallback(() => {
     setSelectedAgentId(null);
     setSelectedTrade(null);
     setLearnMoreOpen(false);
     setHighlightLatestNote(false);
     setPendingDeepLinkTrade(null);
+    setTradeLinkMessage(null);
     updateWorldDeepLink({ agent: null, trade: null, note: null });
     setFocusRequestId((requestId) => requestId + 1);
     if (isMobileViewport()) setMenuHidden(false);
-  };
+    restoreStatsReturnFocus();
+  }, [restoreStatsReturnFocus]);
 
   const copyDeepLink = async (surface: string, params: Record<string, string | null>) => {
     const href = canonicalDeepLink(params);
@@ -1088,6 +1333,12 @@ export function WorldV2Page() {
     }
   };
 
+  const openLatestPublicLabLesson = (surface = 'red_day_anchor') => {
+    setSelectedLabDateKey(null);
+    setPublicLabOpen(true, surface);
+    updateWorldDeepLink({ lab: 'open', date: null, chart: null, period: null });
+  };
+
   const openAccountChart = (surface = 'public_lab_tracker') => {
     setLabMinimized(false);
     setLabCalendarOpen(false);
@@ -1118,12 +1369,14 @@ export function WorldV2Page() {
   };
 
   const selectAgent = (id: WorldMenuAgentId, surface = 'agent_menu') => {
+    rememberStatsReturnFocus();
     trackPublicLabEvent('agent_open', { surface, agent_id: id });
     setSelectedAgentId(id);
     setSelectedTrade(null);
     setLearnMoreOpen(false);
     setHighlightLatestNote(false);
     setPendingDeepLinkTrade(null);
+    setTradeLinkMessage(null);
     setWorldIntroOpen(false);
     updateWorldDeepLink({ agent: id, trade: null, note: null });
     setFocusRequestId((requestId) => requestId + 1);
@@ -1145,6 +1398,7 @@ export function WorldV2Page() {
     setSelectedTrade(null);
     setLearnMoreOpen(true);
     setHighlightLatestNote(true);
+    setTradeLinkMessage(null);
   };
 
   const openTradeReplay = (row: TradeLogEntry) => {
@@ -1158,10 +1412,12 @@ export function WorldV2Page() {
     setHighlightLatestNote(false);
     setWorldIntroOpen(false);
     setSelectedTrade(row);
+    setTradeLinkMessage(null);
     if (selectedLiveAgentId) updateWorldDeepLink({ agent: selectedLiveAgentId, trade: row.id, note: null });
   };
 
   const openTradeForAgent = (id: WorldMenuAgentId, row: TradeLogEntry, surface: string) => {
+    rememberStatsReturnFocus();
     trackPublicLabEvent('trade_replay_open', {
       surface,
       agent_id: id,
@@ -1173,6 +1429,7 @@ export function WorldV2Page() {
     setHighlightLatestNote(false);
     setWorldIntroOpen(false);
     setSelectedTrade(row);
+    setTradeLinkMessage(null);
     updateWorldDeepLink({ agent: id, trade: row.id, note: null });
     setFocusRequestId((requestId) => requestId + 1);
     setBalanceMenuOpen(false);
@@ -1182,12 +1439,19 @@ export function WorldV2Page() {
   };
 
   const openTradeIdForAgent = (id: WorldMenuAgentId, tradeId: string, surface: string) => {
+    rememberStatsReturnFocus();
     setSelectedAgentId(id);
     setLearnMoreOpen(false);
     setHighlightLatestNote(false);
     setWorldIntroOpen(false);
     setSelectedTrade(null);
-    setPendingDeepLinkTrade({ tradeId, surface });
+    if (isPublicTradeId(tradeId)) {
+      setPendingDeepLinkTrade({ tradeId, surface });
+      setTradeLinkMessage(null);
+    } else {
+      setPendingDeepLinkTrade(null);
+      setTradeLinkMessage(INVALID_TRADE_LINK_MESSAGE);
+    }
     windowSetters[id]('lifetime');
     updateWorldDeepLink({ agent: id, trade: tradeId, note: null });
     setFocusRequestId((requestId) => requestId + 1);
@@ -1206,6 +1470,7 @@ export function WorldV2Page() {
     setLearnMoreOpen(false);
     setHighlightLatestNote(false);
     setPendingDeepLinkTrade(null);
+    setTradeLinkMessage(null);
     updateWorldDeepLink({ agent: null, trade: null, note: null });
     setWorldIntroOpen(true);
     setFocusRequestId((requestId) => requestId + 1);
@@ -1239,12 +1504,62 @@ export function WorldV2Page() {
     setLearnMoreOpen(false);
     setHighlightLatestNote(false);
     setPendingDeepLinkTrade(null);
+    setTradeLinkMessage(null);
     updateWorldDeepLink({ agent: null, trade: null, note: null });
     setPublicLabOpen(true, 'guide');
     setFocusRequestId((requestId) => requestId + 1);
     setMenuExpanded(false);
     if (isMobileViewport()) setMenuHidden(false);
   };
+
+  useEffect(() => {
+    if (!selectedLiveAgentId || worldIntroOpen) return;
+    const panel = statsPanelRef.current;
+    if (!panel) return;
+
+    panel.focus();
+
+    const handlePanelKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        event.preventDefault();
+        closeFocus();
+        return;
+      }
+
+      if (event.key !== 'Tab') return;
+
+      const focusable = focusablePanelElements(panel);
+      if (focusable.length === 0) {
+        event.preventDefault();
+        panel.focus();
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+
+      if (!(active instanceof HTMLElement) || !panel.contains(active)) {
+        event.preventDefault();
+        first.focus();
+        return;
+      }
+
+      if (event.shiftKey && active === first) {
+        event.preventDefault();
+        last.focus();
+        return;
+      }
+
+      if (!event.shiftKey && active === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+
+    window.addEventListener('keydown', handlePanelKeyDown);
+    return () => window.removeEventListener('keydown', handlePanelKeyDown);
+  }, [closeFocus, selectedLiveAgentId, selectedPanelMode, selectedTrade?.id, worldIntroOpen]);
 
   useEffect(() => {
     if (!worldIntroOpen) return;
@@ -1349,9 +1664,9 @@ export function WorldV2Page() {
 
       {!isolatedTestMode && <div className="world-v2-vignette" />}
 
-      {!isolatedTestMode && !selectedAgentId && !worldIntroOpen && (
+      {!isolatedTestMode && !selectedAgentId && !worldIntroOpen && !menuHidden && (
         <aside
-          className={`world-v2-coldline${menuHidden ? ' world-v2-coldline--menu-hidden' : ''}${menuExpanded ? ' world-v2-coldline--menu-expanded' : ''}`}
+          className={`world-v2-coldline${menuExpanded ? ' world-v2-coldline--menu-expanded' : ''}`}
           aria-label="What Gym Live is"
         >
           <strong>{coldScreenPrimary}</strong>
@@ -1361,7 +1676,7 @@ export function WorldV2Page() {
 
       {!isolatedTestMode && !selectedAgentId && !worldIntroOpen && visitDelta && (
         <div className="world-v2-visit-delta">
-          <VisitDeltaStrip delta={visitDelta} onDismiss={dismissVisitDelta} />
+          <VisitDeltaStrip delta={visitDelta} onDismiss={dismissVisitDelta} allTimePct={lifetimePnlPct} />
         </div>
       )}
 
@@ -1488,6 +1803,9 @@ export function WorldV2Page() {
                   asOfLabel={publicLabAsOfLabel}
                   lesson={publicLabCopy.lesson}
                   lessonSource={publicLabCopy.lessonSource}
+                  lessonEvidence={publicLabCopy.lessonEvidence}
+                  lessonConfidence={publicLabCopy.lessonConfidence}
+                  lessonSampleSize={publicLabCopy.lessonSampleSize}
                   tomorrowWatch={publicLabCopy.tomorrowWatch}
                   latestDateKey={latestPublicLabDateKey}
                   selectedDateKey={publicLabDateKeyForView}
@@ -1641,6 +1959,18 @@ export function WorldV2Page() {
           </button>
         </div>
 
+        {redDayLessonAnchor && !selectedAgentId && !worldIntroOpen && (
+          <button
+            type="button"
+            className="world-v2-red-day-anchor"
+            onClick={() => openLatestPublicLabLesson('red_day_anchor')}
+          >
+            <span>{redDayLessonAnchor.copy} · {formatCurrencyChange(redDayLessonAnchor.deltaCents)} · data insight</span>
+            <strong>{redDayLessonAnchor.headline}</strong>
+            <em>{redDayLessonAnchor.summary}</em>
+          </button>
+        )}
+
         <div className="world-v2-agent-list">
           <div className="world-v2-agent-list-primary">
             {primaryWorldAgentOrder.map(renderAgentButton)}
@@ -1661,14 +1991,12 @@ export function WorldV2Page() {
 
       {!isolatedTestMode && selectedLiveAgentId && selectedAgent && selectedVm && (
         <section
+          ref={statsPanelRef}
           className={`world-v2-stats-panel world-v2-stats-panel--${selectedPanelMode}`}
-          aria-label={
-            selectedTrade
-              ? `${selectedAgent.name} trade replay`
-              : learnMoreOpen
-                ? `${selectedAgent.name} learn more`
-                : `${selectedAgent.name} trade stats`
-          }
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby={selectedPanelTitleId}
+          tabIndex={-1}
           style={{ '--agent-accent': `var(--color-${selectedLiveAgentId})` } as React.CSSProperties}
         >
           {selectedTrade ? (
@@ -1687,8 +2015,8 @@ export function WorldV2Page() {
                 </button>
                 <div className="world-v2-stats-title">
                   <p>{selectedAgent.name}</p>
-                  <h2>Trade Replay</h2>
-                  <span>{selectedTrade.contract_ticker}</span>
+                  <h2 id={selectedPanelTitleId}>Trade Replay</h2>
+                  <span>{describeKalshiContract(selectedTrade.contract_ticker).shortLabel}</span>
                 </div>
                 <button
                   type="button"
@@ -1734,7 +2062,7 @@ export function WorldV2Page() {
                 </button>
                 <div className="world-v2-stats-title">
                   <p>{selectedAgent.name}</p>
-                  <h2>Learn More</h2>
+                  <h2 id={selectedPanelTitleId}>Learn More</h2>
                   <span>{selectedAgent.nickname}</span>
                 </div>
                 <button
@@ -1774,7 +2102,7 @@ export function WorldV2Page() {
                 />
                 <div className="world-v2-stats-title">
                   <p>{statusCopy(selectedAgent, loading, selectedVm.record.settled)}</p>
-                  <h2>{selectedAgent.name}</h2>
+                  <h2 id={selectedPanelTitleId}>{selectedAgent.name}</h2>
                   <span>{selectedAgent.nickname}</span>
                 </div>
                 <button
@@ -1820,14 +2148,23 @@ export function WorldV2Page() {
                 </div>
               </div>
               <p className="world-v2-stat-scope">
-                {windowScopeLabel(windowsByAgent[selectedLiveAgentId], data.updated_at)}
+                {windowScopeLabel(windowsByAgent[selectedLiveAgentId], data.updated_at, loading)}
               </p>
+
+              {tradeLinkMessage && (
+                <p className="world-v2-trade-link-message" role="status">
+                  {tradeLinkMessage}
+                </p>
+              )}
 
               <TodaysFieldNote
                 agentId={selectedLiveAgentId}
                 onOpenHistory={openLearnMore}
-                scopeLabel={`End-of-day note, ${formatPanelAsOf(selectedLatestNote?.made_at).replace(/^as of /, '')}`}
+                scopeLabel={selectedTradeInsight
+                  ? windowScopeLabel(windowsByAgent[selectedLiveAgentId], data.updated_at, loading)
+                  : `End-of-day note, ${formatPanelAsOf(selectedLatestNote?.made_at).replace(/^as of /, '')}`}
                 reconciliation={selectedReconciliationCopy}
+                insight={selectedTradeInsight}
               />
 
               <TimeFilterPill

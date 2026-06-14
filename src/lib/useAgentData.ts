@@ -59,6 +59,8 @@ const COLUMNS =
 const LIFETIME_COLUMNS = 'agent_id,settled,wins,losses,breakeven,total_pnl,open_count';
 const REPLAY_TICK_COLUMNS =
   'trade_id,captured_at,yes_price_cents,no_price_cents,underlying_label,underlying_value,underlying_unit,source';
+const UUID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const AGENT_DATA_REFRESH_MS = 90_000;
 
 const ZERO_LIFETIME: Omit<LifetimeStatsRow, 'agent_id'> = {
   settled: 0,
@@ -143,10 +145,15 @@ async function attachReplayTicks(tradeLog: TradeLogEntry[]): Promise<TradeLogEnt
   });
 }
 
+export function isPublicTradeId(value: string): boolean {
+  return UUID_PATTERN.test(value);
+}
+
 export async function fetchPublicTradeById(agentId: AgentId, tradeId: string): Promise<TradeLogEntry | null> {
   if (!isSupabaseConfigured || !supabase) {
     return mockTradeLog[agentId]?.find((trade) => trade.id === tradeId) ?? null;
   }
+  if (!isPublicTradeId(tradeId)) return null;
 
   const { data, error } = await supabase
     .from('agent_trades_public')
@@ -301,6 +308,30 @@ function makeEmptyLeaderboard(): LeaderboardResponse {
   return { updated_at: new Date().toISOString(), agents: [] };
 }
 
+function latestValidIso(values: Array<string | null | undefined>) {
+  let latestMs = Number.NEGATIVE_INFINITY;
+  let latestIso: string | null = null;
+
+  for (const value of values) {
+    if (!value) continue;
+    const time = Date.parse(value);
+    if (!Number.isFinite(time) || time <= latestMs) continue;
+    latestMs = time;
+    latestIso = value;
+  }
+
+  return latestIso;
+}
+
+function leaderboardUpdatedAt(agents: Agent[]) {
+  return latestValidIso(
+    agents.flatMap((agent) => [
+      agent.latest_receipt?.settled_at,
+      agent.open_position?.entered_at_delayed,
+    ]),
+  ) ?? new Date().toISOString();
+}
+
 export function useAgentData(
   windowsByAgent: Record<AgentId, PerformanceWindow>,
 ): UseAgentDataResult {
@@ -321,6 +352,7 @@ export function useAgentData(
         : { kind: 'not-configured', message: 'Supabase not configured — using mock data' },
   );
   const [loading, setLoading] = useState<boolean>(() => isSupabaseConfigured);
+  const [refreshNonce, setRefreshNonce] = useState(0);
   const windowSignature = AGENT_IDS.map((id) => windowsByAgent[id] ?? '24h').join('|');
 
   // Mock-mode: card view models recompute reactively when windowsByAgent changes.
@@ -340,6 +372,26 @@ export function useAgentData(
   // on Apex does NOT trigger a refetch on Gale/Metheus. The ref outlives renders;
   // the effect only re-runs queries for agents whose window changed.
   const cacheRef = useRef<Partial<Record<AgentId, PerAgentCache>>>({});
+
+  useEffect(() => {
+    if (!isSupabaseConfigured || !supabase) return;
+
+    const requestRefresh = () => {
+      if (document.visibilityState === 'hidden') return;
+      cacheRef.current = {};
+      setRefreshNonce((value) => value + 1);
+    };
+
+    const refresh = window.setInterval(requestRefresh, AGENT_DATA_REFRESH_MS);
+    window.addEventListener('focus', requestRefresh);
+    document.addEventListener('visibilitychange', requestRefresh);
+
+    return () => {
+      window.clearInterval(refresh);
+      window.removeEventListener('focus', requestRefresh);
+      document.removeEventListener('visibilitychange', requestRefresh);
+    };
+  }, []);
 
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase) return;
@@ -431,7 +483,7 @@ export function useAgentData(
         }
 
         setData({
-          updated_at: new Date().toISOString(),
+          updated_at: leaderboardUpdatedAt(agents.map((a) => a.agent)),
           agents: agents.map((a) => a.agent),
         });
         setLiveCardViewModels(newViewModels);
@@ -448,12 +500,12 @@ export function useAgentData(
     return () => {
       cancelled = true;
     };
-    // Effect re-runs when ANY agent's window changes; the per-agent cache
-    // ensures we only refetch the agent whose window actually flipped.
-    // windowsByAgent object ref changes every render in callers; windowSignature
-    // keeps this dependency stable unless an agent's selected window changes.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [windowSignature]);
+  // Effect re-runs when ANY agent's window changes; the per-agent cache
+  // ensures we only refetch the agent whose window actually flipped.
+  // windowsByAgent object ref changes every render in callers; windowSignature
+  // keeps this dependency stable unless an agent's selected window changes.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [windowSignature, refreshNonce]);
 
   return { data, cardViewModels, source, error, loading };
 }

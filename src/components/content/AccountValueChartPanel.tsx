@@ -177,6 +177,9 @@ export function AccountValueChartPanel({ points, period, onPeriodChange, onBack,
   const low = series.length > 0 ? Math.min(...series.map((point) => point.combined_cleared_cents)) : null;
   const chart = buildChart(series, period);
   const pnlCents = latest ? latest.combined_cleared_cents - PUBLIC_LAB_STARTING_BANKROLL_CENTS : 0;
+  const allTimePct = latest
+    ? (pnlCents / PUBLIC_LAB_STARTING_BANKROLL_CENTS) * 100
+    : 0;
   const periodChangeCents = latest && first ? latest.combined_cleared_cents - first.combined_cleared_cents : 0;
   const periodChangePct = first && first.combined_cleared_cents !== 0
     ? (periodChangeCents / first.combined_cleared_cents) * 100
@@ -205,15 +208,21 @@ export function AccountValueChartPanel({ points, period, onPeriodChange, onBack,
           <em>{formatAsOf(latest?.captured_at)}</em>
         </div>
         <div>
-          <span>{periodName} change</span>
-          <strong className={periodChangeCents >= 0 ? 'world-v2-gain' : 'world-v2-loss'}>
-            {formatSignedDollars(periodChangeCents)}
+          <span>All-time from $10k</span>
+          <strong className={pnlCents >= 0 ? 'world-v2-gain' : 'world-v2-loss'}>
+            {formatSignedDollars(pnlCents)}
           </strong>
-          <em className={periodChangeCents >= 0 ? 'world-v2-gain' : 'world-v2-loss'}>
-            {formatSignedPercent(periodChangePct)}
+          <em className={pnlCents >= 0 ? 'world-v2-gain' : 'world-v2-loss'}>
+            {formatSignedPercent(allTimePct)}
           </em>
         </div>
       </div>
+
+      {series.length > 1 && (
+        <p className="account-chart-panel__lead-in">
+          {periodName} view: {formatSignedDollars(periodChangeCents)} ({formatSignedPercent(periodChangePct)}) since {formatSnapshotDate(first?.captured_at)}.
+        </p>
+      )}
 
       <div className="account-chart-panel__chart">
         {chart ? (

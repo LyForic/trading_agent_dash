@@ -151,7 +151,7 @@ export function GymPage() {
         style={{ color: 'var(--world-ink)' }}
       >
         <div className="gym-chrome">
-          <TrustStrip data={data} error={error} />
+          <TrustStrip data={data} error={error} portfolio={bnf.data} />
         </div>
 
         <main className="px-4 pt-6 pb-10 space-y-4">
@@ -180,7 +180,7 @@ export function GymPage() {
             }}
           >
             <h1 className="text-3xl" style={{ fontFamily: 'var(--font-display)' }}>
-              The Trading Gym
+              Gym Live
             </h1>
             <p className="mt-1 text-sm" style={{ color: 'var(--color-ink-muted)' }}>
               Live agents. Live markets. Documented in public.
@@ -188,7 +188,7 @@ export function GymPage() {
           </header>
 
           <div className="gym-chrome">
-            <VisitDeltaStrip delta={delta} onDismiss={dismiss} />
+            <VisitDeltaStrip delta={delta} onDismiss={dismiss} allTimePct={bnf.snapshot.allTimePct} />
           </div>
 
           {showDataState && (

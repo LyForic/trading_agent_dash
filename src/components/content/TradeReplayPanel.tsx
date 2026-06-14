@@ -1,10 +1,12 @@
-import { Copy, Pause, Play, RotateCcw } from 'lucide-react';
+import { Pause, Play, RotateCcw } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { formatPnl } from '@/lib/formatting';
+import { describeKalshiContract } from '@/lib/kalshiContracts';
 import { tradePlainText } from '@/lib/tradePlainText';
 import { buildReplay } from '@/lib/tradeReplay';
 import type { ReplayPoint } from '@/lib/tradeReplay';
 import type { TradeLogEntry } from '@/lib/types';
+import { MarketIdLine } from './MarketIdLine';
 
 interface Props {
   row: TradeLogEntry;
@@ -90,6 +92,7 @@ function segmentPoints(points: ReplayPoint[], elapsedMs: number, activeYesProbab
 
 export function TradeReplayPanel({ row }: Props) {
   const replay = useMemo(() => buildReplay(row), [row]);
+  const market = useMemo(() => describeKalshiContract(row.contract_ticker), [row.contract_ticker]);
   const [elapsedMs, setElapsedMs] = useState(replay.durationMs);
   const [playing, setPlaying] = useState(false);
   const [speed, setSpeed] = useState<(typeof SPEEDS)[number]>(2);
@@ -152,7 +155,7 @@ export function TradeReplayPanel({ row }: Props) {
     <div className="trade-replay-panel">
       <div className="trade-replay-head">
         <div>
-          <span>{row.contract_ticker}</span>
+          <span>{market.shortLabel}</span>
           <strong>{row.side.toUpperCase()} probability replay</strong>
         </div>
         <div className="trade-replay-timebox">
@@ -162,15 +165,7 @@ export function TradeReplayPanel({ row }: Props) {
 
       <div className="trade-replay-plain">
         <p>{tradePlainText(row)}</p>
-        <button
-          type="button"
-          onClick={() => void navigator.clipboard?.writeText(row.id)}
-          aria-label="Copy full trade id"
-          title={row.id}
-        >
-          <Copy size={13} aria-hidden />
-          <span>Copy ID</span>
-        </button>
+        <MarketIdLine contractTicker={row.contract_ticker} />
       </div>
 
       <div className="trade-replay-chart" aria-label="15 minute trade replay chart showing probabilities">

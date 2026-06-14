@@ -52,11 +52,13 @@ describe('TradeLog', () => {
     const rows = [makeEntry('apex-1', 2)];
     render(<TradeLog rows={rows} windowSettledCount={1} window="24h" hasOpenPosition={false} />);
 
-    await user.click(screen.getByRole('button', { name: /KXFEDDECISION-26MAY/i }));
+    await user.click(screen.getByRole('button', { name: /Fed decision market/i }));
 
     expect(screen.getByLabelText(/15 minute trade replay chart/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Play replay/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/Replay timeline/i)).toHaveAttribute('max', '900000');
+    expect(screen.getAllByText(/Took a YES position/i).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/Bet YES/i)).not.toBeInTheDocument();
   });
 
   it('uses stored replay ticks when a trade provides them', async () => {
@@ -88,7 +90,7 @@ describe('TradeLog', () => {
     ];
     render(<TradeLog rows={rows} windowSettledCount={1} window="24h" hasOpenPosition={false} />);
 
-    await user.click(screen.getByRole('button', { name: /KXFEDDECISION-26MAY/i }));
+    await user.click(screen.getByRole('button', { name: /Fed decision market/i }));
 
     expect(screen.getByText(/Market ticks/i)).toBeInTheDocument();
   });
@@ -98,7 +100,7 @@ describe('TradeLog', () => {
     const rows = [makeEntry('apex-1', 2)];
     render(<TradeLog rows={rows} windowSettledCount={1} window="24h" hasOpenPosition={false} />);
 
-    const tradeButton = screen.getByRole('button', { name: /KXFEDDECISION-26MAY/i });
+    const tradeButton = screen.getByRole('button', { name: /Fed decision market/i });
     await user.click(tradeButton);
     expect(screen.getByLabelText(/15 minute trade replay chart/i)).toBeInTheDocument();
 
@@ -114,11 +116,13 @@ describe('TradeLog', () => {
     ];
     render(<TradeLog rows={rows} windowSettledCount={2} window="24h" hasOpenPosition={false} />);
 
-    await user.click(screen.getByRole('button', { name: /KXFEDDECISION-26MAY/i }));
-    expect(screen.getByText(/^KXFEDDECISION-26MAY$/)).toBeInTheDocument();
+    await user.click(screen.getByRole('button', { name: /Fed decision market/i }));
+    expect(screen.getAllByText(/^KXFEDDECISION-26MAY$/).length).toBeGreaterThan(0);
+    expect(screen.queryByText(/Show market id/i)).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Copy market id/i })).not.toBeInTheDocument();
 
     await user.click(screen.getByRole('button', { name: /2YES/i }));
-    expect(screen.getByText(/^KXBTC-26MAY22-B70000$/)).toBeInTheDocument();
+    expect(screen.getAllByText(/^KXBTC-26MAY22-B70000$/).length).toBeGreaterThan(0);
     expect(screen.queryByText(/^KXFEDDECISION-26MAY$/)).not.toBeInTheDocument();
   });
 
@@ -137,7 +141,7 @@ describe('TradeLog', () => {
       />,
     );
 
-    await user.click(screen.getByRole('button', { name: /KXFEDDECISION-26MAY/i }));
+    await user.click(screen.getByRole('button', { name: /Fed decision market/i }));
 
     expect(onTradeSelect).toHaveBeenCalledWith(rows[0]);
     expect(screen.queryByLabelText(/15 minute trade replay chart/i)).not.toBeInTheDocument();

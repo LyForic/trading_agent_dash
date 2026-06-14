@@ -3,7 +3,9 @@ export function formatPnl(value: number): string {
   return `${sign}$${Math.abs(value).toFixed(2)}`;
 }
 
+const MIN_WIN_RATE_SETTLED = 5;
+
 export function formatWinRate(wins: number, settled: number): string {
-  if (settled === 0) return '—';
+  if (settled < MIN_WIN_RATE_SETTLED) return '—';
   return `${((wins / settled) * 100).toFixed(1)}%`;
 }

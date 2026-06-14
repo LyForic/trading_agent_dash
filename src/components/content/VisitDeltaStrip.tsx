@@ -26,11 +26,18 @@ function timeAgo(days: number): string {
 export function VisitDeltaStrip({
   delta,
   onDismiss,
+  allTimePct = null,
 }: {
   delta: VisitDelta | null;
   onDismiss: () => void;
+  allTimePct?: number | null;
 }) {
   const primary = SOCIAL_LINKS.find((link) => link.id === 'tiktok') ?? SOCIAL_LINKS[0];
+  const followCopy = allTimePct === null
+    ? 'Watch the real $10k account, one lesson a day. follow @brandonnfongg'
+    : allTimePct < 0
+      ? `Watch a real $10k try to climb out of ${allTimePct.toFixed(1)}%, one lesson a day. follow @brandonnfongg`
+      : `Watch a real $10k build on +${allTimePct.toFixed(1)}%, one lesson a day. follow @brandonnfongg`;
 
   return (
     <AnimatePresence>
@@ -110,7 +117,7 @@ export function VisitDeltaStrip({
               destination: primary.href,
             })}
           >
-            Down about 35% - follow @brandonnfongg
+            {followCopy}
           </a>
         </motion.aside>
       )}

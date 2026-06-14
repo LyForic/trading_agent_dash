@@ -1,7 +1,7 @@
 {
-  "name": "The Trading Gym",
-  "short_name": "Trading Gym",
-  "description": "A living world for autonomous trading agents.",
+  "name": "Gym Live by Lyforic",
+  "short_name": "Gym Live",
+  "description": "A real $10,000 run by 6 autonomous AI agents on live prediction markets.",
   "icons": [
     {
       "src": "/icon-192.png",

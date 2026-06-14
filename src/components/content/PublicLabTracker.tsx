@@ -15,6 +15,9 @@ interface Props {
   asOfLabel: string;
   lesson: string;
   lessonSource: string;
+  lessonEvidence?: string[] | null;
+  lessonConfidence?: string | null;
+  lessonSampleSize?: number | null;
   tomorrowWatch: string;
   latestDateKey: string;
   selectedDateKey: string;
@@ -48,6 +51,11 @@ function settledTradeCopy(move: LabMove | null) {
   return `${move.agentId.toUpperCase()} ${formatPnl(move.trade.pnl)}`;
 }
 
+function settledTradeContext(move: LabMove | null) {
+  if (!move) return 'Waiting for a settled trade to inspect.';
+  return 'One strategy inside a 6-agent cohort. The test is whether the account learns from it.';
+}
+
 export function PublicLabTracker({
   currentBalanceCents,
   lifetimePnlCents,
@@ -55,6 +63,9 @@ export function PublicLabTracker({
   asOfLabel,
   lesson,
   lessonSource,
+  lessonEvidence,
+  lessonConfidence,
+  lessonSampleSize,
   tomorrowWatch,
   latestDateKey,
   selectedDateKey,
@@ -129,6 +140,21 @@ export function PublicLabTracker({
           <span>{lessonEyebrow}</span>
           <strong>{lessonHeading}</strong>
           <p>{lesson}</p>
+          {lessonEvidence && lessonEvidence.length > 0 && (
+            <ul className="public-lab-tracker__evidence" aria-label="Lesson evidence">
+              {lessonEvidence.slice(0, 3).map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          )}
+          {(lessonConfidence || (lessonSampleSize !== null && lessonSampleSize !== undefined)) && (
+            <span className="public-lab-tracker__confidence">
+              {lessonConfidence ? `${lessonConfidence} confidence` : 'Evidence logged'}
+              {lessonSampleSize !== null && lessonSampleSize !== undefined
+                ? ` · ${lessonSampleSize} sample${lessonSampleSize === 1 ? '' : 's'}`
+                : ''}
+            </span>
+          )}
         </section>
         <section aria-label={watchEyebrow}>
           <span>{watchEyebrow}</span>
@@ -152,6 +178,7 @@ export function PublicLabTracker({
           <ReceiptText size={15} aria-hidden />
           <span>Largest Settled Trade · 24h</span>
           <strong>{settledTradeCopy(largestSettledTrade)}</strong>
+          <em>{settledTradeContext(largestSettledTrade)}</em>
         </button>
       </div>
     </section>

@@ -44,11 +44,13 @@ vi.mock('@/lib/useAgentData', async () => {
   };
 });
 
-vi.mock('@/lib/useBnfPortfolio', async () => {
+vi.mock('@/lib/useBnfPortfolio', async (importOriginal) => {
   const { mockBnfPortfolioSeries } = await import('@/lib/mockData');
+  const { bnfPortfolioSnapshot } = await importOriginal<typeof import('@/lib/useBnfPortfolio')>();
   return {
     useBnfPortfolio: () => ({
       data: mockBnfPortfolioSeries,
+      snapshot: bnfPortfolioSnapshot(mockBnfPortfolioSeries),
       source: 'mock',
       error: null,
       loading: false,
@@ -69,6 +71,16 @@ vi.mock('@/lib/useAgentLearning', () => ({
     posts: [],
     loading: false,
     error: null,
+  }),
+}));
+
+vi.mock('@/lib/useAgentInsights', () => ({
+  useAgentInsights: () => ({
+    insights: [],
+    latestInsight: null,
+    loading: false,
+    error: null,
+    source: 'none',
   }),
 }));
 
@@ -100,20 +112,26 @@ describe('WorldV2Page onboarding and Public Lab state', () => {
     });
   });
 
-  it('shows the first-run guide without opening Public Lab', () => {
+  it('shows the world first without auto-opening the guide or Public Lab', () => {
     renderWorld();
+
+    expect(screen.queryByRole('dialog', { name: 'How this works' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /How this works/i })).toBeInTheDocument();
+    expect(screen.getByRole('complementary', { name: /What Gym Live is/i })).toBeInTheDocument();
+    expect(screen.queryByRole('region', { name: /Public lab tracker/i })).not.toBeInTheDocument();
+  });
+
+  it('opens and dismisses onboarding from the help button', async () => {
+    const user = userEvent.setup();
+    renderWorld();
+
+    await user.click(screen.getByRole('button', { name: /How this works/i }));
 
     expect(screen.getByRole('dialog', { name: 'How this works' })).toBeInTheDocument();
     expect(screen.getByText(/How Gym Live works/i)).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /Agents/i })).toBeInTheDocument();
     expect(screen.getByRole('tab', { name: /Proof/i })).toBeInTheDocument();
     expect(screen.getByText(/Each character is an autonomous agent/i)).toBeInTheDocument();
-    expect(screen.queryByRole('region', { name: /Public lab tracker/i })).not.toBeInTheDocument();
-  });
-
-  it('dismisses onboarding once and leaves the lab discoverable but collapsed', async () => {
-    const user = userEvent.setup();
-    renderWorld();
 
     await user.click(screen.getByRole('button', { name: /Start exploring/i }));
 
@@ -199,6 +217,25 @@ describe('WorldV2Page onboarding and Public Lab state', () => {
     await user.click(screen.getByRole('button', { name: /How this works/i }));
 
     expect(screen.getByRole('dialog', { name: 'How this works' })).toBeInTheDocument();
+  });
+
+  it('opens an agent panel as a focus-managed dialog', async () => {
+    const user = userEvent.setup();
+    window.localStorage.setItem(GUIDE_STORAGE_KEY, '1');
+    renderWorld();
+
+    const apexButton = screen.getByRole('button', { name: /^Apex/i });
+    await user.click(apexButton);
+
+    const dialog = screen.getByRole('dialog', { name: 'Apex' });
+    expect(dialog).toHaveFocus();
+
+    await user.keyboard('{Escape}');
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog', { name: 'Apex' })).not.toBeInTheDocument();
+    });
+    expect(apexButton).toHaveFocus();
   });
 
   it('closes the guide with Escape and returns focus to the help button', async () => {

@@ -1,7 +1,9 @@
 import { Fragment, useState } from 'react';
 import type { PerformanceWindow, TradeLogEntry } from '@/lib/types';
 import { formatPnl } from '@/lib/formatting';
+import { describeKalshiContract } from '@/lib/kalshiContracts';
 import { tradePlainText } from '@/lib/tradePlainText';
+import { MarketIdLine } from './MarketIdLine';
 import { TradeReplayPanel } from './TradeReplayPanel';
 
 interface Props {
@@ -37,6 +39,7 @@ function shortReceiptId(id: string) {
 
 function FirstRow({ row, selected, onSelect }: { row: TradeLogEntry; selected: boolean; onSelect: () => void }) {
   const isGain = row.pnl >= 0;
+  const market = describeKalshiContract(row.contract_ticker);
   return (
     <button
       type="button"
@@ -57,9 +60,18 @@ function FirstRow({ row, selected, onSelect }: { row: TradeLogEntry; selected: b
         </span>
       </div>
       <div className="trade-log-featured-line tabular-nums">
-        {row.contract_ticker} · {row.side.toUpperCase()} {row.entry_price_cents}¢→{row.settle_price_cents}¢ · size {row.size} · {fmtTime(row.settled_at)}
+        {market.shortLabel} · {row.side.toUpperCase()} {row.entry_price_cents}¢→{row.settle_price_cents}¢ · size {row.size} · {fmtTime(row.settled_at)}
       </div>
     </button>
+  );
+}
+
+function PlainTradeCaption({ row }: { row: TradeLogEntry }) {
+  return (
+    <div className="trade-log-plain-caption">
+      <p>{tradePlainText(row)}</p>
+      <MarketIdLine contractTicker={row.contract_ticker} />
+    </div>
   );
 }
 
@@ -148,14 +160,14 @@ export function TradeLog({
       <div className="trade-log-ledger">
         <FirstRow row={first} selected={selectedTradeId === first.id} onSelect={() => selectTrade(first)} />
         {selectedRow?.id === first.id && (
-          <p className="trade-log-plain-caption">{tradePlainText(selectedRow)}</p>
+          <PlainTradeCaption row={selectedRow} />
         )}
         {showInlineReplay && selectedRow?.id === first.id && <TradeReplayPanel key={selectedRow.id} row={selectedRow} />}
         {rest.map((row) => (
           <Fragment key={row.id}>
             <LedgerRow row={row} selected={selectedTradeId === row.id} onSelect={() => selectTrade(row)} />
             {selectedRow?.id === row.id && (
-              <p className="trade-log-plain-caption">{tradePlainText(selectedRow)}</p>
+              <PlainTradeCaption row={selectedRow} />
             )}
             {showInlineReplay && selectedRow?.id === row.id && <TradeReplayPanel key={selectedRow.id} row={selectedRow} />}
           </Fragment>

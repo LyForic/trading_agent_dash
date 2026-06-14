@@ -1,4 +1,5 @@
 import { formatPnl } from './formatting';
+import { describeKalshiContract } from './kalshiContracts';
 import type { TradeLogEntry } from './types';
 
 function formatRiskDollars(value: number) {
@@ -16,7 +17,8 @@ function formatClock(value: string) {
 
 export function tradePlainText(row: TradeLogEntry) {
   const side = row.side.toUpperCase();
+  const market = describeKalshiContract(row.contract_ticker);
   const risk = (row.size * row.entry_price_cents) / 100;
   const result = row.settle_price_cents >= row.entry_price_cents ? 'rose' : 'fell';
-  return `Bet ${side} on ${row.contract_ticker}. ${row.entry_price_cents}c x ${row.size} contracts, about ${formatRiskDollars(risk)} at risk; the contract ${result} to ${row.settle_price_cents}c by ${formatClock(row.settled_at)} for ${formatPnl(row.pnl)}.`;
+  return `Took a ${side} position on ${market.label}. Entry ${row.entry_price_cents}c x ${row.size} contracts, about ${formatRiskDollars(risk)} at risk; the held side ${result} to ${row.settle_price_cents}c by ${formatClock(row.settled_at)} for ${formatPnl(row.pnl)}.`;
 }
