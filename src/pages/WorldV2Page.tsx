@@ -1964,19 +1964,19 @@ export function WorldV2Page() {
           </button>
         </div>
 
-        {redDayLessonAnchor && !selectedAgentId && !worldIntroOpen && (
-          <button
-            type="button"
-            className="world-v2-red-day-anchor"
-            onClick={() => openLatestPublicLabLesson('red_day_anchor')}
-          >
-            <span>{redDayLessonAnchor.copy} · {formatCurrencyChange(redDayLessonAnchor.deltaCents)} · data insight</span>
-            <strong>{redDayLessonAnchor.headline}</strong>
-            <em>{redDayLessonAnchor.summary}</em>
-          </button>
-        )}
-
         <div className="world-v2-agent-list">
+          {redDayLessonAnchor && !selectedAgentId && !worldIntroOpen && (
+            <button
+              type="button"
+              className="world-v2-red-day-anchor"
+              onClick={() => openLatestPublicLabLesson('red_day_anchor')}
+            >
+              <span>{redDayLessonAnchor.copy} · {formatCurrencyChange(redDayLessonAnchor.deltaCents)} · data insight</span>
+              <strong>{redDayLessonAnchor.headline}</strong>
+              <em>{redDayLessonAnchor.summary}</em>
+            </button>
+          )}
+
           <div className="world-v2-agent-list-primary">
             {primaryWorldAgentOrder.map(renderAgentButton)}
           </div>
