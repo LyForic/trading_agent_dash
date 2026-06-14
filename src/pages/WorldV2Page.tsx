@@ -1337,6 +1337,11 @@ export function WorldV2Page() {
     setSelectedLabDateKey(null);
     setPublicLabOpen(true, surface);
     updateWorldDeepLink({ lab: 'open', date: null, chart: null, period: null });
+    if (isMobileViewport()) {
+      setBalanceMenuOpen(false);
+      setMenuExpanded(false);
+      setMenuHidden(true);
+    }
   };
 
   const openAccountChart = (surface = 'public_lab_tracker') => {
@@ -1650,6 +1655,7 @@ export function WorldV2Page() {
       : 'Mock data';
   const activeTimeModeOption = TIME_MODE_OPTIONS.find((option) => option.value === timeModePreference) ?? TIME_MODE_OPTIONS[0];
   const ActiveTimeModeIcon = activeTimeModeOption.Icon;
+  const publicLabSurfaceOpen = !labMinimized || accountChartOpen;
 
   return (
     <main className="world-v2-page">
@@ -1734,9 +1740,9 @@ export function WorldV2Page() {
           <button
             type="button"
             className="world-v2-lab-toggle-button"
-            onClick={() => setPublicLabOpen(true)}
-            aria-label={labMinimized ? 'Show public lab tracker' : 'Public lab tracker open'}
-            aria-pressed={!labMinimized}
+            onClick={() => setPublicLabOpen(!publicLabSurfaceOpen)}
+            aria-label={publicLabSurfaceOpen ? 'Hide public lab tracker' : 'Show public lab tracker'}
+            aria-pressed={publicLabSurfaceOpen}
           >
             <FlaskConical size={19} aria-hidden />
           </button>
@@ -1760,7 +1766,7 @@ export function WorldV2Page() {
         </div>
       )}
 
-      {!isolatedTestMode && !selectedAgentId && !worldIntroOpen && (!labMinimized || accountChartOpen) && (
+      {!isolatedTestMode && !selectedAgentId && !worldIntroOpen && publicLabSurfaceOpen && (
         <div className="world-v2-lab-stack">
           <div className="world-v2-lab-card">
             {accountChartOpen ? (
@@ -1829,7 +1835,6 @@ export function WorldV2Page() {
                     date: publicLabDateKeyForView === latestPublicLabDateKey ? null : publicLabDateKeyForView,
                   })}
                   onOpenSettledTrade={(agentId, trade) => openTradeForAgent(agentId, trade, 'public_lab_largest_settled_trade')}
-                  onMinimize={() => setPublicLabOpen(false, 'public_lab_tracker')}
                 />
                 <FollowExperimentCta surface="public_lab_tracker" />
               </>

@@ -1,4 +1,4 @@
-import { CalendarDays, ChartNoAxesCombined, FlaskConical, Minimize2, ReceiptText, Share2 } from 'lucide-react';
+import { CalendarDays, ChartNoAxesCombined, FlaskConical, ReceiptText, Share2 } from 'lucide-react';
 import { formatPnl } from '@/lib/formatting';
 import { PUBLIC_LAB_STARTING_BANKROLL_CENTS, publicLabDay } from '@/lib/publicLab';
 import type { AgentId, TradeLogEntry } from '@/lib/types';
@@ -27,7 +27,6 @@ interface Props {
   onOpenChart?: () => void;
   onOpenCalendar?: () => void;
   onShare?: () => void;
-  onMinimize?: () => void;
 }
 
 function formatDollars(cents: number | null) {
@@ -75,7 +74,6 @@ export function PublicLabTracker({
   onOpenChart,
   onOpenCalendar,
   onShare,
-  onMinimize,
 }: Props) {
   const day = publicLabDay(labDate);
   const isLatest = selectedDateKey === latestDateKey;
@@ -108,11 +106,6 @@ export function PublicLabTracker({
           {onShare && (
             <button type="button" onClick={onShare} aria-label="Copy Public Lab link">
               <Share2 size={14} aria-hidden />
-            </button>
-          )}
-          {onMinimize && (
-            <button type="button" onClick={onMinimize} aria-label="Minimize public lab tracker">
-              <Minimize2 size={14} aria-hidden />
             </button>
           )}
         </div>
