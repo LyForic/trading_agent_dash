@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from 'framer-motion';
-import { useRef, type PointerEvent } from 'react';
+import { useRef, useState, type PointerEvent } from 'react';
 import type { VisitDelta } from '@/lib/useVisitDelta';
 import { formatPnl } from '@/lib/formatting';
 import { SOCIAL_LINKS, trackPublicLabEvent } from '@/lib/publicLab';
@@ -15,26 +15,27 @@ import { SOCIAL_LINKS, trackPublicLabEvent } from '@/lib/publicLab';
  */
 
 function timeAgo(days: number): string {
-  if (days < 1 / 24) return 'just now';
+  if (days < 1 / (24 * 60)) return 'just now';
+  if (days < 1 / 24) {
+    const minutes = Math.max(1, Math.round(days * 24 * 60));
+    return `${minutes} min ago`;
+  }
   if (days < 1) {
     const hours = Math.round(days * 24);
-    return `${hours}h ago`;
+    return `${hours} hr${hours === 1 ? '' : 's'} ago`;
   }
   const rounded = Math.round(days);
   return `${rounded} day${rounded === 1 ? '' : 's'} ago`;
-}
-
-function notificationTimeLabel() {
-  return new Intl.DateTimeFormat(undefined, {
-    hour: 'numeric',
-    minute: '2-digit',
-  }).format(new Date());
 }
 
 function pnlTone(value: number) {
   if (value > 0) return 'visit-delta-notification__pnl visit-delta-notification__pnl--gain';
   if (value < 0) return 'visit-delta-notification__pnl visit-delta-notification__pnl--loss';
   return 'visit-delta-notification__pnl';
+}
+
+function tradeCountLabel(count: number) {
+  return `${count} trade${count === 1 ? '' : 's'}`;
 }
 
 export function VisitDeltaStrip({
@@ -52,16 +53,21 @@ export function VisitDeltaStrip({
     : allTimePct < 0
       ? `Watch a real $10k try to climb out of ${allTimePct.toFixed(1)}%, one lesson a day. follow @brandonnfongg`
       : `Watch a real $10k build on +${allTimePct.toFixed(1)}%, one lesson a day. follow @brandonnfongg`;
+  const [expanded, setExpanded] = useState(false);
   const dragStartY = useRef<number | null>(null);
+  const awayLabel = delta ? timeAgo(delta.daysSince) : '';
+  const collapsedAgentCount = 3;
+  const visibleAgents = expanded ? delta?.perAgent ?? [] : delta?.perAgent.slice(0, collapsedAgentCount) ?? [];
+  const hiddenAgentCount = Math.max(0, (delta?.perAgent.length ?? 0) - visibleAgents.length);
   const handlePointerDown = (event: PointerEvent<HTMLElement>) => {
     dragStartY.current = event.clientY;
-    event.currentTarget.setPointerCapture(event.pointerId);
+    event.currentTarget.setPointerCapture?.(event.pointerId);
   };
   const handlePointerUp = (event: PointerEvent<HTMLElement>) => {
     if (dragStartY.current === null) return;
     const dragged = event.clientY - dragStartY.current;
     dragStartY.current = null;
-    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+    if (event.currentTarget.hasPointerCapture?.(event.pointerId)) {
       event.currentTarget.releasePointerCapture(event.pointerId);
     }
     if (dragged < -42) onDismiss();
@@ -86,7 +92,7 @@ export function VisitDeltaStrip({
         >
           <div className="visit-delta-notification__header">
             <span>Gym Live</span>
-            <time>{notificationTimeLabel()}</time>
+            <time>{awayLabel}</time>
           </div>
           <button
             type="button"
@@ -99,18 +105,27 @@ export function VisitDeltaStrip({
           <strong className="visit-delta-notification__title">While you were away</strong>
           <p className="visit-delta-notification__body">
             {delta.totalNewTrades} new settled trade{delta.totalNewTrades === 1 ? '' : 's'}.
-            Account <span className={pnlTone(delta.totalPnlDelta)}>{formatPnl(delta.totalPnlDelta)}</span>
-            {' '}since {timeAgo(delta.daysSince)}.
+            Account <span className={pnlTone(delta.totalPnlDelta)}>{formatPnl(delta.totalPnlDelta)}</span>.
           </p>
-          <p className="visit-delta-notification__agents">
-            {delta.perAgent.map((a, i) => (
-              <span key={a.id}>
-                {i > 0 && <span> · </span>}
-                <span>{a.name}</span>{' '}
-                <span className={pnlTone(a.pnlDelta)}>{formatPnl(a.pnlDelta)}</span>
-              </span>
+          <div className="visit-delta-notification__agents" aria-label="Agent changes while away">
+            {visibleAgents.map((agent) => (
+              <div key={agent.id} className="visit-delta-notification__agent-row">
+                <span>{agent.name}</span>
+                <span>{tradeCountLabel(agent.newTrades)}</span>
+                <span className={pnlTone(agent.pnlDelta)}>{formatPnl(agent.pnlDelta)}</span>
+              </div>
             ))}
-          </p>
+          </div>
+          {hiddenAgentCount > 0 || expanded ? (
+            <button
+              type="button"
+              className="visit-delta-notification__expand"
+              aria-expanded={expanded}
+              onClick={() => setExpanded((open) => !open)}
+            >
+              {expanded ? 'Show less' : `Show ${hiddenAgentCount} more`}
+            </button>
+          ) : null}
           <a
             href={primary.href}
             target="_blank"
