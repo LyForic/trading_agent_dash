@@ -75,6 +75,9 @@ export function VisitDeltaStrip({
   const handlePointerCancel = () => {
     dragStartY.current = null;
   };
+  const stopNotificationDrag = (event: PointerEvent<HTMLElement>) => {
+    event.stopPropagation();
+  };
 
   return (
     <AnimatePresence>
@@ -99,6 +102,8 @@ export function VisitDeltaStrip({
             onClick={onDismiss}
             aria-label="Dismiss"
             className="visit-delta-notification__close"
+            onPointerDown={stopNotificationDrag}
+            onPointerUp={stopNotificationDrag}
           >
             ×
           </button>
@@ -121,6 +126,8 @@ export function VisitDeltaStrip({
               type="button"
               className="visit-delta-notification__expand"
               aria-expanded={expanded}
+              onPointerDown={stopNotificationDrag}
+              onPointerUp={stopNotificationDrag}
               onClick={() => setExpanded((open) => !open)}
             >
               {expanded ? 'Show less' : `Show ${hiddenAgentCount} more`}
@@ -131,6 +138,8 @@ export function VisitDeltaStrip({
             target="_blank"
             rel="noreferrer"
             className="visit-delta-notification__follow"
+            onPointerDown={stopNotificationDrag}
+            onPointerUp={stopNotificationDrag}
             onClick={() => trackPublicLabEvent('follow_click', {
               surface: 'visit_delta_strip',
               platform: primary.id,
