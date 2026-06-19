@@ -117,7 +117,7 @@ describe('WorldV2Page onboarding and Public Lab state', () => {
 
     expect(screen.queryByRole('dialog', { name: 'How this works' })).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /How this works/i })).toBeInTheDocument();
-    expect(screen.getByRole('complementary', { name: /What Gym Live is/i })).toBeInTheDocument();
+    expect(screen.queryByRole('complementary', { name: /What Gym Live is/i })).not.toBeInTheDocument();
     expect(screen.queryByRole('region', { name: /Public lab tracker/i })).not.toBeInTheDocument();
   });
 

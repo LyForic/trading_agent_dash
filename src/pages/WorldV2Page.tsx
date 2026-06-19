@@ -958,9 +958,6 @@ export function WorldV2Page() {
   const lifetimeArcCopy = latestBnfPoint === null
     ? 'Public account syncing'
     : `6 strategies · ${formatKCurrency(PUBLIC_LAB_STARTING_BANKROLL_CENTS)} · Day ${publicLabDay(new Date(latestBnfPoint.captured_at))} · ${formatPercentChange(lifetimePnlPct)} all-time`;
-  const coldScreenPrimary = latestBnfPoint === null
-    ? '6 strategies are trading one real $10,000 account on live prediction markets.'
-    : `6 strategies, one real $10,000 account. Day ${publicLabDay(new Date(latestBnfPoint.captured_at))}: ${lifetimePnlPct !== null && lifetimePnlPct < 0 ? 'down' : 'up'} ${Math.abs(lifetimePnlPct ?? 0).toFixed(1)}%. Testing them live is the point.`;
   const publicLabStartDateKey = publicLabDateKey(new Date(PUBLIC_LAB_START_DATE));
   const latestPublicLabDateKey = latestBnfPoint
     ? publicLabDateKeyFromIso(latestBnfPoint.captured_at)
@@ -1688,16 +1685,6 @@ export function WorldV2Page() {
       />
 
       {!isolatedTestMode && <div className="world-v2-vignette" />}
-
-      {!isolatedTestMode && !selectedAgentId && !worldIntroOpen && !menuHidden && (
-        <aside
-          className={`world-v2-coldline${menuExpanded ? ' world-v2-coldline--menu-expanded' : ''}`}
-          aria-label="What Gym Live is"
-        >
-          <strong>{coldScreenPrimary}</strong>
-          <span>Public experiment with the owner's own money. Not financial advice. Nothing to buy.</span>
-        </aside>
-      )}
 
       {!isolatedTestMode && !selectedAgentId && !worldIntroOpen && visitDelta && (
         <div className="world-v2-visit-delta">
