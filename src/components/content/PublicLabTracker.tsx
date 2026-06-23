@@ -18,7 +18,6 @@ interface Props {
   lessonEvidence?: string[] | null;
   lessonConfidence?: string | null;
   lessonSampleSize?: number | null;
-  tomorrowWatch: string;
   latestDateKey: string;
   selectedDateKey: string;
   onOpenSettledTrade: (agentId: AgentId, trade: TradeLogEntry) => void;
@@ -65,7 +64,6 @@ export function PublicLabTracker({
   lessonEvidence,
   lessonConfidence,
   lessonSampleSize,
-  tomorrowWatch,
   latestDateKey,
   selectedDateKey,
   onOpenSettledTrade,
@@ -83,7 +81,6 @@ export function PublicLabTracker({
     : lessonSource.includes('field note')
       ? lessonSource
       : 'Lesson from this snapshot';
-  const watchEyebrow = isLatest ? 'Tomorrow watch' : 'Next watch from that day';
   const dayHeading = isLatest
     ? `Day ${day} of the $10K public agent account`
     : `Day ${day} snapshot`;
@@ -148,10 +145,6 @@ export function PublicLabTracker({
                 : ''}
             </span>
           )}
-        </section>
-        <section aria-label={watchEyebrow}>
-          <span>{watchEyebrow}</span>
-          <p>{tomorrowWatch}</p>
         </section>
       </div>
 

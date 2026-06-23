@@ -23,12 +23,15 @@ const crowdedDelta: VisitDelta = {
 describe('VisitDeltaStrip', () => {
   it('shows time away and exposes hidden agent changes with an expand control', async () => {
     const user = userEvent.setup();
-    render(<VisitDeltaStrip delta={crowdedDelta} onDismiss={vi.fn()} allTimePct={-30.4} />);
+    const { container } = render(<VisitDeltaStrip delta={crowdedDelta} onDismiss={vi.fn()} allTimePct={-30.4} />);
 
     expect(screen.getByText('50 min ago')).toBeInTheDocument();
-    expect(screen.getByText('Apex')).toBeInTheDocument();
-    expect(screen.getByText('Gale')).toBeInTheDocument();
-    expect(screen.getByText('Metheus')).toBeInTheDocument();
+    expect([...container.querySelectorAll('.visit-delta-notification__agent-row')].map((row) => row.textContent)).toEqual([
+      'Apex5 trades+$4.50',
+      'Metheus3 trades+$1.00',
+      'Meridian2 trades-$1.00',
+    ]);
+    expect(screen.queryByText('Gale')).not.toBeInTheDocument();
     expect(screen.queryByText('Bacon')).not.toBeInTheDocument();
 
     const expand = screen.getByRole('button', { name: /show 3 more/i });
@@ -36,9 +39,14 @@ describe('VisitDeltaStrip', () => {
 
     await user.click(expand);
 
-    expect(screen.getByText('Bacon')).toBeInTheDocument();
-    expect(screen.getByText('Nova')).toBeInTheDocument();
-    expect(screen.getByText('Meridian')).toBeInTheDocument();
+    expect([...container.querySelectorAll('.visit-delta-notification__agent-row')].map((row) => row.textContent)).toEqual([
+      'Apex5 trades+$4.50',
+      'Metheus3 trades+$1.00',
+      'Meridian2 trades-$1.00',
+      'Gale4 trades-$2.25',
+      'Bacon2 trades-$6.50',
+      'Nova2 trades-$8.09',
+    ]);
     expect(screen.getByRole('button', { name: /show less/i })).toHaveAttribute('aria-expanded', 'true');
   });
 });

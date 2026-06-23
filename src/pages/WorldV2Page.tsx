@@ -1818,7 +1818,6 @@ export function WorldV2Page() {
                   lessonEvidence={publicLabCopy.lessonEvidence}
                   lessonConfidence={publicLabCopy.lessonConfidence}
                   lessonSampleSize={publicLabCopy.lessonSampleSize}
-                  tomorrowWatch={publicLabCopy.tomorrowWatch}
                   latestDateKey={latestPublicLabDateKey}
                   selectedDateKey={publicLabDateKeyForView}
                   labDate={publicLabDateForView}

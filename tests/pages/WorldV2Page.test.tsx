@@ -178,7 +178,7 @@ describe('WorldV2Page onboarding and Public Lab state', () => {
     expect(screen.getByRole('heading', { name: /public agent account/i })).toBeInTheDocument();
     expect(screen.getByText(/public data/i)).toBeInTheDocument();
     expect(screen.getByText(/Today's lesson/i)).toBeInTheDocument();
-    expect(screen.getByText(/Tomorrow watch/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Tomorrow watch/i)).not.toBeInTheDocument();
   });
 
   it('opens the Public Lab calendar and returns to a selected day', async () => {

@@ -38,6 +38,14 @@ function tradeCountLabel(count: number) {
   return `${count} trade${count === 1 ? '' : 's'}`;
 }
 
+function compareAgentsByAwayGain(a: VisitDelta['perAgent'][number], b: VisitDelta['perAgent'][number]) {
+  const pnlDelta = b.pnlDelta - a.pnlDelta;
+  if (pnlDelta !== 0) return pnlDelta;
+  const tradeDelta = b.newTrades - a.newTrades;
+  if (tradeDelta !== 0) return tradeDelta;
+  return a.name.localeCompare(b.name);
+}
+
 export function VisitDeltaStrip({
   delta,
   onDismiss,
@@ -57,8 +65,9 @@ export function VisitDeltaStrip({
   const dragStartY = useRef<number | null>(null);
   const awayLabel = delta ? timeAgo(delta.daysSince) : '';
   const collapsedAgentCount = 3;
-  const visibleAgents = expanded ? delta?.perAgent ?? [] : delta?.perAgent.slice(0, collapsedAgentCount) ?? [];
-  const hiddenAgentCount = Math.max(0, (delta?.perAgent.length ?? 0) - visibleAgents.length);
+  const rankedAgents = [...(delta?.perAgent ?? [])].sort(compareAgentsByAwayGain);
+  const visibleAgents = expanded ? rankedAgents : rankedAgents.slice(0, collapsedAgentCount);
+  const hiddenAgentCount = Math.max(0, rankedAgents.length - visibleAgents.length);
   const handlePointerDown = (event: PointerEvent<HTMLElement>) => {
     dragStartY.current = event.clientY;
     event.currentTarget.setPointerCapture?.(event.pointerId);
