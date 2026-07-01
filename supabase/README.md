@@ -17,6 +17,12 @@ live dashboard.
   until 30 minutes after entry, so public clients cannot see live entries as
   they are opened. This is the primary read path for the frontend and the
   `leaderboard` Edge Function. Anon `SELECT` GRANTED.
+- **`agent_trade_public_events`** — sanitized realtime invalidation table.
+  A trigger inserts or updates one row only after an `agent_trades` row is
+  settled and public-safe. The browser subscribes to this table through
+  Supabase Realtime, then refetches `agent_trades_public` and
+  `agent_lifetime_stats`. It does not expose open entries or replace the public
+  views as the source of truth.
 - **`agent_lifetime_stats`** — per-agent aggregate view built on top of
   `agent_trades_public`. Emits one row per agent with `settled`, `wins`,
   `losses`, `breakeven`, `total_pnl`, and `open_count`. Used by the
@@ -153,6 +159,7 @@ credentials used by the trading daemons.
 | `20260524001000_public_lab_episodes.sql` | Create privileged public lab episode feed and published read-only view |
 | `20260603002000_publish_settled_outcomes_without_delay.sql` | Publish settled outcomes/account snapshots immediately while keeping open entries delayed |
 | `20260613000000_agent_insights.sql` | Create privileged sanitized agent insight packets and public read-only view |
+| `20260701000000_agent_trade_public_events.sql` | Create sanitized realtime invalidation feed so settled outcomes refresh in the browser immediately |
 
 ## Frontend read paths (current)
 
@@ -160,6 +167,7 @@ credentials used by the trading daemons.
 |------|-------------|
 | 24h / 7d window | `agent_trades_public` filtered by `settled_at` range |
 | Lifetime | `agent_lifetime_stats` (one row per agent) |
+| Realtime settled refresh | `agent_trade_public_events` subscription invalidates and refetches public views |
 | Trade replay chart | `agent_trade_replay_ticks_public` for real ticks, modeled fallback when missing |
 | Learn More cards | `agent_learning_posts_public` filtered by selected `agent_id` |
 | Agent insight cards / Public Lab lesson | `agent_insights_public`, falling back to deterministic public-trade insights |

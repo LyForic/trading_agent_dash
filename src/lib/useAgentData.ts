@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { supabase, isSupabaseConfigured } from './supabase';
 import { AGENT_META, AGENT_IDS } from './agentMeta';
 import { mockLeaderboard, mockCardViewModels, buildMockCardViewModel, mockTradeLog } from './mockData';
+import { subscribeToPublicTradeEvents } from './publicTradeEvents';
 import type {
   Agent,
   AgentId,
@@ -383,11 +384,13 @@ export function useAgentData(
     };
 
     const refresh = window.setInterval(requestRefresh, AGENT_DATA_REFRESH_MS);
+    const unsubscribeFromTradeEvents = subscribeToPublicTradeEvents(requestRefresh, 'agent-data');
     window.addEventListener('focus', requestRefresh);
     document.addEventListener('visibilitychange', requestRefresh);
 
     return () => {
       window.clearInterval(refresh);
+      unsubscribeFromTradeEvents();
       window.removeEventListener('focus', requestRefresh);
       document.removeEventListener('visibilitychange', requestRefresh);
     };
