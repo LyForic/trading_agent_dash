@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { AGENT_IDS } from './agentMeta';
 import { mockTradeLog } from './mockData';
+import { subscribeToPublicTradeEvents } from './publicTradeEvents';
 import { isSupabaseConfigured, supabase } from './supabase';
 import type { AgentId, PerformanceWindow } from './types';
 
@@ -41,6 +42,7 @@ const EMPTY_WINDOWS: Record<PerformanceWindow, SettledAgentPnlWindow | null> = {
 };
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+const SETTLED_AGENT_PNL_REFRESH_MS = 90_000;
 
 function pnlToCents(value: number | string | null | undefined) {
   const numeric = Number(value ?? 0);
@@ -120,6 +122,28 @@ export function useSettledAgentPnl(): UseSettledAgentPnlResult {
         : { kind: 'not-configured', message: 'Supabase not configured — using mock data' },
   );
   const [loading, setLoading] = useState<boolean>(() => isSupabaseConfigured);
+  const [refreshNonce, setRefreshNonce] = useState(0);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured || !supabase) return;
+
+    const requestRefresh = () => {
+      if (document.visibilityState === 'hidden') return;
+      setRefreshNonce((value) => value + 1);
+    };
+
+    const refresh = window.setInterval(requestRefresh, SETTLED_AGENT_PNL_REFRESH_MS);
+    const unsubscribeFromTradeEvents = subscribeToPublicTradeEvents(requestRefresh, 'settled-agent-pnl');
+    window.addEventListener('focus', requestRefresh);
+    document.addEventListener('visibilitychange', requestRefresh);
+
+    return () => {
+      window.clearInterval(refresh);
+      unsubscribeFromTradeEvents();
+      window.removeEventListener('focus', requestRefresh);
+      document.removeEventListener('visibilitychange', requestRefresh);
+    };
+  }, []);
 
   useEffect(() => {
     if (!isSupabaseConfigured || !supabase) return;
@@ -167,7 +191,7 @@ export function useSettledAgentPnl(): UseSettledAgentPnlResult {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [refreshNonce]);
 
   return { windows, source, error, loading };
 }
